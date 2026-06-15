@@ -1,7 +1,9 @@
 import aiosqlite
 import os
 
+import os
 DB_PATH = "data/equb.db"
+os.makedirs("data", exist_ok=True)
 
 async def init_db():
     async with aiosqlite.connect(DB_PATH) as db:
