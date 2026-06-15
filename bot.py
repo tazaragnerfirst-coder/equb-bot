@@ -957,10 +957,11 @@ async def main_menu_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ─────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────
-def main():
-    asyncio.run(db.init_db())
+async def post_init(application):
+    await db.init_db()
 
-    app = Application.builder().token(BOT_TOKEN).build()
+def main():
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", lambda u, c: admin_panel_cb(u, c) if is_admin(u.effective_user.id) else None))
