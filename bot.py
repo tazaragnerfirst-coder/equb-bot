@@ -1,5 +1,7 @@
 import logging
 import asyncio
+from threading import Thread
+from flask import Flask
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
@@ -11,6 +13,18 @@ from config import *
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ─── Keep Alive ───
+flask_app = Flask('')
+
+@flask_app.route('/')
+def home():
+    return "Bot is alive! 🤖"
+
+def keep_alive():
+    t = Thread(target=lambda: flask_app.run(host='0.0.0.0', port=8080))
+    t.daemon = True
+    t.start()
 
 # States
 (STATE_CHOOSE_NUMBERS, STATE_CHOOSE_PAYMENT, STATE_SEND_RECEIPT,
@@ -961,6 +975,7 @@ async def post_init(application):
     await db.init_db()
 
 def main():
+    keep_alive()
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
