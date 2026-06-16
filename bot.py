@@ -187,8 +187,8 @@ def is_admin(user_id):
 def mask_phone(phone):
     phone = str(phone)
     if len(phone) >= 2:
-        return phone[:-1] + "*"
-    return phone + "*"
+        return phone[:-1] + "# ✅"
+    return phone + "# ✅"
 
 def get_menu_keyboard(ctx):
     return ReplyKeyboardMarkup(
