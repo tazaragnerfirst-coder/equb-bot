@@ -251,11 +251,15 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize3 = await db.get_setting("prize_3")
     lang = ctx.user_data.get("lang", "am")
 
-    text = T[lang]["welcome"].format(
-        title=title, price=price, total=total,
-        remaining=remaining, prize1=prize1,
-        prize2=prize2, prize3=prize3,
-        max_t=MAX_TICKETS_PER_USER * 2
+    sep = "─" * 30
+    text = (
+        "🎉 *" + str(title) + "*\n" + sep + "\n"
+        "🎟 ዋጋ: *" + str(price) + " ETB*\n"
+        "🔢 ጠቅላላ: *" + str(total) + "*\n"
+        "✅ የቀሩ: *" + str(remaining) + "*\n" + sep + "\n"
+        "🥇 " + str(prize1) + "\n"
+        "🥈 " + str(prize2) + "\n"
+        "🥉 " + str(prize3) + "\n" + sep
     )
 
     keyboard = [
