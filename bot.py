@@ -15,29 +15,25 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ─── Keep Alive ───
-flask_app = Flask('')
+from flask import Flask
+from threading import Thread
 
-@flask_app.route('/')
+app = Flask('')
+
+@app.route('/')
 def home():
-    return "Bot is alive! 🤖"
+    return "I am alive!"
+
+def run():
+    app.run(host='0.0.0.0', port=8080)
 
 def keep_alive():
-    t = Thread(target=lambda: flask_app.run(host='0.0.0.0', port=8080))
-    t.daemon = True
+    t = Thread(target=run)
     t.start()
 
-# States
-(STATE_CHOOSE_NUMBERS, STATE_CHOOSE_PAYMENT, STATE_SEND_RECEIPT,
- STATE_ADMIN_BROADCAST, STATE_ADMIN_SET_TICKETS, STATE_ADMIN_SET_PRICE,
- STATE_ADMIN_SET_PRIZE, STATE_ADMIN_DRAW) = range(8)
+# ይህንን መስመር ቦትህን ከማስነሳትህ በፊት (ለምሳሌ ከbot.infinity_polling() በፊት) ጥራው
+keep_alive()
 
-def is_admin(user_id):
-    return user_id in ADMIN_IDS
-
-def mask_phone(phone):
-    if len(phone) >= 2:
-        return phone[:-1] + "*"
-    return phone + "*"
 
 # ─────────────────────────────────────────
 # START
