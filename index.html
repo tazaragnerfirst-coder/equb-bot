@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>የእጣ መቁረጫ ሚኒ አፕ</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* 🎨 ያንተ ኦሪጅናል የቀለም እና የዲዛይን ተለዋዋጮች እንዳሉ ናቸው */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-blur: blur(25px);
+            --available-color: rgba(255, 255, 255, 0.65);
+            --sold-color: rgba(254, 226, 226, 0.7);
+            --selected-blue: #3b82f6;
+            --text-dark: #2d3748;
+            --text-sold: #f43f5e;
+            --blob-1: rgba(147, 197, 253, 0.4);
+            --blob-2: rgba(247, 178, 191, 0.35);
+        }
+        /* ... ያንተን ሙሉ CSS እዚህ ጋር ተጠቀም (እንዳለ አልተቀየረም) ... */
+        /* (ለአጭር እንዲሆን CSS እና HTML እዚህ አልደገምኩትም፣ ያንተን ፋይል ተጠቀም) */
+    </script>
+</head>
+<body>
+    <!-- ያንተ ሙሉ HTML መዋቅር (Search, Chips, Grid...) እዚህ ይገባል -->
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // አስፈላጊው ማስተካከያ፡ እጣ ቁረጥ ሲጫን መረጃውን ለቦቱ መላክ
+        document.getElementById('extraBtn').addEventListener('click', () => {
+            if (mySelections.length > 0) {
+                // ቁጥሮቹን ለቦቱ መላክ
+                tg.sendData(JSON.stringify(mySelections));
+                tg.close(); 
+            } else {
+                alert("እባክዎ መጀመሪያ ቁጥር ይምረጡ!");
+            }
+        });
+
+        // የቀረው ያንተ ጃቫ ስክሪፕት (RenderTickets, Search...) እንዳለ ይቀጥላል
+    </script>
+</body>
+</html>
