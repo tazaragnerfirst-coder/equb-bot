@@ -1,6 +1,5 @@
 import aiosqlite
 import os
-from datetime import datetime
 
 DB_PATH = "data/equb.db"
 os.makedirs("data", exist_ok=True)
@@ -44,7 +43,6 @@ async def set_setting(key, value):
 
 async def get_all_tickets_status():
     async with aiosqlite.connect(DB_PATH) as db:
-        # ሁሉንም ቁጥሮች ከነገዢው ስልክ ጋር ያወጣል
         async with db.execute("SELECT number, phone, username, status FROM tickets ORDER BY number") as cur:
             return await cur.fetchall()
 
@@ -61,15 +59,9 @@ async def confirm_tickets(numbers, user_id, username, phone):
     async with aiosqlite.connect(DB_PATH) as db:
         for num in numbers:
             await db.execute(
-                "UPDATE tickets SET status='taken', user_id=?, username=?, phone=? WHERE number=?",
-                (user_id, username, phone, num)
+                "INSERT OR REPLACE INTO tickets (number, user_id, username, phone, status) VALUES (?, ?, ?, ?, 'taken')",
+                (num, user_id, username, phone)
             )
-        await db.commit()
-
-async def free_tickets(numbers):
-    async with aiosqlite.connect(DB_PATH) as db:
-        for num in numbers:
-            await db.execute("DELETE FROM tickets WHERE number=?", (num,))
         await db.commit()
 
 async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
@@ -90,12 +82,5 @@ async def get_payment(payment_id):
 
 async def update_payment_status(payment_id, status, reviewed_by):
     async with aiosqlite.connect(DB_PATH) as db:
-        await db.execute(
-            "UPDATE payments SET status=?, reviewed_by=? WHERE id=?", (status, reviewed_by, payment_id)
-        )
+        await db.execute("UPDATE payments SET status=?, reviewed_by=? WHERE id=?", (status, reviewed_by, payment_id))
         await db.commit()
-
-async def get_pending_payments():
-    async with aiosqlite.connect(DB_PATH) as db:
-        async with db.execute("SELECT * FROM payments WHERE status='pending'") as cur:
-            return await cur.fetchall()
