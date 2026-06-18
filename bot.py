@@ -15,6 +15,10 @@ from config import *
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# ─── Constants ───
+PAGE_SIZE = 50          # በ1 ገፅ ላይ የሚታዩ ቁጥሮች
+MAX_TICKETS_PER_USER = 10  # አንድ ሰው መምረጥ የሚችላቸው ከፍተኛ ቁጥሮች
+
 # ─── Keep Alive ───
 flask_app = Flask('')
 @flask_app.route('/')
@@ -209,8 +213,8 @@ async def send_full_list_to_group(bot, total):
     # 2. ሁሉም ቲኬቶች data ይዘምን
     ticket_map = await db.get_all_tickets_full(total)
 
-    # 3. በ50 chunks ይላካሉ
-    CHUNK = 50
+    # 3. በ40 chunks ይላካሉ (rate limit ለማስወገድ)
+    CHUNK = 40
     title = await db.get_setting("lottery_title")
     new_msg_ids = []
 
@@ -238,7 +242,7 @@ async def send_full_list_to_group(bot, total):
         try:
             msg = await bot.send_message(chat_id=GROUP_ID, text=text)
             new_msg_ids.append(msg.message_id)
-            await asyncio.sleep(0.4)
+            await asyncio.sleep(0.8)
         except Exception as e:
             logger.error(f"Chunk send error: {e}")
 
@@ -1212,17 +1216,18 @@ async def post_init(application):
 
 def main():
     keep_alive()
-        global app
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
-
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("admin", lambda u, c: show_admin_panel(u, c) if is_admin(u.effective_user.id) else None))
+    async def admin_cmd(update, ctx):
+        if is_admin(update.effective_user.id):
+            await show_admin_panel(update, ctx)
+    app.add_handler(CommandHandler("admin", admin_cmd))
 
     app.add_handler(CallbackQueryHandler(lang_cb, pattern="^lang_"))
     app.add_handler(CallbackQueryHandler(home_cb, pattern="^main_menu$"))
     app.add_handler(CallbackQueryHandler(pick_numbers_cb, pattern="^pick_numbers$"))
-    app.add_handler(CallbackQueryHandler(number_cb, pattern="^(select|deselect|taken|pending|page|noop)_"))
+    app.add_handler(CallbackQueryHandler(number_cb, pattern="^(select|deselect|taken|pending|page)_|^noop$"))
     app.add_handler(CallbackQueryHandler(proceed_payment_cb, pattern="^proceed_payment$"))
     app.add_handler(CallbackQueryHandler(payment_method_cb, pattern="^pay_(cbe|telebirr)$"))
     app.add_handler(CallbackQueryHandler(confirm_send_cb, pattern="^confirm_send$"))
@@ -1248,19 +1253,8 @@ def main():
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
-from flask import Flask
-import threading
-
-flask_app = Flask(__name__)
-
-@flask_app.route('/')
-def home():
-    return "Bot is Running!"
-
-def run_telegram_bot():
+    logger.info("Bot started!")
     app.run_polling(drop_pending_updates=True)
 
-bot_thread = threading.Thread(target=run_telegram_bot)
-bot_thread.start()
-
-flask_app.run(host="0.0.0.0", port=10000)
+if __name__ == "__main__":
+    main()
