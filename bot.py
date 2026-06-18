@@ -694,6 +694,10 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
+        # ── Firestore sync ──
+        for num in numbers:
+            await firestore_set_ticket(num, "taken", p_username, p_phone, p_username, p_method, p_receipt)
+
         # ── Auto send full list to group ──
         try:
             await send_full_list_to_group(ctx.bot, total)
@@ -716,6 +720,8 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     else:  # reject
         await db.update_payment_status(payment_id, "rejected", user.id)
         await db.free_tickets(numbers)
+        for num in numbers:
+            await firestore_delete_ticket(num)
 
         # ── User notification ──
         try:
@@ -1251,6 +1257,7 @@ def main():
     app.add_handler(CallbackQueryHandler(approve_reject_cb, pattern="^(approve|reject)_"))
 
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
     logger.info("Bot started!")
@@ -1258,3 +1265,108 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ─────────────────────────────────────────
+# WEB APP DATA HANDLER (Mini App → Bot)
+# ─────────────────────────────────────────
+async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """Mini App ቁጥሮች ሲልክ ይቀበለዋል → payment flow ይጀምራል"""
+    import json
+    user = update.effective_user
+    try:
+        data = json.loads(update.effective_message.web_app_data.data)
+    except Exception as e:
+        logger.error(f"WebApp data parse error: {e}")
+        return
+
+    if data.get("action") != "buy_tickets":
+        return
+
+    numbers = data.get("numbers", [])
+    if not numbers:
+        return
+
+    price = await db.get_setting("ticket_price")
+    total_price = len(numbers) * int(price)
+
+    # Check availability
+    for num in numbers:
+        ticket = await db.get_ticket(num)
+        if ticket and ticket[4] in ("taken", "reserved"):
+            await update.message.reply_text(
+                f"⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።"
+            )
+            return
+
+    # Save to user_data and start payment flow
+    ctx.user_data["selected"] = numbers
+    ctx.user_data["waiting_name"] = True
+    ctx.user_data["waiting_phone"] = False
+    ctx.user_data["waiting_receipt"] = False
+
+    lang = ctx.user_data.get("lang", "am")
+    await update.message.reply_text(
+        f"✅ *{len(numbers)} ቁጥሮች ተመርጠዋል:* {', '.join(map(str, sorted(numbers)))}\n"
+        f"💰 ጠቅላላ: *{total_price} ETB*\n\n"
+        f"{T[lang]['ask_name']}",
+        parse_mode="Markdown",
+        reply_markup=get_menu_keyboard(ctx)
+    )
+
+
+# ─────────────────────────────────────────
+# FIRESTORE SYNC HELPERS
+# ─────────────────────────────────────────
+import httpx
+
+FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/equb-c5f5f/databases/(default)/documents"
+
+async def firestore_set_ticket(number, status, username, phone, full_name, payment_method, receipt_file_id=""):
+    """Firestore ላይ ticket status ያዘምናል"""
+    from datetime import datetime
+    url = f"{FIRESTORE_BASE}/tickets/{number}"
+    payload = {
+        "fields": {
+            "status": {"stringValue": status},
+            "username": {"stringValue": str(username)},
+            "phone": {"stringValue": str(phone)},
+            "full_name": {"stringValue": str(full_name)},
+            "payment_method": {"stringValue": str(payment_method)},
+            "receipt_file_id": {"stringValue": str(receipt_file_id)},
+            "created_at": {"stringValue": datetime.now().isoformat()},
+        }
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(url, json=payload, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore set ticket error: {e}")
+
+async def firestore_delete_ticket(number):
+    """Firestore ላይ ticket ይሰርዛል (free ሲሆን)"""
+    url = f"{FIRESTORE_BASE}/tickets/{number}"
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.delete(url, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore delete ticket error: {e}")
+
+async def firestore_sync_settings(total, price, prize1, prize2, prize3, title):
+    """Firestore settings ያዘምናል"""
+    url = f"{FIRESTORE_BASE}/settings/main"
+    payload = {
+        "fields": {
+            "total_tickets": {"integerValue": str(total)},
+            "ticket_price": {"integerValue": str(price)},
+            "prize_1": {"stringValue": str(prize1)},
+            "prize_2": {"stringValue": str(prize2)},
+            "prize_3": {"stringValue": str(prize3)},
+            "lottery_title": {"stringValue": str(title)},
+        }
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(url, json=payload, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore sync settings error: {e}")
