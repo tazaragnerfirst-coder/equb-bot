@@ -1212,7 +1212,9 @@ async def post_init(application):
 
 def main():
     keep_alive()
+        global app
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("admin", lambda u, c: show_admin_panel(u, c) if is_admin(u.effective_user.id) else None))
@@ -1246,20 +1248,19 @@ def main():
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
-        from flask import Flask
-    import threading
+from flask import Flask
+import threading
 
-    flask_app = Flask(__name__)
+flask_app = Flask(__name__)
 
-    @flask_app.route('/')
-    def home():
-        return "Bot is Running!"
+@flask_app.route('/')
+def home():
+    return "Bot is Running!"
 
-    def run_telegram_bot():
-        app.run_polling(drop_pending_updates=True)
+def run_telegram_bot():
+    app.run_polling(drop_pending_updates=True)
 
-    bot_thread = threading.Thread(target=run_telegram_bot)
-    bot_thread.start()
-    
-    flask_app.run(host="0.0.0.0", port=10000)
+bot_thread = threading.Thread(target=run_telegram_bot)
+bot_thread.start()
 
+flask_app.run(host="0.0.0.0", port=10000)
