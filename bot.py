@@ -3,7 +3,7 @@ import asyncio
 from datetime import date
 from threading import Thread
 from flask import Flask
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
+from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
     MessageHandler, filters, ContextTypes
@@ -311,7 +311,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
     keyboard = [
-        [InlineKeyboardButton(t(ctx, "pick_btn"), callback_data="pick_numbers")],
+        [InlineKeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url="https://tazaragnerfirst-coder.github.io/equub-bot/"))],
         [InlineKeyboardButton(t(ctx, "my_tickets_btn"), callback_data="my_tickets")],
     ]
     if is_admin(user.id):
