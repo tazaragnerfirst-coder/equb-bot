@@ -1246,8 +1246,20 @@ def main():
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
-    logger.info("Bot started!")
-    app.run_polling(drop_pending_updates=True)
+        from flask import Flask
+    import threading
 
-if __name__ == "__main__":
-    main()
+    flask_app = Flask(__name__)
+
+    @flask_app.route('/')
+    def home():
+        return "Bot is Running!"
+
+    def run_telegram_bot():
+        app.run_polling(drop_pending_updates=True)
+
+    bot_thread = threading.Thread(target=run_telegram_bot)
+    bot_thread.start()
+    
+    flask_app.run(host="0.0.0.0", port=10000)
+
