@@ -311,7 +311,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
     keyboard = [
-        [InlineKeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url="https://tazaragnerfirst-coder.github.io/equub-bot/"))],
+        [InlineKeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url="https://tazaragnerfirst-coder.github.io/equb-bot/"))],
         [InlineKeyboardButton(t(ctx, "my_tickets_btn"), callback_data="my_tickets")],
     ]
     if is_admin(user.id):
