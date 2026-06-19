@@ -193,15 +193,6 @@ def remove_menu():
 # GROUP LIST SENDER — ሁሉንም ቁጥሮች ይልካል
 # ─────────────────────────────────────────
 async def send_full_list_to_group(bot, total):
-    """
-    ሁሉም ቁጥሮች (taken + free) ወደ ግሩፕ ይላካሉ።
-    ቀደም ብሎ የተላኩ messages ይሰረዛሉ።
-    Format:
-        12 👉 0912345678# ✅
-        13 👉
-        14 👉 0986532100# ✅
-    """
-    # 1. አሮጌ messages ሰርዝ
     old_msgs = await db.get_group_message_ids()
     for msg_id, chat_id in old_msgs:
         try:
@@ -210,10 +201,8 @@ async def send_full_list_to_group(bot, total):
             logger.warning(f"Delete old group msg error: {e}")
     await db.clear_group_messages()
 
-    # 2. ሁሉም ቲኬቶች data ይዘምን
     ticket_map = await db.get_all_tickets_full(total)
 
-    # 3. በ40 chunks ይላካሉ — 40×25=1000 (header የለም)
     CHUNK = 40
     new_msg_ids = []
 
@@ -234,7 +223,6 @@ async def send_full_list_to_group(bot, total):
         except Exception as e:
             logger.error(f"Chunk send error: {e}")
 
-    # 4. አዲስ message IDs ያስቀምጣል
     await db.save_group_message_ids(GROUP_ID, new_msg_ids)
     return len(new_msg_ids)
 
@@ -298,28 +286,34 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         f"🥉 {prize3}\n{sep}"
     )
 
-    keyboard = [
-        [InlineKeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url="https://tazaragnerfirst-coder.github.io/equb-bot/"))],
-        [InlineKeyboardButton(t(ctx, "my_tickets_btn"), callback_data="my_tickets")],
+    # ── Menu buttons (ReplyKeyboard) ──
+    lang = ctx.user_data.get("lang", "am")
+    lang_url = f"https://tazaragnerfirst-coder.github.io/equb-bot/?lang={lang}"
+
+    rows = [
+        [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=lang_url))],
+        [KeyboardButton(t(ctx, "my_tickets_btn"))],
     ]
     if is_admin(user.id):
-        keyboard.append([InlineKeyboardButton(t(ctx, "admin_btn"), callback_data="admin_panel")])
+        rows.append([KeyboardButton(t(ctx, "admin_btn"))])
+
+    reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
     if update.callback_query:
         try:
             await update.callback_query.edit_message_text(
-                text, parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(keyboard)
+                text, parse_mode="Markdown"
             )
         except:
-            await update.effective_message.reply_text(
-                text, parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            pass
+        await update.effective_message.reply_text(
+            text, parse_mode="Markdown",
+            reply_markup=reply_markup
+        )
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            reply_markup=reply_markup
         )
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -335,6 +329,9 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
     home_words = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "/start"]
     cancel_words = ["❌ ሰርዝ", "Cancel", "Haquu"]
+    tickets_words = ["📋 የእኔ ትኬቶች", "📋 My Tickets", "📋 Tikeetii Koo"]
+    admin_words = ["👨‍💼 አድሚን ፓነል", "👨‍💼 Admin Panel"]
+    pick_words = ["🎟 ቁጥር ምረጥ", "🎟 Pick Numbers", "🎟 Lakkoofsa Filadhu"]
 
     if any(w in text for w in home_words):
         ctx.user_data["waiting_name"] = False
@@ -352,6 +349,33 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("❌", reply_markup=remove_menu())
         await show_home(update, ctx)
         return
+
+    if any(w in text for w in tickets_words):
+        user = update.effective_user
+        confirmed = await db.get_user_tickets(user.id, "taken")
+        pending = await db.get_user_tickets(user.id, "reserved")
+        lang = ctx.user_data.get("lang", "am")
+        if not confirmed and not pending:
+            reply_text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
+        else:
+            price = await db.get_setting("ticket_price")
+            reply_text = f"{T[lang]['my_tickets_title']}\n{'─'*25}\n"
+            if confirmed:
+                nums = sorted([t[0] for t in confirmed])
+                reply_text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
+            if pending:
+                nums = sorted([t[0] for t in pending])
+                reply_text += f"{T[lang]['pending_label']}: {', '.join(map(str, nums))}\n"
+        await update.message.reply_text(reply_text, parse_mode="Markdown")
+        return
+
+    if any(w in text for w in admin_words):
+        if is_admin(update.effective_user.id):
+            await show_admin_panel(update, ctx)
+        return
+
+    if any(w in text for w in pick_words):
+        return  # WebApp button — bot side ምንም action አያስፈልግም
 
     if ctx.user_data.get("waiting_name") or ctx.user_data.get("waiting_phone") or ctx.user_data.get("admin_action"):
         await handle_text_input(update, ctx)
