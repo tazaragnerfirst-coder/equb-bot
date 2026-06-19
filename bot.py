@@ -1258,19 +1258,27 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             )
             return
 
-    # Save to user_data and start payment flow
+    # Save to user_data and show payment method selection
     ctx.user_data["selected"] = numbers
-    ctx.user_data["waiting_name"] = True
+    ctx.user_data["waiting_name"] = False
     ctx.user_data["waiting_phone"] = False
     ctx.user_data["waiting_receipt"] = False
 
     lang = ctx.user_data.get("lang", "am")
+    text = (
+        f"{T[lang]['payment_title']}\n{'─'*25}\n"
+        f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(numbers)))}\n"
+        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*25}\n"
+        f"{T[lang]['choose_payment']}"
+    )
+    keyboard = [
+        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe")],
+        [InlineKeyboardButton("📱 Telebirr", callback_data="pay_telebirr")],
+        [InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")],
+    ]
     await update.message.reply_text(
-        f"✅ *{len(numbers)} ቁጥሮች ተመርጠዋል:* {', '.join(map(str, sorted(numbers)))}\n"
-        f"💰 ጠቅላላ: *{total_price} ETB*\n\n"
-        f"{T[lang]['ask_name']}",
-        parse_mode="Markdown",
-        reply_markup=get_menu_keyboard(ctx)
+        text, parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 
