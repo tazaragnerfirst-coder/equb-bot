@@ -213,21 +213,9 @@ async def send_full_list_to_group(bot, total):
     # 2. ሁሉም ቲኬቶች data ይዘምን
     ticket_map = await db.get_all_tickets_full(total)
 
-    # 3. በ40 chunks ይላካሉ (rate limit ለማስወገድ)
+    # 3. በ40 chunks ይላካሉ — 40×25=1000 (header የለም)
     CHUNK = 40
-    title = await db.get_setting("lottery_title")
     new_msg_ids = []
-
-    # Header
-    try:
-        hdr = await bot.send_message(
-            chat_id=GROUP_ID,
-            text=f"🎟 *{title}* — ሁሉም ቁጥሮች\n{'─'*25}",
-            parse_mode="Markdown"
-        )
-        new_msg_ids.append(hdr.message_id)
-    except Exception as e:
-        logger.error(f"Header send error: {e}")
 
     for chunk_start in range(1, total + 1, CHUNK):
         chunk_end = min(chunk_start + CHUNK - 1, total)
