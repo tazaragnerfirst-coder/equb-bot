@@ -262,3 +262,23 @@
         };
 
         function saveAdminChanges() {
+            totalTickets = document.getElementById('adminTotalNumbers').value;
+            ticketPrice = document.getElementById('adminPrice').value;
+            adminPanel.style.display = 'none';
+            numberGrid.style.display = 'grid';
+            searchBar.value = '';
+            renderTickets();
+        }
+
+        function toggleTheme() {
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeToggleBtn').innerText = theme === 'dark' ? '☀️' : '🌙';
+        }
+
+        function closeModal() { document.getElementById('errorModal').style.display='none'; }
+
+        renderTickets();
+    </script>
+</body>
+</html>
