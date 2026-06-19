@@ -8,129 +8,457 @@
     <style>
         :root {
             --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
-            --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(255, 255, 255, 0.45); --glass-blur: blur(25px);
-            --available: rgba(255, 255, 255, 0.75); --sold: rgba(254, 226, 226, 0.85);
-            --selected: #3b82f6; --text: #2d3748; --text-sold: #f43f5e;
-            --blob-1: rgba(147, 197, 253, 0.4); --blob-2: rgba(247, 178, 191, 0.35);
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-blur: blur(25px);
+            --available-color: rgba(255, 255, 255, 0.65);
+            --sold-color: rgba(254, 226, 226, 0.7);
+            --pending-color: rgba(254, 243, 199, 0.75);
+            --selected-blue: #3b82f6;
+            --text-dark: #2d3748;
+            --text-sold: #f43f5e;
+            --text-pending: #b45309;
+            --blob-1: rgba(147, 197, 253, 0.4);
+            --blob-2: rgba(247, 178, 191, 0.35);
         }
-        [data-theme="dark"] { --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); --glass-bg: rgba(30, 41, 59, 0.75); --glass-border: rgba(255, 255, 255, 0.08); --text: #f8fafc; }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, sans-serif; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; color: var(--text); }
-        body::before, body::after { content: ""; position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; }
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --available-color: rgba(51, 65, 85, 0.6);
+            --sold-color: rgba(127, 29, 29, 0.4);
+            --pending-color: rgba(120, 80, 10, 0.4);
+            --selected-blue: #2563eb;
+            --text-dark: #f8fafc;
+            --text-sold: #ef4444;
+            --text-pending: #fbbf24;
+            --blob-1: rgba(37, 99, 235, 0.15);
+            --blob-2: rgba(225, 29, 72, 0.1);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh; margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; color: var(--text-dark);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        body::before, body::after {
+            content: ""; position: absolute; border-radius: 50%;
+            filter: blur(80px); z-index: -1; transition: background 0.3s ease;
+        }
         body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
         body::after { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
-
-        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 450px; padding: 16px; z-index: 110; }
-        .top-bar { display: flex; align-items: center; gap: 10px; }
+        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 390px; padding: 16px 16px 6px 16px; z-index: 110; pointer-events: none; }
+        .top-bar { display: flex; width: 100%; gap: 8px; pointer-events: auto; }
         .search-container { flex: 1; position: relative; }
-        .search-bar { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 20px; font-size: 15px; color: var(--text); outline: none; transition: all 0.3s; }
-        .search-bar::placeholder { transition: opacity 0.4s; }
-        .search-bar.fade-out::placeholder { opacity: 0; }
+        .search-bar {
+            width: 100%; padding: 12px 16px 12px 42px;
+            border: 1px solid var(--glass-border); background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border-radius: 20px; font-size: 15px; color: var(--text-dark); outline: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02); transition: all 0.3s ease;
+        }
+        .search-bar::placeholder { transition: opacity 0.4s ease, transform 0.4s ease; opacity: 0.6; color: var(--text-dark); }
+        .search-bar.fade-out::placeholder { opacity: 0; transform: translateY(-5px); }
         .search-container::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
-        .theme-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-
-        .cart-fixed-wrapper { position: fixed; top: 76px; width: 100%; max-width: 450px; padding: 0 16px; z-index: 100; pointer-events: none; }
-        .cart-panel { display: none; width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); border-radius: 22px; padding: 8px 12px; align-items: center; justify-content: space-between; gap: 8px; pointer-events: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
-        .chips-wrapper { flex: 1; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%); }
-        .selected-chips { display: inline-flex; gap: 6px; padding: 5px 15px; }
+        .quick-pick-btn, .theme-toggle-btn {
+            border: 1px solid var(--glass-border); background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border-radius: 20px; color: var(--text-dark); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;
+        }
+        .quick-pick-btn { padding: 0 14px; font-size: 13px; font-weight: 600; }
+        .theme-toggle-btn { width: 44px; height: 44px; font-size: 18px; }
+        .cart-fixed-wrapper { position: fixed; top: 64px; width: 100%; max-width: 390px; padding: 4px 16px 10px 16px; z-index: 100; pointer-events: none; }
+        .cart-panel {
+            display: none; width: 100%; background: var(--glass-bg);
+            border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur); border-radius: 20px; padding: 10px 14px;
+            align-items: center; justify-content: space-between; gap: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05); pointer-events: auto;
+        }
+        .chips-wrapper {
+            flex: 1; overflow: hidden; position: relative; white-space: nowrap;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+        .selected-chips { display: inline-flex; gap: 6px; padding: 2px 15px; position: relative; }
         .animate-marquee { animation: bounceMarquee 7s ease-in-out infinite alternate; }
         @keyframes bounceMarquee { 0% { transform: translateX(0px); } 100% { transform: translateX(var(--scroll-dist, 0px)); } }
-        .chip { width: 32px; height: 32px; background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; animation: rainbowGlow 8s ease infinite; flex-shrink: 0; }
-        .extra-btn { background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: white; border: none; padding: 10px 18px; border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer; animation: rainbowGlow 8s ease infinite; }
+        .chip {
+            width: 32px; height: 32px;
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: #ffffff !important; border: none; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            flex-shrink: 0; animation: rainbowGlow 8s ease infinite; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .price-tag { font-size: 13px; color: var(--text-dark); font-weight: 700; white-space: nowrap; }
+        .extra-btn {
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: white; border: none; padding: 8px 16px;
+            border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap; animation: rainbowGlow 8s ease infinite;
+        }
         @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-
-        .scroll-content { width: 100%; max-width: 450px; padding: 84px 16px 24px 16px; transition: padding-top 0.3s ease; }
-        .scroll-content.shifted { padding-top: 154px; }
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
-        .box { aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; background: var(--available); border: 1px solid var(--glass-border); }
-        .sold { background: var(--sold); color: var(--text-sold); cursor: not-allowed; }
-        .selected { background: var(--selected) !important; color: white !important; transform: scale(0.92); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
-
-        .admin-view { display: none; background: var(--glass-bg); padding: 25px; border-radius: 24px; margin-top: 20px; width: 100%; border: 1px solid var(--glass-border); backdrop-filter: blur(30px); }
-        .history-item { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
-        .admin-input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: var(--text); }
+        .scrollable-content { width: 100%; max-width: 390px; padding: 72px 16px 24px 16px; transition: padding-top 0.2s ease; }
+        .scrollable-content.shifted { padding-top: 134px; }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+        .number-box {
+            aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;
+            user-select: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .available { background: var(--available-color); color: var(--text-dark); border: 1px solid var(--glass-border); }
+        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; border: 1px solid rgba(254, 226, 226, 0.2); }
+        .pending { background: var(--pending-color); color: var(--text-pending); cursor: not-allowed; border: 1px solid rgba(254, 243, 199, 0.3); }
+        .number-box.selected { background: var(--selected-blue) !important; color: white !important; border: none; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35); }
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .modal-box {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            padding: 24px; border-radius: 24px; width: 100%; max-width: 320px; text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-box h3 { margin: 0 0 10px 0; color: var(--text-sold); font-size: 20px; }
+        .modal-box p { margin: 0 0 20px 0; color: var(--text-dark); font-size: 15px; line-height: 1.4; opacity: 0.9; }
+        .modal-btn {
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: white !important; border: none; padding: 11px 24px;
+            border-radius: 16px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); animation: rainbowGlow 8s ease infinite;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.1s ease;
+        }
+        .modal-btn:active { transform: scale(0.97); }
+        .admin-panel {
+            display: none; width: 100%; background: rgba(30, 41, 59, 0.95);
+            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
+            color: white; padding: 20px; border-radius: 24px; margin-top: 20px;
+        }
+        .admin-panel label { font-size: 13px; opacity: 0.85; }
+        .admin-panel input {
+            width: 100%; padding: 12px; margin: 6px 0 16px 0; border-radius: 12px;
+            border: none; background: rgba(255,255,255,0.15); color: white; font-size: 15px; outline: none;
+        }
+        .admin-panel h4 {
+            margin: 18px 0 8px 0; font-size: 14px; color: #93c5fd;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;
+        }
+        .admin-ticket-row { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; }
+        .admin-ticket-row .row-top { display:flex; justify-content:space-between; font-weight:700; }
+        .admin-ticket-row .row-sub { opacity:0.7; margin-top:2px; font-size:11px; }
     </style>
 </head>
 <body>
-    <div class="search-fixed-wrapper"><div class="top-bar"><div class="search-container"><input type="text" id="searchBar" class="search-bar" placeholder="ቁጥር ይፈልጉ..."></div><button class="theme-btn" onclick="toggleTheme()">🌙</button></div></div>
-    <div class="cart-fixed-wrapper"><div class="cart-panel" id="cartPanel"><div class="chips-wrapper"><div class="selected-chips" id="chipsContainer"></div></div><div id="priceTag" style="font-weight:bold; font-size:12px; margin: 0 5px;">0 ETB</div><button class="extra-btn" id="submitBtn">እጣ ቁረጥ</button></div></div>
-    
-    <div class="scroll-content" id="scrollContent">
-        <div id="numberGrid" class="grid"></div>
-        <div id="adminPanel" class="admin-view">
-            <h3 style="color:#3b82f6; margin-top:0;">🔐 Admin Panel</h3>
-            <label>ጠቅላላ ብዛት:</label><input type="number" id="admTotal" class="admin-input" value="100">
-            <label>ዋጋ:</label><input type="number" id="admPrice" class="admin-input" value="20">
-            <div id="soldHistory" style="margin-top:15px; max-height:200px; overflow-y:auto;">
-                <b>የተሸጡ ቁጥሮች ሂስትሪ:</b>
-                <div class="history-item">ቁጥር 7 👉 0912... ✅ (10:30 AM)</div>
+
+    <div class="search-fixed-wrapper">
+        <div class="top-bar">
+            <div class="search-container">
+                <input type="text" id="searchBar" class="search-bar" placeholder="5">
             </div>
-            <button class="extra-btn" style="width:100%; margin-top:15px;" onclick="saveAdmin()">አስቀምጥ</button>
+            <button class="quick-pick-btn" id="quickPickBtn">Quick Pick</button>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
         </div>
     </div>
 
-    <script>
-        const tg = window.Telegram.WebApp; tg.expand();
-        let ticketPrice = 20, totalTickets = 100, mySelections = [];
-        const grid = document.getElementById('numberGrid'), sBar = document.getElementById('searchBar');
+    <div class="cart-fixed-wrapper">
+        <div class="cart-panel" id="cartPanel">
+            <div class="chips-wrapper" id="chipsWrapper">
+                <div class="selected-chips" id="chipsContainer"></div>
+            </div>
+            <div class="price-tag" id="priceTag">0/15 = 0 ETB</div>
+            <button class="extra-btn" id="extraBtn">እጣ ቁረጥ</button>
+        </div>
+    </div>
 
-        const hints = ["ቁጥር 5 ይፈልጋሉ?", "admin123 ብለው ይፃፉ", "እድለኛ ቁጥሮን ይምረጡ"];
-        let hIdx = 0; setInterval(() => { sBar.classList.add('fade-out'); setTimeout(() => { hIdx = (hIdx+1)%hints.length; sBar.placeholder = hints[hIdx]; sBar.classList.remove('fade-out'); }, 400); }, 3000);
+    <div class="scrollable-content" id="scrollContent">
+        <div class="number-grid" id="numberGrid"></div>
 
-        function render(filter = '') {
-            grid.innerHTML = '';
-            for(let i=1; i<=totalTickets; i++) {
-                if(filter && !i.toString().includes(filter)) continue;
-                const box = document.createElement('div'); box.innerText = i;
-                box.className = 'box available';
-                if(mySelections.includes(i)) box.classList.add('selected');
-                box.onclick = () => { 
-                    if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-                    toggle(i);
-                };
-                grid.appendChild(box);
-            }
+        <div class="admin-panel" id="adminPanel">
+            <h3 style="margin-top:0; color:#3b82f6;">🔐 የአድሚን ማስተካከያ</h3>
+            <label>የእጣዎች ጠቅላላ ብዛት (100 - 1000):</label>
+            <input type="number" id="adminTotalNumbers" value="100" min="100" max="1000">
+            <label>የአንዱ እጣ ዋጋ (ብር):</label>
+            <input type="number" id="adminPrice" value="20">
+            <button style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
+
+            <h4>📋 ሁሉም ቲኬቶች (ደረሰኝ / ስም / ስልክ / ጊዜ)</h4>
+            <div id="adminTicketsList"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal-box">
+            <h3>⚠️ ገደብ አልፏል!</h3>
+            <p>በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
+            <button class="modal-btn" onclick="closeModal()">እሺ ገብቶኛል</button>
+        </div>
+    </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
+    authDomain: "equb-c5f5f.firebaseapp.com",
+    databaseURL: "https://equb-c5f5f-default-rtdb.firebaseio.com",
+    projectId: "equb-c5f5f",
+    storageBucket: "equb-c5f5f.firebasestorage.app",
+    messagingSenderId: "745997733561",
+    appId: "1:745997733561:web:6a37c360fdc5fa2d559568",
+    measurementId: "G-0NR450CFN9"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const firestore = getFirestore(firebaseApp);
+
+const tg = window.Telegram?.WebApp;
+if (tg) tg.expand();
+const tgUser = tg?.initDataUnsafe?.user;
+const userId = tgUser?.id || 0;
+const userName = tgUser?.first_name || "Guest";
+
+const MAX_SELECT = 15;
+
+let ticketPrice = 20;
+let totalTickets = 100;
+let ticketsData = {};
+let mySelections = [];
+
+const numberGrid = document.getElementById('numberGrid');
+const searchBar = document.getElementById('searchBar');
+const cartPanel = document.getElementById('cartPanel');
+const chipsContainer = document.getElementById('chipsContainer');
+const chipsWrapper = document.getElementById('chipsWrapper');
+const priceTag = document.getElementById('priceTag');
+const adminPanel = document.getElementById('adminPanel');
+const scrollContent = document.getElementById('scrollContent');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const errorModal = document.getElementById('errorModal');
+const quickPickBtn = document.getElementById('quickPickBtn');
+const extraBtn = document.getElementById('extraBtn');
+
+document.getElementById('maxLimitText').innerText = MAX_SELECT;
+
+function initTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.innerText = "☀️";
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.innerText = "🌙";
+    }
+}
+initTheme();
+window.toggleTheme = function() {
+    const current = document.documentElement.getAttribute('data-theme');
+    if (current === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.innerText = "🌙";
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.innerText = "☀️";
+    }
+};
+
+const placeholders = ["5", "12", "88", "143", "450", "777"];
+let placeholderIndex = 0;
+setInterval(() => {
+    if (searchBar.value.trim() !== "") return;
+    searchBar.classList.add('fade-out');
+    setTimeout(() => {
+        placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+        searchBar.setAttribute('placeholder', placeholders[placeholderIndex]);
+        searchBar.classList.remove('fade-out');
+    }, 400);
+}, 2500);
+
+onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
+    if (!snap.exists()) { renderTickets(); return; }
+    const d = snap.data();
+    if (d.ticket_price) ticketPrice = parseInt(d.ticket_price);
+    if (d.total_tickets) totalTickets = parseInt(d.total_tickets);
+    document.getElementById('adminPrice').value = ticketPrice;
+    document.getElementById('adminTotalNumbers').value = totalTickets;
+    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+    updateCart();
+}, (err) => {
+    console.error('Settings listener error:', err);
+    renderTickets();
+});
+
+onSnapshot(collection(firestore, 'tickets'), (snap) => {
+    ticketsData = {};
+    snap.forEach(d => { ticketsData[parseInt(d.id)] = d.data().status; });
+    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+    renderAdminTickets(snap);
+}, (err) => {
+    console.error('Tickets listener error:', err);
+});
+
+// Render immediately on load with defaults, don't wait for Firestore
+renderTickets();
+
+function renderTickets(filterText = '') {
+    numberGrid.innerHTML = '';
+    for (let i = 1; i <= totalTickets; i++) {
+        if (filterText !== '') {
+            if (!i.toString().includes(filterText)) continue;
         }
-        function toggle(n) {
-            const idx = mySelections.indexOf(n);
-            if(idx > -1) mySelections.splice(idx, 1);
-            else if(mySelections.length < 15) mySelections.push(n);
-            updateCart(); render(sBar.value);
+        const box = document.createElement('div');
+        box.innerText = i;
+        box.className = 'number-box';
+        const status = ticketsData[i];
+        if (status === 'taken') box.classList.add('sold');
+        else if (status === 'pending') box.classList.add('pending');
+        else box.classList.add('available');
+        if (mySelections.includes(i)) box.classList.add('selected');
+        box.addEventListener('click', () => {
+            if (status === 'taken' || status === 'pending') return;
+            toggleSelection(i);
+        });
+        numberGrid.appendChild(box);
+    }
+}
+
+function toggleSelection(num) {
+    if (mySelections.includes(num)) {
+        mySelections = mySelections.filter(n => n !== num);
+    } else {
+        if (mySelections.length >= MAX_SELECT) { showModal(); return; }
+        mySelections.push(num);
+    }
+    updateCart();
+    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+}
+
+function showModal() { errorModal.style.display = 'flex'; }
+window.closeModal = function() { errorModal.style.display = 'none'; };
+
+function updateCart() {
+    if (mySelections.length === 0) {
+        cartPanel.style.display = 'none';
+        scrollContent.classList.remove('shifted');
+        return;
+    }
+    cartPanel.style.display = 'flex';
+    scrollContent.classList.add('shifted');
+    chipsContainer.innerHTML = '';
+    mySelections.sort((a,b) => a-b).forEach(num => {
+        const chip = document.createElement('div');
+        chip.classList.add('chip');
+        chip.innerText = num;
+        chipsContainer.appendChild(chip);
+    });
+    priceTag.innerText = `${mySelections.length}/${MAX_SELECT} = ${mySelections.length * ticketPrice} ETB`;
+    setTimeout(() => {
+        if (chipsContainer.scrollWidth > chipsWrapper.clientWidth) {
+            const diff = chipsContainer.scrollWidth - chipsWrapper.clientWidth;
+            document.documentElement.style.setProperty('--scroll-dist', `-${diff + 30}px`);
+            chipsContainer.classList.add('animate-marquee');
+        } else {
+            chipsContainer.classList.remove('animate-marquee');
         }
-        function updateCart() {
-            const panel = document.getElementById('cartPanel'), cont = document.getElementById('chipsContainer');
-            if(mySelections.length === 0) { panel.style.display = 'none'; document.getElementById('scrollContent').classList.remove('shifted'); return; }
-            panel.style.display = 'flex'; document.getElementById('scrollContent').classList.add('shifted');
-            cont.innerHTML = mySelections.sort((a,b)=>a-b).map(n => `<div class="chip">${n}</div>`).join('');
-            document.getElementById('priceTag').innerText = `${mySelections.length * ticketPrice} ETB`;
-            const wrap = cont.parentElement;
-            if(cont.scrollWidth > wrap.clientWidth) { 
-                const diff = cont.scrollWidth - wrap.clientWidth;
-                document.documentElement.style.setProperty('--scroll-dist', `-${diff + 30}px`);
-                cont.classList.add('animate-marquee'); 
-            } else cont.classList.remove('animate-marquee');
-        }
-        document.getElementById('submitBtn').onclick = () => {
-            if(mySelections.length > 0) {
-                tg.sendData(JSON.stringify({action: "buy_tickets", numbers: mySelections}));
-                setTimeout(() => tg.close(), 600);
-            }
-        };
-        sBar.oninput = (e) => {
-            const v = e.target.value;
-            if(v === 'admin123') { document.getElementById('adminPanel').style.display = 'block'; grid.style.display = 'none'; }
-            else { document.getElementById('adminPanel').style.display = 'none'; grid.style.display = 'grid'; render(v); }
-        };
-        function saveAdmin() { 
-            totalTickets = document.getElementById('admTotal').value; 
-            ticketPrice = document.getElementById('admPrice').value; 
-            sBar.value = ''; render(); 
-        }
-        function toggleTheme() { 
-            const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
-            document.documentElement.setAttribute('data-theme', t); 
-        }
-        render();
-    </script>
+    }, 50);
+}
+
+searchBar.addEventListener('input', (e) => {
+    const val = e.target.value.trim();
+    if (val === 'admin123') {
+        adminPanel.style.display = 'block';
+        numberGrid.style.display = 'none';
+    } else {
+        adminPanel.style.display = 'none';
+        numberGrid.style.display = 'grid';
+        renderTickets(val);
+    }
+});
+
+window.saveAdminChanges = async function() {
+    let inputTotal = parseInt(document.getElementById('adminTotalNumbers').value);
+    totalTickets = Math.min(Math.max(inputTotal, 100), 1000);
+    ticketPrice = parseInt(document.getElementById('adminPrice').value);
+    try {
+        await setDoc(doc(firestore, 'settings', 'config'), {
+            total_tickets: totalTickets,
+            ticket_price: ticketPrice
+        }, { merge: true });
+    } catch(e) {
+        alert('❌ Error: ' + e.message);
+        return;
+    }
+    renderTickets();
+    updateCart();
+    adminPanel.style.display = 'none';
+    numberGrid.style.display = 'grid';
+    searchBar.value = '';
+};
+
+function renderAdminTickets(snap) {
+    const list = document.getElementById('adminTicketsList');
+    if (!list) return;
+    list.innerHTML = '';
+    const docs = [];
+    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
+    docs.sort((a,b) => parseInt(a.id) - parseInt(b.id));
+    docs.forEach(t => {
+        const row = document.createElement('div');
+        row.className = 'admin-ticket-row';
+        const statusLabel = t.status === 'taken' ? '✅ ተረጋግጧል' : '⏳ በሂደት';
+        const time = t.created_at || '';
+        row.innerHTML = `
+            <div class="row-top"><span>#${t.id}</span><span>${statusLabel}</span></div>
+            <div class="row-sub">👤 ${t.name || t.username || '-'} | 📞 ${t.phone || '-'}</div>
+            <div class="row-sub">🕐 ${time}</div>
+        `;
+        list.appendChild(row);
+    });
+}
+
+quickPickBtn.addEventListener('click', () => {
+    const freeNums = [];
+    for (let i = 1; i <= totalTickets; i++) {
+        if (!ticketsData[i] && !mySelections.includes(i)) freeNums.push(i);
+    }
+    if (freeNums.length === 0) return;
+    const remaining = MAX_SELECT - mySelections.length;
+    if (remaining <= 0) { showModal(); return; }
+    const pickCount = Math.min(5, remaining, freeNums.length);
+    for (let k = 0; k < pickCount; k++) {
+        const idx = Math.floor(Math.random() * freeNums.length);
+        mySelections.push(freeNums[idx]);
+        freeNums.splice(idx, 1);
+    }
+    updateCart();
+    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+});
+
+extraBtn.addEventListener('click', () => {
+    if (mySelections.length === 0) return;
+    const total = mySelections.length * ticketPrice;
+    const payload = JSON.stringify({
+        action: 'buy_tickets',
+        numbers: mySelections.slice().sort((a,b)=>a-b),
+        total: total,
+        user_id: userId,
+        username: tgUser?.username || userName
+    });
+    if (tg && tg.sendData) {
+        tg.sendData(payload);
+        tg.close();
+    } else {
+        alert('Telegram ውስጥ ይክፈቱ።');
+    }
+});
+
+</script>
 </body>
 </html>
