@@ -6,27 +6,35 @@
     <title>የእጣ መቁረጫ ሚኒ አፕ</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* 🎨 የቀለም ተለዋዋጮች */
         :root {
             --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
-            --glass-bg: rgba(255, 255, 255, 0.7);
-            --glass-border: rgba(255, 255, 255, 0.5);
-            --glass-blur: blur(20px);
-            --available-color: #f0f4f8;
-            --sold-color: rgba(254, 226, 226, 0.8);
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-blur: blur(25px);
+            --available-color: rgba(255, 255, 255, 0.65);
+            --sold-color: rgba(254, 226, 226, 0.7);
             --selected-blue: #3b82f6;
             --text-dark: #2d3748;
             --text-sold: #f43f5e;
+            --blob-1: rgba(147, 197, 253, 0.4);
+            --blob-2: rgba(247, 178, 191, 0.35);
         }
 
         [data-theme="dark"] {
             --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            --glass-bg: rgba(30, 41, 59, 0.8);
-            --glass-border: rgba(255, 255, 255, 0.1);
-            --available-color: rgba(51, 65, 85, 0.5);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --available-color: rgba(51, 65, 85, 0.6);
+            --sold-color: rgba(127, 29, 29, 0.4);
+            --selected-blue: #2563eb;
             --text-dark: #f8fafc;
+            --text-sold: #ef4444;
+            --blob-1: rgba(37, 99, 235, 0.15);
+            --blob-2: rgba(225, 29, 72, 0.1);
         }
 
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        *, *::before, *::after { box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -34,77 +42,80 @@
             display: flex; flex-direction: column; align-items: center; overflow-x: hidden; color: var(--text-dark);
         }
 
-        /* ሰርች ባር ማሸጊያ - ስፋቱ ተስተካክሏል */
-        .search-fixed-wrapper {
-            position: fixed; top: 0; width: 100%; padding: 12px 16px; z-index: 110;
-            background: transparent;
-        }
+        /* Blobs */
+        body::before, body::after { content: ""; position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; }
+        body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
+        body::after { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
 
-        .top-bar { display: flex; align-items: center; gap: 8px; width: 100%; }
-        
+        /* ሰርች ባር */
+        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 450px; padding: 16px; z-index: 110; pointer-events: none; }
+        .top-bar { display: flex; width: 100%; gap: 10px; pointer-events: auto; }
         .search-container { flex: 1; position: relative; }
         .search-bar {
-            width: 100%; padding: 12px 16px 12px 40px; border: 1px solid var(--glass-border);
+            width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--glass-border);
             background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-            border-radius: 18px; font-size: 15px; color: var(--text-dark); outline: none;
+            border-radius: 20px; font-size: 15px; color: var(--text-dark); outline: none; box-shadow: 0 4px 16px rgba(0,0,0,0.02);
         }
         .search-container::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
 
         .theme-toggle-btn {
-            width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--glass-border);
-            background: var(--glass-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px;
+            width: 44px; height: 44px; border-radius: 20px; border: 1px solid var(--glass-border);
+            background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            color: var(--text-dark); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px;
         }
 
-        /* ካርት ፓነል - በፎቶው መሰረት የተስተካከለ */
-        .cart-fixed-wrapper {
-            position: fixed; top: 68px; width: 100%; padding: 0 16px; z-index: 100; pointer-events: none;
-        }
-
+        /* ካርት ፓነል */
+        .cart-fixed-wrapper { position: fixed; top: 76px; width: 100%; max-width: 450px; padding: 0 16px; z-index: 100; pointer-events: none; }
         .cart-panel {
             display: none; width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border);
             backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
-            border-radius: 20px; padding: 8px 12px; align-items: center; justify-content: space-between;
-            pointer-events: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-radius: 20px; padding: 10px 14px; align-items: center; justify-content: space-between; gap: 10px;
+            pointer-events: auto; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
         }
         
-        .chips-wrapper { flex: 1; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right, transparent 0%, black 10%, black 90%, transparent 100%); }
-        .selected-chips { display: inline-flex; gap: 5px; padding: 5px; }
+        .chips-wrapper { flex: 1; overflow: hidden; position: relative; white-space: nowrap; mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%); }
+        .selected-chips { display: inline-flex; gap: 6px; padding: 2px 15px; position: relative; }
+
+        .animate-marquee { animation: bounceMarquee 7s ease-in-out infinite alternate; }
+        @keyframes bounceMarquee { 0% { transform: translateX(0px); } 100% { transform: translateX(var(--scroll-dist, 0px)); } }
 
         .chip {
-            width: 30px; height: 30px; background: var(--selected-blue); color: #fff;
-            border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-            font-size: 12px; font-weight: bold; flex-shrink: 0; box-shadow: 0 2px 5px rgba(59, 130, 246, 0.3);
+            width: 32px; height: 32px; background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold; animation: rainbowGlow 8s ease infinite; flex-shrink: 0; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
         }
 
-        .price-tag { font-size: 13px; font-weight: 800; color: var(--text-dark); margin: 0 10px; white-space: nowrap; }
+        .price-tag { font-size: 13px; font-weight: 800; color: var(--text-dark); white-space: nowrap; }
 
         .extra-btn {
-            background: #ffc107; color: #fff; border: none; padding: 10px 16px;
-            border-radius: 14px; font-size: 13px; font-weight: bold; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(255, 193, 7, 0.3); transition: transform 0.1s;
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: white; border: none; padding: 10px 20px;
+            border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); animation: rainbowGlow 8s ease infinite;
         }
-        .extra-btn:active { transform: scale(0.95); }
 
-        /* የቁጥሮች ግሪድ */
-        .scrollable-content { width: 100%; padding: 78px 16px 24px 16px; transition: padding-top 0.3s ease; }
-        .scrollable-content.shifted { padding-top: 138px; }
+        @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+        /* ኮንቴንት */
+        .scrollable-content { width: 100%; max-width: 450px; padding: 84px 16px 24px 16px; transition: padding-top 0.3s ease; }
+        .scrollable-content.shifted { padding-top: 154px; }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; width: 100%; }
 
         .number-box {
-            aspect-ratio: 1; border-radius: 12px; display: flex; align-items: center; justify-content: center;
-            font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; user-select: none;
+            aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;
             background: var(--available-color); border: 1px solid var(--glass-border); color: var(--text-dark);
         }
-        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; opacity: 0.6; }
-        .number-box.selected { background: var(--selected-blue) !important; color: white !important; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; }
+        .number-box.selected { background: var(--selected-blue) !important; color: white !important; transform: scale(0.95); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
 
         /* አድሚን */
-        .admin-panel { display: none; background: rgba(30, 41, 59, 0.98); padding: 20px; border-radius: 20px; color: white; width: 100%; margin-top: 20px; }
-        .admin-panel input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 10px; border: none; }
+        .admin-panel { display: none; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 24px; color: white; width: 100%; margin-top: 20px; }
+        .admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: white; outline: none; }
 
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-box { background: #fff; padding: 20px; border-radius: 20px; width: 85%; text-align: center; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: var(--glass-bg); padding: 24px; border-radius: 24px; width: 90%; max-width: 320px; text-align: center; }
+        .modal-btn { background: var(--selected-blue); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -132,37 +143,44 @@
         <div class="number-grid" id="numberGrid"></div>
         
         <div class="admin-panel" id="adminPanel">
-            <h3>🔐 Admin Settings</h3>
-            <input type="number" id="adminTotalNumbers" value="100" placeholder="Total Tickets">
-            <input type="number" id="adminPrice" value="20" placeholder="Price per Ticket">
-            <button style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:10px; font-weight:bold;" onclick="saveAdminChanges()">SAVE</button>
+            <h3 style="color:#3b82f6;">🔐 አድሚን ማስተካከያ</h3>
+            <label>ጠቅላላ ብዛት:</label>
+            <input type="number" id="adminTotalNumbers" value="100">
+            <label>የአንዱ ዋጋ:</label>
+            <input type="number" id="adminPrice" value="20">
+            <button class="modal-btn" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
         </div>
     </div>
 
     <div class="modal-overlay" id="errorModal">
         <div class="modal-box">
-            <h3 style="color:#f43f5e">⚠️ ገደብ አልፏል!</h3>
+            <h3 style="color:var(--text-sold)">⚠️ ገደብ አልፏል!</h3>
             <p>ከ15 በላይ እጣ መምረጥ አይቻልም።</p>
-            <button style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:10px;" onclick="closeModal()">እሺ</button>
+            <button class="modal-btn" onclick="closeModal()">እሺ</button>
         </div>
     </div>
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
+        if(tg) tg.expand();
 
         let ticketPrice = 20; 
         let totalTickets = 100; 
         let ticketsData = {}; 
         let mySelections = [];
 
-        // ዳታቤዝ ማስጀመሪያ (ሁሉም ነፃ እንዲሆኑ)
-        for(let i = 1; i <= 1000; i++) { ticketsData[i] = 1; }
+        function initData() {
+            for(let i = 1; i <= 1000; i++) {
+                ticketsData[i] = 1; // 1 = Available
+            }
+        }
+        initData();
 
         const numberGrid = document.getElementById('numberGrid');
         const searchBar = document.getElementById('searchBar');
         const cartPanel = document.getElementById('cartPanel');
         const chipsContainer = document.getElementById('chipsContainer');
+        const chipsWrapper = document.getElementById('chipsWrapper');
         const priceTag = document.getElementById('priceTag');
         const scrollContent = document.getElementById('scrollContent');
         const adminPanel = document.getElementById('adminPanel');
@@ -210,16 +228,28 @@
             scrollContent.classList.add('shifted');
             chipsContainer.innerHTML = mySelections.sort((a,b)=>a-b).map(n => `<div class="chip">${n}</div>`).join('');
             priceTag.innerText = `${mySelections.length * ticketPrice} ETB`;
+
+            // Marquee Animation
+            setTimeout(() => {
+                if (chipsContainer.scrollWidth > chipsWrapper.clientWidth) {
+                    const diff = chipsContainer.scrollWidth - chipsWrapper.clientWidth;
+                    document.documentElement.style.setProperty('--scroll-dist', `-${diff + 30}px`);
+                    chipsContainer.classList.add('animate-marquee');
+                } else {
+                    chipsContainer.classList.remove('animate-marquee');
+                }
+            }, 50);
         }
 
-        // መረጃ ለቦቱ መላኪያ - በትክክል እንዲሰራ
+        // እጣ ቁረጥ ሲጫን ወደ ቦቱ ዳታ መላኪያ
         document.getElementById('extraBtn').onclick = () => {
             if(mySelections.length > 0) {
-                const result = {
+                // ለቦቱ የሚላክ ዳታ (Python ቦትህ እንዲቀበለው)
+                const dataToSend = {
                     action: "buy_tickets",
                     numbers: mySelections
                 };
-                tg.sendData(JSON.stringify(result));
+                tg.sendData(JSON.stringify(dataToSend));
             }
         };
 
