@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # ─── Constants ───
 PAGE_SIZE = 50          # በ1 ገፅ ላይ የሚታዩ ቁጥሮች
-MAX_TICKETS_PER_USER = 10  # አንድ ሰው መምረጥ የሚችላቸው ከፍተኛ ቁጥሮች
+MAX_TICKETS_PER_USER = 15  # አንድ ሰው መምረጥ የሚችላቸው ከፍተኛ ቁጥሮች
 
 # ─── Keep Alive ───
 flask_app = Flask('')
