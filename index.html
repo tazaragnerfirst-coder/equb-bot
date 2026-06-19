@@ -188,7 +188,7 @@
             <input type="number" id="adminTotalNumbers" value="100" min="100" max="1000">
             <label>የአንዱ እጣ ዋጋ (ብር):</label>
             <input type="number" id="adminPrice" value="20">
-            <button style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
+            <button id="adminSaveBtn" style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
 
             <h4>📋 ሁሉም ቲኬቶች (ደረሰኝ / ስም / ስልክ / ጊዜ)</h4>
             <div id="adminTicketsList"></div>
@@ -197,9 +197,9 @@
 
     <div class="modal-overlay" id="errorModal">
         <div class="modal-box">
-            <h3>⚠️ ገደብ አልፏል!</h3>
-            <p>በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
-            <button class="modal-btn" onclick="closeModal()">እሺ ገብቶኛል</button>
+            <h3 id="modalTitle">⚠️ ገደብ አልፏል!</h3>
+            <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
+            <button class="modal-btn" id="modalOkBtn" onclick="closeModal()">እሺ ገብቶኛል</button>
         </div>
     </div>
 
@@ -226,6 +226,47 @@ const tgUser = tg?.initDataUnsafe?.user;
 const userId = tgUser?.id || 0;
 const userName = tgUser?.first_name || "Guest";
 
+// ── ቋንቋ ከ URL parameter (ቦቱ ይልካል) ──
+const urlParams = new URLSearchParams(window.location.search);
+const botLang = urlParams.get('lang') || 'am';
+
+const LANG_TEXT = {
+    am: {
+        cutBtn: "እጣ ቁረጥ",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ ገደብ አልፏል!",
+        modalMsg: "በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት",
+        modalSuffix: "ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።",
+        modalOk: "እሺ ገብቶኛል",
+        openInTg: "Telegram ውስጥ ይክፈቱ።",
+        adminSaved: "✅ ተቀምጧል!",
+        adminSaveBtn: "ለውጦችን አስቀምጥ",
+    },
+    en: {
+        cutBtn: "Buy Tickets",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ Limit Reached!",
+        modalMsg: "You can select a maximum of",
+        modalSuffix: "tickets at a time. Please proceed first.",
+        modalOk: "OK, Got it",
+        openInTg: "Please open in Telegram.",
+        adminSaved: "✅ Saved!",
+        adminSaveBtn: "Save Changes",
+    },
+    or: {
+        cutBtn: "Tikeetii Bitadhu",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ Daangaa Darbeera!",
+        modalMsg: "Yookaan filachuu dandeessu",
+        modalSuffix: "qofa. Duraan tikeetiiwwan jiran kutaa.",
+        modalOk: "Galatoomaa",
+        openInTg: "Telegram keessatti banuuf.",
+        adminSaved: "✅ Qabame!",
+        adminSaveBtn: "Jijjiirama Qabi",
+    }
+};
+const L = LANG_TEXT[botLang] || LANG_TEXT['am'];
+
 const MAX_SELECT = 15;
 
 let ticketPrice = 20;
@@ -246,7 +287,14 @@ const errorModal = document.getElementById('errorModal');
 const quickPickBtn = document.getElementById('quickPickBtn');
 const extraBtn = document.getElementById('extraBtn');
 
+// ── ቋንቋ UI ላይ ተኩስ ──
 document.getElementById('maxLimitText').innerText = MAX_SELECT;
+document.getElementById('modalTitle').innerText = L.modalTitle;
+document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
+document.getElementById('modalOkBtn').innerText = L.modalOk;
+extraBtn.innerText = L.cutBtn;
+quickPickBtn.innerText = L.quickPick;
+document.getElementById('adminSaveBtn').innerText = L.adminSaveBtn;
 
 function initTheme() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -384,15 +432,34 @@ searchBar.addEventListener('input', (e) => {
 
 window.saveAdminChanges = async function() {
     let inputTotal = parseInt(document.getElementById('adminTotalNumbers').value);
+    if (isNaN(inputTotal)) { alert('⚠️ ቁጥር ብቻ ፃፍ።'); return; }
     totalTickets = Math.min(Math.max(inputTotal, 100), 1000);
-    ticketPrice = parseInt(document.getElementById('adminPrice').value);
+
+    let inputPrice = parseInt(document.getElementById('adminPrice').value);
+    if (isNaN(inputPrice) || inputPrice <= 0) { alert('⚠️ ትክክለኛ ዋጋ ፃፍ።'); return; }
+    ticketPrice = inputPrice;
+
+    const btn = document.getElementById('adminSaveBtn');
+    btn.disabled = true;
+    btn.innerText = '⏳...';
+
     try {
+        // settings/config — app reads here
         await setDoc(doc(firestore, 'settings', 'config'), {
             total_tickets: totalTickets,
             ticket_price: ticketPrice
         }, { merge: true });
+        // settings/main — bot reads here
+        await setDoc(doc(firestore, 'settings', 'main'), {
+            total_tickets: totalTickets,
+            ticket_price: ticketPrice
+        }, { merge: true });
+        btn.innerText = L.adminSaved;
+        setTimeout(() => { btn.innerText = L.adminSaveBtn; btn.disabled = false; }, 2000);
     } catch(e) {
         alert('❌ Error: ' + e.message);
+        btn.innerText = L.adminSaveBtn;
+        btn.disabled = false;
         return;
     }
     renderTickets();
@@ -455,7 +522,7 @@ extraBtn.addEventListener('click', () => {
         tg.sendData(payload);
         tg.close();
     } else {
-        alert('Telegram ውስጥ ይክፈቱ።');
+        alert(L.openInTg);
     }
 });
 
