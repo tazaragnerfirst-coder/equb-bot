@@ -444,13 +444,7 @@ window.saveAdminChanges = async function() {
     btn.innerText = '⏳...';
 
     try {
-        // settings/config — app reads here
         await setDoc(doc(firestore, 'settings', 'config'), {
-            total_tickets: totalTickets,
-            ticket_price: ticketPrice
-        }, { merge: true });
-        // settings/main — bot reads here
-        await setDoc(doc(firestore, 'settings', 'main'), {
             total_tickets: totalTickets,
             ticket_price: ticketPrice
         }, { merge: true });
