@@ -1,473 +1,212 @@
 <!DOCTYPE html>
 <html lang="am">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>ዕድለኛ እጣ መቁረጫ</title>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-<style>
-body { background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); color: #1e293b; font-family: 'Inter', sans-serif; overflow-x: hidden; }
-.liquid-glass { background: rgba(255,255,255,0.45); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.6); border-radius: 24px; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.04); }
-.first-prize-card { position: relative; background-color: rgba(255,255,255,0.85); background-image: url('https://images.unsplash.com/photo-1568605117036-5fe5e7bab0b7?q=80&w=400&auto=format&fit=crop'); background-size: cover; background-position: center; background-blend-mode: overlay; overflow: hidden; }
-.sketch-gauge-container { background: rgba(255,255,255,0.75); border: 1.5px solid rgba(255,255,255,0.9); border-radius: 20px; width: 110px; height: 115px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); z-index: 2; }
-.smooth-gauge-box { position: relative; width: 90px; height: 52px; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
-.smooth-svg { width: 90px; height: 90px; position: absolute; top: 4px; }
-.gauge-bg-track { stroke: rgba(148,163,184,0.15); stroke-width: 9; stroke-linecap: round; }
-#gauge-progress { stroke: url(#gauge-gradient); stroke-width: 9; stroke-linecap: round; stroke-dasharray: 157.08; stroke-dashoffset: 157.08; transition: stroke-dashoffset 1.5s cubic-bezier(0.22,1,0.36,1); }
-.promo-slider-container { position: relative; width: 100%; height: 110px; overflow: hidden; border-radius: 24px; }
-.promo-card-item { position: absolute; top:0; left:0; width:100%; height:100%; display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-radius:24px; transition: transform 0.8s cubic-bezier(0.25,1,0.5,1), opacity 0.8s ease; transform: translateX(100%); opacity: 0; }
-.promo-card-item.active { transform: translateX(0); opacity: 1; }
-.promo-card-item.exit { transform: translateX(-100%); opacity: 0; }
-.dynamic-time-block { font-size: 13px; font-weight: 900; background: rgba(255,255,255,0.85); border: 1px solid rgba(0,0,0,0.04); width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
-.ticket-premium-yellow { position: relative; background: linear-gradient(135deg,#FFD000 0%,#FFAA00 100%); border-radius: 24px; box-shadow: 0 8px 24px rgba(255,170,0,0.25); overflow: hidden; height: 110px; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; border: 1px solid rgba(255,255,255,0.4); transition: transform 0.2s ease; cursor: pointer; }
-.ticket-premium-yellow:active { transform: scale(0.98); }
-.ticket-premium-yellow::before, .ticket-premium-yellow::after { content:''; position:absolute; top:50%; transform:translateY(-50%); width:16px; height:16px; background-color:#e2e8f0; border-radius:50%; z-index:10; }
-.ticket-premium-yellow::before { left:-8px; }
-.ticket-premium-yellow::after { right:-8px; }
-
-.num-btn { aspect-ratio:1; border-radius:12px; font-size:11px; font-weight:800; display:flex; align-items:center; justify-content:center; cursor:pointer; transition: all 0.15s ease; border: 1.5px solid transparent; position:relative; user-select:none; }
-.num-btn.free { background: rgba(255,255,255,0.85); color:#475569; border-color: rgba(148,163,184,0.3); }
-.num-btn.free:active { transform: scale(0.9); }
-.num-btn.selected { background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border-color:#ef4444; transform: scale(1.08); box-shadow: 0 4px 12px rgba(239,68,68,0.4); animation: selPulse 0.3s ease; }
-.num-btn.taken { background: rgba(148,163,184,0.25); color:#64748b; border-color: rgba(148,163,184,0.3); cursor:not-allowed; }
-.num-btn.pending { background: rgba(234,179,8,0.18); color:#a16207; border-color: rgba(234,179,8,0.4); cursor:not-allowed; }
-@keyframes selPulse { 0%{transform:scale(1)} 50%{transform:scale(1.18)} 100%{transform:scale(1.08)} }
-
-.chip { display:inline-flex; align-items:center; gap:4px; background: linear-gradient(135deg,#ef4444,#dc2626); color:#fff; border-radius:20px; padding:3px 8px 3px 10px; font-size:11px; font-weight:800; animation: chipIn 0.25s cubic-bezier(0.34,1.56,0.64,1); }
-@keyframes chipIn { from{transform:scale(0) rotate(-10deg); opacity:0;} to{transform:scale(1) rotate(0); opacity:1;} }
-.chip-remove { width:14px; height:14px; background:rgba(255,255,255,0.3); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:9px; }
-
-#bottom-nav-container { position:fixed; bottom:0; left:0; right:0; z-index:40; padding-bottom: max(16px, env(safe-area-inset-bottom)); padding-left:32px; padding-right:32px; pointer-events:none; }
-#bottom-nav { display:flex; justify-content:space-around; align-items:center; background: rgba(255,255,255,0.6); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); padding:2px 6px; border-radius:9999px; box-shadow: 0 8px 32px 0 rgba(31,38,135,0.05); border:1px solid rgba(255,255,255,0.5); pointer-events:auto; width:100%; max-width:320px; margin:0 auto; height:54px; }
-.nav-btn { flex:1; color:#64748b; background:transparent; border:none; cursor:pointer; height:100%; display:flex; align-items:center; justify-content:center; }
-.nav-btn .icon-wrapper { display:flex; align-items:center; justify-content:center; width:60px; height:38px; border-radius:22px; transition: all 0.18s ease-in-out; }
-.nav-btn.active { color:#2481cc; }
-.nav-btn.active .icon-wrapper { background-color: rgba(36,129,204,0.15); transform: scale(1.05); }
-
-.skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.4) 25%, rgba(255,255,255,0.7) 50%, rgba(255,255,255,0.4) 75%); background-size:200% 100%; animation: shimmer 1.5s infinite; border-radius:10px; }
-@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
-
-.admin-input { background: rgba(255,255,255,0.85); border: 1.5px solid rgba(148,163,184,0.3); border-radius:12px; padding:10px 14px; font-size:13px; font-weight:700; width:100%; color:#1e293b; }
-.admin-input:focus { outline:none; border-color:#3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
-.admin-save-btn { background: linear-gradient(135deg,#3b82f6,#6366f1); color:#fff; border:none; border-radius:12px; padding:10px 20px; font-size:12px; font-weight:800; cursor:pointer; white-space:nowrap; }
-.admin-save-btn:active { transform: scale(0.96); }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>የእጣ መቁረጫ ሚኒ አፕ</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* 🎨 የቀለም ተለዋዋጮች (Light & Dark Mode) */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-blur: blur(25px);
+            --available-color: rgba(255, 255, 255, 0.65);
+            --sold-color: rgba(254, 226, 226, 0.7);
+            --selected-blue: #3b82f6;
+            --text-dark: #2d3748;
+            --text-sold: #f43f5e;
+            --blob-1: rgba(147, 197, 253, 0.4);
+            --blob-2: rgba(247, 178, 191, 0.35);
+        }
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --available-color: rgba(51, 65, 85, 0.6);
+            --sold-color: rgba(127, 29, 29, 0.4);
+            --selected-blue: #2563eb;
+            --text-dark: #f8fafc;
+            --text-sold: #ef4444;
+            --blob-1: rgba(37, 99, 235, 0.15);
+            --blob-2: rgba(225, 29, 72, 0.1);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center; overflow-x: hidden; color: var(--text-dark);
+        }
+        body::before, body::after { content: ""; position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; }
+        body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
+        body::after { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
+        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 390px; padding: 16px 16px 6px 16px; z-index: 110; pointer-events: none; }
+        .top-bar { display: flex; width: 100%; gap: 8px; pointer-events: auto; }
+        .search-container { flex: 1; position: relative; }
+        .search-bar { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 20px; font-size: 15px; color: var(--text-dark); outline: none; }
+        .search-container::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
+        .quick-pick-btn, .theme-toggle-btn { border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 20px; color: var(--text-dark); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .quick-pick-btn { padding: 0 14px; font-size: 13px; font-weight: 600; opacity: 0.6; }
+        .cart-fixed-wrapper { position: fixed; top: 64px; width: 100%; max-width: 390px; padding: 4px 16px 10px 16px; z-index: 100; pointer-events: none; }
+        .cart-panel { display: none; width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); border-radius: 20px; padding: 10px 14px; align-items: center; justify-content: space-between; gap: 10px; pointer-events: auto; }
+        .chips-wrapper { flex: 1; overflow: hidden; position: relative; white-space: nowrap; mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%); }
+        .selected-chips { display: inline-flex; gap: 6px; padding: 2px 15px; }
+        .chip { width: 32px; height: 32px; background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; animation: rainbowGlow 8s ease infinite; }
+        @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .extra-btn { background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: white; border: none; padding: 8px 16px; border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer; animation: rainbowGlow 8s ease infinite; }
+        .scrollable-content { width: 100%; max-width: 390px; padding: 72px 16px 24px 16px; transition: padding-top 0.2s ease; }
+        .scrollable-content.shifted { padding-top: 134px; }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+        .number-box { aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s ease; }
+        .available { background: var(--available-color); border: 1px solid var(--glass-border); }
+        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; }
+        .number-box.selected { background: var(--selected-blue) !important; color: white !important; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: var(--glass-bg); padding: 24px; border-radius: 24px; width: 90%; max-width: 320px; text-align: center; }
+        .modal-btn { background: var(--selected-blue); color: white; border: none; padding: 12px; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; }
+        .admin-panel { display: none; background: rgba(30, 41, 59, 0.95); padding: 20px; border-radius: 24px; color: white; margin-top: 20px; }
+        .admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; }
+    </style>
 </head>
-<body class="antialiased select-none">
+<body>
 
-<header class="pt-6 pb-3 px-4 bg-[#f1f5f9]/60 backdrop-blur-md z-30 flex justify-between items-center sticky top-0">
-    <div class="flex items-center gap-3">
-        <div class="w-11 h-11 rounded-full border border-white/80 bg-white/40 flex items-center justify-center text-lg shadow-sm">👤</div>
-        <div>
-            <h1 id="header-title" class="text-sm font-black text-slate-800">ዕድለኛ እጣ</h1>
-            <p id="header-user" class="text-[10px] font-medium text-blue-600 bg-blue-500/10 px-2 py-0.5 rounded-full inline-block mt-0.5">@user</p>
-        </div>
-    </div>
-    <div class="text-[11px] font-black px-3.5 py-1.5 rounded-full bg-white/60 text-slate-700 shadow-sm border border-white/80">ቁጥር ይምረጡ</div>
-</header>
-
-<main class="px-4 pb-32">
-
-<!-- HOME -->
-<div id="home-tab" class="tab-content space-y-4 pt-2">
-    <div class="first-prize-card liquid-glass p-5 flex flex-row items-center justify-between gap-3 min-h-[160px]">
-        <div class="flex flex-col justify-between flex-1 h-full py-1 z-10">
-            <div><span class="text-[9px] font-black uppercase tracking-widest bg-amber-500/80 text-white px-2.5 py-1 rounded-full inline-block shadow-sm">1ST እጣ</span></div>
-            <div class="mt-4 bg-white/50 backdrop-blur-sm p-2 rounded-xl border border-white/40">
-                <h2 id="prize1-text" class="text-base font-black tracking-tight text-slate-900 leading-tight">1ኛ ሽልማት 🏆</h2>
-                <p class="text-[10px] text-slate-700 font-bold mt-0.5">ታላቁ የዕለቱ ዋና ዕድለኛ እጣ</p>
+    <div class="search-fixed-wrapper">
+        <div class="top-bar">
+            <div class="search-container">
+                <input type="number" id="searchBar" class="search-bar" placeholder="ቁጥር ይፈልጉ...">
             </div>
-        </div>
-        <div class="sketch-gauge-container shrink-0">
-            <div class="smooth-gauge-box">
-                <svg class="smooth-svg" viewBox="0 0 120 120">
-                    <defs><linearGradient id="gauge-gradient" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#FFCB52"/><stop offset="100%" stop-color="#FF7B02"/></linearGradient></defs>
-                    <path class="gauge-bg-track" fill="none" d="M 15,65 A 45,45 0 0,1 105,65"/>
-                    <path id="gauge-progress" fill="none" d="M 15,65 A 45,45 0 0,1 105,65"/>
-                </svg>
-                <div class="absolute inset-0 flex items-center justify-center pt-3">
-                    <span id="stat-percentage-text" class="text-xs font-black text-slate-800 bg-white/70 px-1 rounded">0%</span>
-                </div>
-            </div>
-            <div class="flex items-center justify-between w-full px-1 mt-2 border-t border-slate-200/60 pt-1.5">
-                <div class="flex flex-col items-center"><span class="text-[7px] text-slate-400 font-bold uppercase">የተሸጠ</span><span id="stat-sold-count" class="text-[9px] font-black text-rose-500">0</span></div>
-                <div class="h-3 w-[1px] bg-slate-300 mx-0.5"></div>
-                <div class="flex flex-col items-center"><span class="text-[7px] text-slate-400 font-bold uppercase">የቀረ</span><span id="stat-remain-count" class="text-[9px] font-black text-emerald-600">-</span></div>
-            </div>
+            <button class="quick-pick-btn" id="quickPickBtn">Quick Pick</button>
+            <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
         </div>
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-        <div class="liquid-glass p-4 h-24 flex flex-col justify-between bg-white/60">
-            <span class="text-base">👑</span>
-            <p class="text-[10px] font-black text-slate-400 uppercase">2nd እጣ</p>
-            <h4 id="prize2-text" class="text-xs font-black text-purple-600 -mt-2">2ኛ ሽልማት</h4>
-        </div>
-        <div class="liquid-glass p-4 h-24 flex flex-col justify-between bg-white/60">
-            <span class="text-base">⏳</span>
-            <p class="text-[10px] font-black text-slate-400 uppercase">3rd እጣ</p>
-            <h4 id="prize3-text" class="text-xs font-black text-rose-500 -mt-2">3ኛ ሽልማት</h4>
+    <div class="cart-fixed-wrapper">
+        <div class="cart-panel" id="cartPanel">
+            <div class="chips-wrapper">
+                <div class="selected-chips" id="chipsContainer"></div>
+            </div>
+            <div class="price-tag" id="priceTag" style="font-size: 12px; font-weight: bold;">0 ETB</div>
+            <button class="extra-btn" id="extraBtn">እጣ ቁረጥ</button>
         </div>
     </div>
 
-    <div class="liquid-glass p-4 bg-white/70 border-white flex flex-col space-y-3 shadow-sm">
-        <div class="flex items-center justify-between">
-            <div>
-                <h4 class="text-[11px] font-black tracking-wide text-slate-700">እጣው ለመውጣት የቀረው ጊዜ</h4>
-                <p class="text-[9px] text-slate-400 mt-0.5">ታላቁ የሽልማት እጣ መዝጊያ ሰዓት</p>
-            </div>
-            <div class="flex items-center gap-1.5">
-                <div class="flex flex-col items-center"><span id="days" class="dynamic-time-block">03</span><span class="text-[7px] text-slate-400 font-bold mt-1">ቀን</span></div>
-                <span class="text-xs font-black text-slate-300 -mt-3">:</span>
-                <div class="flex flex-col items-center"><span id="hours" class="dynamic-time-block">04</span><span class="text-[7px] text-slate-400 font-bold mt-1">ሰዓት</span></div>
-                <span class="text-xs font-black text-slate-300 -mt-3">:</span>
-                <div class="flex flex-col items-center"><span id="minutes" class="dynamic-time-block">14</span><span class="text-[7px] text-slate-400 font-bold mt-1">ደቂቃ</span></div>
-            </div>
+    <div class="scrollable-content" id="scrollContent">
+        <div class="number-grid" id="numberGrid"></div>
+        <div class="admin-panel" id="adminPanel">
+            <h3>🔐 አድሚን</h3>
+            <input type="number" id="adminTotalNumbers" value="100">
+            <input type="number" id="adminPrice" value="20">
+            <button class="modal-btn" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
         </div>
     </div>
 
-    <div class="promo-slider-container shadow-inner border border-white/40">
-        <div class="promo-card-item active bg-gradient-to-r from-blue-500 to-indigo-600 text-white">
-            <div class="flex flex-col space-y-1.5">
-                <span class="text-[8px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full w-max">PROMO</span>
-                <p class="text-xs font-black">5 እጣ በአንድ ሲገዙ 1 እጣ በነጻ! 🎁</p>
-            </div>
-            <div class="text-3xl pr-2 animate-bounce">🎉</div>
-        </div>
-        <div class="promo-card-item bg-gradient-to-r from-purple-500 to-pink-600 text-white">
-            <div class="flex flex-col space-y-1.5">
-                <span class="text-[8px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full w-max">HOT</span>
-                <p class="text-xs font-black">የዕድሉ ባለቤት ይሁኑ፤ አሁኑኑ ይቁረጡ! 🔥</p>
-            </div>
-            <div class="text-3xl pr-2">⚡</div>
-        </div>
-        <div class="promo-card-item bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
-            <div class="flex flex-col space-y-1.5">
-                <span class="text-[8px] font-black uppercase tracking-widest bg-white/20 px-2 py-0.5 rounded-full w-max">NOTICE</span>
-                <p class="text-xs font-black">ፈጣን የቴሌብር እና የቻፓ ማረጋገጫ! ✅</p>
-            </div>
-            <div class="text-3xl pr-2">👑</div>
+    <div class="modal-overlay" id="errorModal">
+        <div class="modal-box">
+            <h3 style="color:var(--text-sold)">⚠️ ገደብ አልፏል!</h3>
+            <p>ከ15 በላይ እጣ መምረጥ አይቻልም።</p>
+            <button class="modal-btn" onclick="closeModal()">እሺ</button>
         </div>
     </div>
 
-    <div onclick="switchTab('tickets-tab')" class="ticket-premium-yellow">
-        <div class="flex items-center gap-4">
-            <div class="w-12 h-8 rounded-lg bg-amber-950 flex items-center justify-center text-base shadow-md font-black text-amber-300 shrink-0">🎫</div>
-            <div>
-                <h3 class="text-xs font-black tracking-wide text-amber-950 uppercase">እጣ ለመቁረጥ ይጫኑ</h3>
-                <p class="text-[10px] text-amber-900/80 font-bold mt-0.5">የሚወዱትን እድለኛ ቁጥር አሁኑኑ ይምረጡ</p>
-            </div>
-        </div>
-        <div class="h-12 border-l border-dashed border-amber-900/30 mx-2 shrink-0"></div>
-        <button class="bg-amber-950 text-amber-300 font-black text-[10px] px-4 py-2.5 rounded-full shadow-md uppercase tracking-wider shrink-0">PLAY</button>
-    </div>
-</div>
+    <script>
+        const tg = window.Telegram.WebApp;
+        if(tg) tg.expand();
 
-<!-- TICKETS -->
-<div id="tickets-tab" class="tab-content" style="display:none">
-    <div class="pt-2 space-y-3">
-        <div class="liquid-glass p-3 bg-white/60 flex items-center justify-around text-[10px] font-bold">
-            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-white border border-slate-300 inline-block"></span>ነፃ</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-500 inline-block"></span>የመረጡት</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-yellow-400 inline-block"></span>በሂደት</span>
-            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-400 inline-block"></span>የተሸጠ</span>
-        </div>
+        let ticketPrice = 20; 
+        let totalTickets = 100; 
+        let ticketsData = {}; 
+        let mySelections = [];
 
-        <div id="chips-container" class="flex flex-wrap gap-1.5 px-1" style="display:none"></div>
+        // ዳታ ማመንጫ (ለሙከራ)
+        for(let i = 1; i <= 1000; i++) { ticketsData[i] = (i % 9 === 0) ? 3 : 1; }
 
-        <div id="price-bar" class="liquid-glass p-3 bg-white/70 flex items-center justify-between" style="display:none">
-            <span class="text-[11px] font-black text-slate-600">የተመረጡ: <span id="selected-count">0</span></span>
-            <span class="text-[11px] font-black text-emerald-600">ጠቅላላ: <span id="total-price">0</span> ብር</span>
-        </div>
+        const numberGrid = document.getElementById('numberGrid');
+        const searchBar = document.getElementById('searchBar');
+        const cartPanel = document.getElementById('cartPanel');
+        const chipsContainer = document.getElementById('chipsContainer');
+        const priceTag = document.getElementById('priceTag');
+        const adminPanel = document.getElementById('adminPanel');
+        const scrollContent = document.getElementById('scrollContent');
 
-        <div id="grid-loading" class="grid grid-cols-5 gap-2">
-            <div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div>
-            <div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div><div class="skeleton h-12"></div>
-        </div>
-        <div id="numbers-grid" class="grid grid-cols-5 gap-2" style="display:none"></div>
+        function renderTickets(filter = '') {
+            numberGrid.innerHTML = '';
+            for (let i = 1; i <= totalTickets; i++) {
+                if (filter && !i.toString().includes(filter)) continue;
+                const box = document.createElement('div');
+                box.innerText = i;
+                box.className = 'number-box ' + (ticketsData[i] === 3 ? 'sold' : 'available');
+                if (mySelections.includes(i)) box.classList.add('selected');
+                box.onclick = () => { if(ticketsData[i] !== 3) toggleSelection(i); };
+                numberGrid.appendChild(box);
+            }
+        }
 
-        <div id="submit-area" style="display:none" class="sticky bottom-20 z-30">
-            <button onclick="submitTickets()" class="w-full bg-gradient-to-r from-red-500 to-rose-600 text-white font-black text-sm py-4 rounded-2xl shadow-lg active:scale-95 transition-all">🎫 እጣ ቁረጥ</button>
-        </div>
-    </div>
-</div>
+        function toggleSelection(num) {
+            const idx = mySelections.indexOf(num);
+            if (idx > -1) { mySelections.splice(idx, 1); } 
+            else {
+                if (mySelections.length >= 15) { document.getElementById('errorModal').style.display='flex'; return; }
+                mySelections.push(num);
+            }
+            updateCart();
+            renderTickets(searchBar.value);
+        }
 
-<!-- ADMIN (only visible to admin id, no password prompt) -->
-<div id="admin-tab" class="tab-content" style="display:none">
-    <div class="pt-2 space-y-3">
-        <div class="liquid-glass p-4 bg-white/70 space-y-3">
-            <h3 class="text-sm font-black text-slate-800">⚙️ ቅንብሮች</h3>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">💰 የትኬት ዋጋ (ETB)</label>
-                <div class="flex gap-2">
-                    <input id="admin-price" type="number" class="admin-input" placeholder="400">
-                    <button onclick="saveAdminSetting('ticket_price', document.getElementById('admin-price').value)" class="admin-save-btn">ቀይር</button>
-                </div>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">🔢 የትኬት ብዛት</label>
-                <div class="flex gap-2">
-                    <input id="admin-total" type="number" class="admin-input" placeholder="1000">
-                    <button onclick="saveAdminSetting('total_tickets', document.getElementById('admin-total').value)" class="admin-save-btn">ቀይር</button>
-                </div>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">🥇 1ኛ ሽልማት</label>
-                <div class="flex gap-2">
-                    <input id="admin-prize1" type="text" class="admin-input">
-                    <button onclick="saveAdminSetting('prize_1', document.getElementById('admin-prize1').value)" class="admin-save-btn">ቀይር</button>
-                </div>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">🥈 2ኛ ሽልማት</label>
-                <div class="flex gap-2">
-                    <input id="admin-prize2" type="text" class="admin-input">
-                    <button onclick="saveAdminSetting('prize_2', document.getElementById('admin-prize2').value)" class="admin-save-btn">ቀይር</button>
-                </div>
-            </div>
-            <div>
-                <label class="text-[10px] font-black text-slate-500 uppercase mb-1 block">🥉 3ኛ ሽልማት</label>
-                <div class="flex gap-2">
-                    <input id="admin-prize3" type="text" class="admin-input">
-                    <button onclick="saveAdminSetting('prize_3', document.getElementById('admin-prize3').value)" class="admin-save-btn">ቀይር</button>
-                </div>
-            </div>
-        </div>
+        function updateCart() {
+            if (mySelections.length === 0) {
+                cartPanel.style.display = 'none';
+                scrollContent.classList.remove('shifted');
+                return;
+            }
+            cartPanel.style.display = 'flex';
+            scrollContent.classList.add('shifted');
+            chipsContainer.innerHTML = mySelections.sort((a,b)=>a-b).map(n => `<div class="chip">${n}</div>`).join('');
+            priceTag.innerText = `${mySelections.length * ticketPrice} ETB`;
+        }
 
-        <div class="liquid-glass p-4 bg-white/70 space-y-2">
-            <h3 class="text-sm font-black text-slate-800">📋 ሁሉም ቲኬቶች</h3>
-            <div id="admin-tickets-list" class="space-y-2 max-h-64 overflow-y-auto text-xs"></div>
-        </div>
-    </div>
-</div>
+        document.getElementById('extraBtn').onclick = () => {
+            if(mySelections.length > 0) {
+                tg.sendData(JSON.stringify({
+                    action: "buy_tickets", // ቦቱ ጋር እንዲመሳሰል ተስተካክሏል
+                    numbers: mySelections
+                }));
+            }
+        };
 
-</main>
+        // Quick Pick ባዶ እንዲሆን ተደርጓል
+        document.getElementById('quickPickBtn').onclick = () => { };
 
-<div id="bottom-nav-container">
-    <nav id="bottom-nav">
-        <button onclick="switchTab('home-tab')" id="nav-home" class="nav-btn active"><div class="icon-wrapper"><span class="material-icons">home</span></div></button>
-        <button onclick="switchTab('tickets-tab')" id="nav-tickets" class="nav-btn"><div class="icon-wrapper"><span class="material-icons">local_activity</span></div></button>
-        <button onclick="switchTab('admin-tab')" id="nav-admin" class="nav-btn" style="display:none"><div class="icon-wrapper"><span class="material-icons">admin_panel_settings</span></div></button>
-    </nav>
-</div>
+        searchBar.oninput = (e) => {
+            const val = e.target.value;
+            if(val === 'admin123') { 
+                adminPanel.style.display = 'block';
+                numberGrid.style.display = 'none';
+            } else {
+                adminPanel.style.display = 'none';
+                numberGrid.style.display = 'grid';
+                renderTickets(val);
+            }
+        };
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+        function saveAdminChanges() {
+            totalTickets = document.getElementById('adminTotalNumbers').value;
+            ticketPrice = document.getElementById('adminPrice').value;
+            adminPanel.style.display = 'none';
+            numberGrid.style.display = 'grid';
+            searchBar.value = '';
+            renderTickets();
+        }
 
-const firebaseConfig = {
-    apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
-    authDomain: "equb-c5f5f.firebaseapp.com",
-    databaseURL: "https://equb-c5f5f-default-rtdb.firebaseio.com",
-    projectId: "equb-c5f5f",
-    storageBucket: "equb-c5f5f.firebasestorage.app",
-    messagingSenderId: "745997733561",
-    appId: "1:745997733561:web:6a37c360fdc5fa2d559568",
-    measurementId: "G-0NR450CFN9"
-};
-const app = initializeApp(firebaseConfig);
-const firestore = getFirestore(app);
+        function toggleTheme() {
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            document.getElementById('themeToggleBtn').innerText = theme === 'dark' ? '☀️' : '🌙';
+        }
 
-const tg = window.Telegram?.WebApp;
-if (tg) { tg.expand(); tg.ready(); }
+        function closeModal() { document.getElementById('errorModal').style.display='none'; }
 
-const ADMIN_IDS = [8397441795];
-const tgUser = tg?.initDataUnsafe?.user;
-const userId = tgUser?.id || 0;
-const userName = tgUser?.first_name || "Guest";
-const isAdmin = ADMIN_IDS.includes(userId);
-
-document.getElementById('header-user').textContent = tgUser?.username ? `@${tgUser.username}` : userName;
-if (isAdmin) document.getElementById('nav-admin').style.display = 'flex';
-
-let selectedNums = [];
-let ticketPrice = 400;
-let totalTickets = 1000;
-let ticketStatuses = {};
-
-onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
-    if (!snap.exists()) return;
-    const d = snap.data();
-    ticketPrice = parseInt(d.ticket_price || 400);
-    totalTickets = parseInt(d.total_tickets || 1000);
-    if (d.prize_1) document.getElementById('prize1-text').textContent = d.prize_1 + ' 🏆';
-    if (d.prize_2) document.getElementById('prize2-text').textContent = d.prize_2;
-    if (d.prize_3) document.getElementById('prize3-text').textContent = d.prize_3;
-    if (d.lottery_title) document.getElementById('header-title').textContent = d.lottery_title;
-    if (isAdmin) {
-        const pp = document.getElementById('admin-price'); if (pp) pp.value = ticketPrice;
-        const tt = document.getElementById('admin-total'); if (tt) tt.value = totalTickets;
-        const p1 = document.getElementById('admin-prize1'); if (p1 && d.prize_1) p1.value = d.prize_1;
-        const p2 = document.getElementById('admin-prize2'); if (p2 && d.prize_2) p2.value = d.prize_2;
-        const p3 = document.getElementById('admin-prize3'); if (p3 && d.prize_3) p3.value = d.prize_3;
-    }
-    renderGrid();
-    updatePriceBar();
-    updateGauge();
-});
-
-onSnapshot(collection(firestore, 'tickets'), (snap) => {
-    ticketStatuses = {};
-    snap.forEach(d => { ticketStatuses[parseInt(d.id)] = d.data().status; });
-    renderGrid();
-    updateGauge();
-    if (isAdmin) renderAdminTickets(snap);
-});
-
-function renderGrid() {
-    const grid = document.getElementById('numbers-grid');
-    const loading = document.getElementById('grid-loading');
-    if (!grid) return;
-    loading.style.display = 'none';
-    grid.style.display = 'grid';
-    grid.innerHTML = '';
-    for (let n = 1; n <= totalTickets; n++) {
-        const status = ticketStatuses[n];
-        const isSel = selectedNums.includes(n);
-        let cls = 'free';
-        if (isSel) cls = 'selected';
-        else if (status === 'taken') cls = 'taken';
-        else if (status === 'pending') cls = 'pending';
-        const btn = document.createElement('button');
-        btn.className = `num-btn ${cls}`;
-        btn.textContent = n;
-        if (cls === 'free' || cls === 'selected') btn.onclick = () => toggleNumber(n);
-        grid.appendChild(btn);
-    }
-}
-
-function toggleNumber(n) {
-    if (ticketStatuses[n] === 'taken' || ticketStatuses[n] === 'pending') return;
-    const idx = selectedNums.indexOf(n);
-    if (idx === -1) {
-        if (selectedNums.length >= 10) { tg?.showAlert?.('እስከ 10 ቁጥር ብቻ መምረጥ ይቻላል!'); return; }
-        selectedNums.push(n);
-    } else {
-        selectedNums.splice(idx, 1);
-    }
-    renderGrid();
-    updateChips();
-    updatePriceBar();
-}
-
-function updateChips() {
-    const c = document.getElementById('chips-container');
-    if (selectedNums.length === 0) { c.style.display = 'none'; return; }
-    c.style.display = 'flex';
-    c.innerHTML = '';
-    selectedNums.slice().sort((a,b)=>a-b).forEach(n => {
-        const chip = document.createElement('div');
-        chip.className = 'chip';
-        chip.innerHTML = `${n}<span class="chip-remove" onclick="removeNum(${n})">✕</span>`;
-        c.appendChild(chip);
-    });
-}
-window.removeNum = function(n) {
-    selectedNums = selectedNums.filter(x => x !== n);
-    renderGrid(); updateChips(); updatePriceBar();
-};
-
-function updatePriceBar() {
-    const bar = document.getElementById('price-bar');
-    const sub = document.getElementById('submit-area');
-    if (selectedNums.length > 0) {
-        bar.style.display = 'flex';
-        sub.style.display = 'block';
-        document.getElementById('selected-count').textContent = selectedNums.length;
-        document.getElementById('total-price').textContent = (selectedNums.length * ticketPrice).toLocaleString();
-    } else {
-        bar.style.display = 'none';
-        sub.style.display = 'none';
-    }
-}
-
-function updateGauge() {
-    const taken = Object.values(ticketStatuses).filter(s => s === 'taken').length;
-    const pct = totalTickets > 0 ? Math.round((taken/totalTickets)*100) : 0;
-    const pc = document.getElementById('gauge-progress');
-    if (pc) pc.style.strokeDashoffset = 157.08 - ((pct/100)*157.08);
-    const t = document.getElementById('stat-percentage-text'); if (t) t.textContent = pct + '%';
-    const s = document.getElementById('stat-sold-count'); if (s) s.textContent = taken;
-    const r = document.getElementById('stat-remain-count'); if (r) r.textContent = totalTickets - taken;
-}
-
-window.submitTickets = function() {
-    if (selectedNums.length === 0) return;
-    const total = selectedNums.length * ticketPrice;
-    const payload = JSON.stringify({
-        action: 'buy_tickets',
-        numbers: selectedNums.slice().sort((a,b)=>a-b),
-        total: total,
-        user_id: userId,
-        username: tgUser?.username || userName
-    });
-    if (tg && tg.sendData) {
-        tg.sendData(payload);
-        tg.close();
-    } else {
-        alert('Telegram ውስጥ ይክፈቱ።');
-    }
-};
-
-window.saveAdminSetting = async function(key, value) {
-    if (!isAdmin) return;
-    try {
-        await setDoc(doc(firestore, 'settings', 'config'), { [key]: value }, { merge: true });
-        tg?.showAlert ? tg.showAlert('✅ ተቀምጧል!') : alert('✅ ተቀምጧል!');
-    } catch(e) {
-        alert('❌ ' + e.message);
-    }
-};
-
-function renderAdminTickets(snap) {
-    const list = document.getElementById('admin-tickets-list');
-    if (!list) return;
-    list.innerHTML = '';
-    snap.forEach(d => {
-        const data = d.data();
-        const div = document.createElement('div');
-        div.className = 'bg-white/60 rounded-xl p-2';
-        div.innerHTML = `<div class="flex justify-between"><span class="font-black">#${d.id}</span><span class="${data.status==='taken'?'text-emerald-600':'text-yellow-600'} font-bold">${data.status}</span></div>
-        <div class="text-slate-500 mt-0.5">👤 ${data.username||''} | 📞 ${data.phone||''}</div>`;
-        list.appendChild(div);
-    });
-}
-
-window.switchTab = function(id) {
-    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).style.display = 'block';
-    const map = {'home-tab':'nav-home','tickets-tab':'nav-tickets','admin-tab':'nav-admin'};
-    document.getElementById(map[id])?.classList.add('active');
-    if (id === 'tickets-tab') updateChips();
-};
-
-function startCountdown() {
-    let dist = 3*86400000 + 4*3600000 + 14*60000;
-    setInterval(() => {
-        dist -= 1000;
-        if (dist < 0) return;
-        const d=Math.floor(dist/86400000), h=Math.floor((dist%86400000)/3600000), m=Math.floor((dist%3600000)/60000);
-        document.getElementById('days').innerText = String(d).padStart(2,'0');
-        document.getElementById('hours').innerText = String(h).padStart(2,'0');
-        document.getElementById('minutes').innerText = String(m).padStart(2,'0');
-    }, 1000);
-}
-function initCarousel() {
-    const cards = document.querySelectorAll('.promo-card-item');
-    if (!cards.length) return;
-    let idx = 0;
-    setInterval(() => {
-        cards[idx].classList.remove('active'); cards[idx].classList.add('exit');
-        idx = (idx+1) % cards.length;
-        cards[idx].classList.remove('exit'); cards[idx].classList.add('active');
-    }, 4500);
-}
-startCountdown();
-initCarousel();
-renderGrid();
-</script>
+        renderTickets();
+    </script>
 </body>
 </html>
