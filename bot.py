@@ -1203,59 +1203,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("✅ መልዕክት ተቀምጧል!")
 
 # ─────────────────────────────────────────
-# MAIN
-# ─────────────────────────────────────────
-async def post_init(application):
-    await db.init_db()
-
-def main():
-    keep_alive()
-    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
-
-    app.add_handler(CommandHandler("start", start))
-    async def admin_cmd(update, ctx):
-        if is_admin(update.effective_user.id):
-            await show_admin_panel(update, ctx)
-    app.add_handler(CommandHandler("admin", admin_cmd))
-
-    app.add_handler(CallbackQueryHandler(lang_cb, pattern="^lang_"))
-    app.add_handler(CallbackQueryHandler(home_cb, pattern="^main_menu$"))
-    app.add_handler(CallbackQueryHandler(pick_numbers_cb, pattern="^pick_numbers$"))
-    app.add_handler(CallbackQueryHandler(number_cb, pattern="^(select|deselect|taken|pending|page)_|^noop$"))
-    app.add_handler(CallbackQueryHandler(proceed_payment_cb, pattern="^proceed_payment$"))
-    app.add_handler(CallbackQueryHandler(payment_method_cb, pattern="^pay_(cbe|telebirr)$"))
-    app.add_handler(CallbackQueryHandler(confirm_send_cb, pattern="^confirm_send$"))
-    app.add_handler(CallbackQueryHandler(edit_field_cb, pattern="^edit_(name|phone)$"))
-    app.add_handler(CallbackQueryHandler(my_tickets_cb, pattern="^my_tickets$"))
-
-    app.add_handler(CallbackQueryHandler(admin_panel_cb, pattern="^admin_panel$"))
-    app.add_handler(CallbackQueryHandler(admin_pending_cb, pattern="^admin_pending$"))
-    app.add_handler(CallbackQueryHandler(admin_stats_cb, pattern="^admin_stats$"))
-    app.add_handler(CallbackQueryHandler(admin_all_tickets_cb, pattern="^admin_all_tickets$"))
-    app.add_handler(CallbackQueryHandler(admin_settings_cb, pattern="^admin_settings$"))
-    app.add_handler(CallbackQueryHandler(admin_broadcast_cb, pattern="^admin_broadcast$"))
-    app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
-    app.add_handler(CallbackQueryHandler(admin_send_list_cb, pattern="^admin_send_list$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_msg_cb, pattern="^admin_draw_msg$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_send_cb, pattern="^admin_draw_send$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_confirm_cb, pattern="^admin_draw_confirm$"))
-    app.add_handler(CallbackQueryHandler(admin_reset_confirm_cb, pattern="^admin_reset_confirm$"))
-    app.add_handler(CallbackQueryHandler(admin_reset_yes_cb, pattern="^admin_reset_yes$"))
-    app.add_handler(CallbackQueryHandler(set_field_cb, pattern="^set_(tickets|price|prize_)"))
-    app.add_handler(CallbackQueryHandler(approve_reject_cb, pattern="^(approve|reject)_"))
-
-    app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
-    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
-
-    logger.info("Bot started!")
-    app.run_polling(drop_pending_updates=True)
-
-if __name__ == "__main__":
-    main()
-
-
-# ─────────────────────────────────────────
 # WEB APP DATA HANDLER (Mini App → Bot)
 # ─────────────────────────────────────────
 async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1358,3 +1305,55 @@ async def firestore_sync_settings(total, price, prize1, prize2, prize3, title):
             await client.patch(url, json=payload, timeout=10)
     except Exception as e:
         logger.error(f"Firestore sync settings error: {e}")
+
+# ─────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────
+async def post_init(application):
+    await db.init_db()
+
+def main():
+    keep_alive()
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+
+    app.add_handler(CommandHandler("start", start))
+    async def admin_cmd(update, ctx):
+        if is_admin(update.effective_user.id):
+            await show_admin_panel(update, ctx)
+    app.add_handler(CommandHandler("admin", admin_cmd))
+
+    app.add_handler(CallbackQueryHandler(lang_cb, pattern="^lang_"))
+    app.add_handler(CallbackQueryHandler(home_cb, pattern="^main_menu$"))
+    app.add_handler(CallbackQueryHandler(pick_numbers_cb, pattern="^pick_numbers$"))
+    app.add_handler(CallbackQueryHandler(number_cb, pattern="^(select|deselect|taken|pending|page)_|^noop$"))
+    app.add_handler(CallbackQueryHandler(proceed_payment_cb, pattern="^proceed_payment$"))
+    app.add_handler(CallbackQueryHandler(payment_method_cb, pattern="^pay_(cbe|telebirr)$"))
+    app.add_handler(CallbackQueryHandler(confirm_send_cb, pattern="^confirm_send$"))
+    app.add_handler(CallbackQueryHandler(edit_field_cb, pattern="^edit_(name|phone)$"))
+    app.add_handler(CallbackQueryHandler(my_tickets_cb, pattern="^my_tickets$"))
+
+    app.add_handler(CallbackQueryHandler(admin_panel_cb, pattern="^admin_panel$"))
+    app.add_handler(CallbackQueryHandler(admin_pending_cb, pattern="^admin_pending$"))
+    app.add_handler(CallbackQueryHandler(admin_stats_cb, pattern="^admin_stats$"))
+    app.add_handler(CallbackQueryHandler(admin_all_tickets_cb, pattern="^admin_all_tickets$"))
+    app.add_handler(CallbackQueryHandler(admin_settings_cb, pattern="^admin_settings$"))
+    app.add_handler(CallbackQueryHandler(admin_broadcast_cb, pattern="^admin_broadcast$"))
+    app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
+    app.add_handler(CallbackQueryHandler(admin_send_list_cb, pattern="^admin_send_list$"))
+    app.add_handler(CallbackQueryHandler(admin_draw_msg_cb, pattern="^admin_draw_msg$"))
+    app.add_handler(CallbackQueryHandler(admin_draw_send_cb, pattern="^admin_draw_send$"))
+    app.add_handler(CallbackQueryHandler(admin_draw_confirm_cb, pattern="^admin_draw_confirm$"))
+    app.add_handler(CallbackQueryHandler(admin_reset_confirm_cb, pattern="^admin_reset_confirm$"))
+    app.add_handler(CallbackQueryHandler(admin_reset_yes_cb, pattern="^admin_reset_yes$"))
+    app.add_handler(CallbackQueryHandler(set_field_cb, pattern="^set_(tickets|price|prize_)"))
+    app.add_handler(CallbackQueryHandler(approve_reject_cb, pattern="^(approve|reject)_"))
+
+    app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
+    app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
+
+    logger.info("Bot started!")
+    app.run_polling(drop_pending_updates=True)
+
+if __name__ == "__main__":
+    main()
