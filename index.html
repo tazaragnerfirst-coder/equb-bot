@@ -9,73 +9,85 @@
         :root {
             --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
             --glass-bg: rgba(255, 255, 255, 0.6); --glass-border: rgba(255, 255, 255, 0.45); --glass-blur: blur(25px);
-            --available-color: rgba(255, 255, 255, 0.75); --sold-color: rgba(254, 226, 226, 0.85);
-            --selected-blue: #3b82f6; --text-dark: #2d3748; --text-sold: #f43f5e;
+            --available: rgba(255, 255, 255, 0.75); --sold: rgba(254, 226, 226, 0.85);
+            --selected: #3b82f6; --text: #2d3748; --text-sold: #f43f5e;
             --blob-1: rgba(147, 197, 253, 0.4); --blob-2: rgba(247, 178, 191, 0.35);
         }
-        [data-theme="dark"] { --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); --glass-bg: rgba(30, 41, 59, 0.75); --glass-border: rgba(255, 255, 255, 0.08); --text-dark: #f8fafc; }
+        [data-theme="dark"] { --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); --glass-bg: rgba(30, 41, 59, 0.75); --glass-border: rgba(255, 255, 255, 0.08); --text: #f8fafc; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; color: var(--text-dark); }
+        body { font-family: -apple-system, sans-serif; background: var(--bg-gradient); min-height: 100vh; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; overflow-x: hidden; color: var(--text); }
         body::before, body::after { content: ""; position: absolute; border-radius: 50%; filter: blur(80px); z-index: -1; }
         body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
         body::after { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
 
-        /* ሰርች ባር */
         .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 450px; padding: 16px; z-index: 110; }
-        .top-bar { display: flex; align-items: center; gap: 10px; width: 100%; }
+        .top-bar { display: flex; align-items: center; gap: 10px; }
         .search-container { flex: 1; position: relative; }
-        .search-bar { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 20px; font-size: 15px; color: var(--text-dark); outline: none; transition: all 0.3s; }
-        .search-bar::placeholder { transition: opacity 0.4s ease; }
+        .search-bar { width: 100%; padding: 12px 16px 12px 42px; border: 1px solid var(--glass-border); background: var(--glass-bg); backdrop-filter: var(--glass-blur); border-radius: 20px; font-size: 15px; color: var(--text); outline: none; transition: all 0.3s; }
+        .search-bar::placeholder { transition: opacity 0.4s; }
         .search-bar.fade-out::placeholder { opacity: 0; }
         .search-container::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
-        .theme-toggle-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; backdrop-filter: var(--glass-blur); }
+        .theme-btn { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--glass-border); background: var(--glass-bg); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 
-        /* ካርት ፓነልና ማርኪው */
         .cart-fixed-wrapper { position: fixed; top: 76px; width: 100%; max-width: 450px; padding: 0 16px; z-index: 100; pointer-events: none; }
         .cart-panel { display: none; width: 100%; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur); border-radius: 22px; padding: 8px 12px; align-items: center; justify-content: space-between; gap: 8px; pointer-events: auto; box-shadow: 0 8px 30px rgba(0,0,0,0.1); }
         .chips-wrapper { flex: 1; overflow: hidden; white-space: nowrap; mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%); }
         .selected-chips { display: inline-flex; gap: 6px; padding: 5px 15px; }
         .animate-marquee { animation: bounceMarquee 7s ease-in-out infinite alternate; }
         @keyframes bounceMarquee { 0% { transform: translateX(0px); } 100% { transform: translateX(var(--scroll-dist, 0px)); } }
-        .chip { width: 32px; height: 32px; background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; animation: rainbowGlow 8s ease infinite; flex-shrink: 0; box-shadow: 0 3px 10px rgba(0,0,0,0.15); }
+        .chip { width: 32px; height: 32px; background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: #fff; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; animation: rainbowGlow 8s ease infinite; flex-shrink: 0; }
         .extra-btn { background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50); background-size: 400% 400%; color: white; border: none; padding: 10px 18px; border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer; animation: rainbowGlow 8s ease infinite; }
         @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-        /* ግሪድ */
-        .scrollable-content { width: 100%; max-width: 450px; padding: 84px 16px 24px 16px; transition: padding-top 0.3s ease; }
-        .scrollable-content.shifted { padding-top: 154px; }
-        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
-        .number-box { aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; background: var(--available-color); border: 1px solid var(--glass-border); color: var(--text-dark); }
-        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; }
-        .number-box.selected { background: var(--selected-blue) !important; color: white !important; transform: scale(0.92); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
+        .scroll-content { width: 100%; max-width: 450px; padding: 84px 16px 24px 16px; transition: padding-top 0.3s ease; }
+        .scroll-content.shifted { padding-top: 154px; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+        .box { aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.2s; background: var(--available); border: 1px solid var(--glass-border); }
+        .sold { background: var(--sold); color: var(--text-sold); cursor: not-allowed; }
+        .selected { background: var(--selected) !important; color: white !important; transform: scale(0.92); box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4); }
 
-        /* አድሚን ፓነል */
-        .admin-panel { display: none; background: rgba(30, 41, 59, 0.98); padding: 25px; border-radius: 24px; color: white; width: 100%; margin-top: 20px; }
-        .admin-panel input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; background: rgba(255,255,255,0.1); color: white; }
+        .admin-view { display: none; background: var(--glass-bg); padding: 25px; border-radius: 24px; margin-top: 20px; width: 100%; border: 1px solid var(--glass-border); backdrop-filter: blur(30px); }
+        .history-item { padding: 10px; border-bottom: 1px solid rgba(0,0,0,0.05); font-size: 13px; }
+        .admin-input { width: 100%; padding: 12px; margin: 8px 0; border-radius: 12px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.1); color: var(--text); }
     </style>
 </head>
 <body>
-    <div class="search-fixed-wrapper"><div class="top-bar"><div class="search-container"><input type="text" id="searchBar" class="search-bar" placeholder="ቁጥር ይፈልጉ..."></div><button class="theme-toggle-btn" onclick="toggleTheme()">🌙</button></div></div>
-    <div class="cart-fixed-wrapper"><div class="cart-panel" id="cartPanel"><div class="chips-wrapper" id="chipsWrapper"><div class="selected-chips" id="chipsContainer"></div></div><div id="priceTag" style="font-weight:bold; font-size:12px;">0 ETB</div><button class="extra-btn" id="submitBtn">እጣ ቁረጥ</button></div></div>
-    <div class="scrollable-content" id="scrollContent"><div class="number-grid" id="numberGrid"></div><div class="admin-panel" id="adminPanel"><h3>🔐 Admin Settings</h3><label>ጠቅላላ ብዛት:</label><input type="number" id="adminTotal" value="100"><label>ዋጋ:</label><input type="number" id="adminPrice" value="20"><button class="extra-btn" style="width:100%" onclick="saveAdmin()">ለውጦችን አስቀምጥ</button></div></div>
+    <div class="search-fixed-wrapper"><div class="top-bar"><div class="search-container"><input type="text" id="searchBar" class="search-bar" placeholder="ቁጥር ይፈልጉ..."></div><button class="theme-btn" onclick="toggleTheme()">🌙</button></div></div>
+    <div class="cart-fixed-wrapper"><div class="cart-panel" id="cartPanel"><div class="chips-wrapper"><div class="selected-chips" id="chipsContainer"></div></div><div id="priceTag" style="font-weight:bold; font-size:12px; margin: 0 5px;">0 ETB</div><button class="extra-btn" id="submitBtn">እጣ ቁረጥ</button></div></div>
+    
+    <div class="scroll-content" id="scrollContent">
+        <div id="numberGrid" class="grid"></div>
+        <div id="adminPanel" class="admin-view">
+            <h3 style="color:#3b82f6; margin-top:0;">🔐 Admin Panel</h3>
+            <label>ጠቅላላ ብዛት:</label><input type="number" id="admTotal" class="admin-input" value="100">
+            <label>ዋጋ:</label><input type="number" id="admPrice" class="admin-input" value="20">
+            <div id="soldHistory" style="margin-top:15px; max-height:200px; overflow-y:auto;">
+                <b>የተሸጡ ቁጥሮች ሂስትሪ:</b>
+                <div class="history-item">ቁጥር 7 👉 0912... ✅ (10:30 AM)</div>
+            </div>
+            <button class="extra-btn" style="width:100%; margin-top:15px;" onclick="saveAdmin()">አስቀምጥ</button>
+        </div>
+    </div>
 
     <script>
         const tg = window.Telegram.WebApp; tg.expand();
-        let ticketPrice = 20, totalTickets = 100, mySelections = [], ticketsData = {};
-        const grid = document.getElementById('numberGrid'), searchBar = document.getElementById('searchBar');
+        let ticketPrice = 20, totalTickets = 100, mySelections = [];
+        const grid = document.getElementById('numberGrid'), sBar = document.getElementById('searchBar');
 
-        // Placeholder Animation
         const hints = ["ቁጥር 5 ይፈልጋሉ?", "admin123 ብለው ይፃፉ", "እድለኛ ቁጥሮን ይምረጡ"];
-        let hIdx = 0; setInterval(() => { searchBar.classList.add('fade-out'); setTimeout(() => { hIdx = (hIdx+1)%hints.length; searchBar.placeholder = hints[hIdx]; searchBar.classList.remove('fade-out'); }, 400); }, 3000);
+        let hIdx = 0; setInterval(() => { sBar.classList.add('fade-out'); setTimeout(() => { hIdx = (hIdx+1)%hints.length; sBar.placeholder = hints[hIdx]; sBar.classList.remove('fade-out'); }, 400); }, 3000);
 
         function render(filter = '') {
             grid.innerHTML = '';
             for(let i=1; i<=totalTickets; i++) {
                 if(filter && !i.toString().includes(filter)) continue;
                 const box = document.createElement('div'); box.innerText = i;
-                box.className = 'number-box ' + (ticketsData[i] === 3 ? 'sold' : 'available');
+                box.className = 'box available';
                 if(mySelections.includes(i)) box.classList.add('selected');
-                box.onclick = () => { if(ticketsData[i]!==3) toggle(i); };
+                box.onclick = () => { 
+                    if(tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+                    toggle(i);
+                };
                 grid.appendChild(box);
             }
         }
@@ -83,28 +95,41 @@
             const idx = mySelections.indexOf(n);
             if(idx > -1) mySelections.splice(idx, 1);
             else if(mySelections.length < 15) mySelections.push(n);
-            updateCart(); render(searchBar.value);
+            updateCart(); render(sBar.value);
         }
         function updateCart() {
             const panel = document.getElementById('cartPanel'), cont = document.getElementById('chipsContainer');
-            if(mySelections.length === 0) { panel.style.display = 'none'; return; }
-            panel.style.display = 'flex';
+            if(mySelections.length === 0) { panel.style.display = 'none'; document.getElementById('scrollContent').classList.remove('shifted'); return; }
+            panel.style.display = 'flex'; document.getElementById('scrollContent').classList.add('shifted');
             cont.innerHTML = mySelections.sort((a,b)=>a-b).map(n => `<div class="chip">${n}</div>`).join('');
             document.getElementById('priceTag').innerText = `${mySelections.length * ticketPrice} ETB`;
-            const wrap = document.getElementById('chipsWrapper');
-            if(cont.scrollWidth > wrap.clientWidth) { document.documentElement.style.setProperty('--scroll-dist', `-${cont.scrollWidth - wrap.clientWidth + 30}px`); cont.classList.add('animate-marquee'); }
-            else cont.classList.remove('animate-marquee');
+            const wrap = cont.parentElement;
+            if(cont.scrollWidth > wrap.clientWidth) { 
+                const diff = cont.scrollWidth - wrap.clientWidth;
+                document.documentElement.style.setProperty('--scroll-dist', `-${diff + 30}px`);
+                cont.classList.add('animate-marquee'); 
+            } else cont.classList.remove('animate-marquee');
         }
         document.getElementById('submitBtn').onclick = () => {
-            if(mySelections.length > 0) { tg.sendData(JSON.stringify({action: "buy_tickets", numbers: mySelections})); setTimeout(() => tg.close(), 500); }
+            if(mySelections.length > 0) {
+                tg.sendData(JSON.stringify({action: "buy_tickets", numbers: mySelections}));
+                setTimeout(() => tg.close(), 600);
+            }
         };
-        searchBar.oninput = (e) => {
+        sBar.oninput = (e) => {
             const v = e.target.value;
             if(v === 'admin123') { document.getElementById('adminPanel').style.display = 'block'; grid.style.display = 'none'; }
             else { document.getElementById('adminPanel').style.display = 'none'; grid.style.display = 'grid'; render(v); }
         };
-        function saveAdmin() { totalTickets = document.getElementById('adminTotal').value; ticketPrice = document.getElementById('adminPrice').value; searchBar.value = ''; render(); }
-        function toggleTheme() { const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', t); }
+        function saveAdmin() { 
+            totalTickets = document.getElementById('admTotal').value; 
+            ticketPrice = document.getElementById('admPrice').value; 
+            sBar.value = ''; render(); 
+        }
+        function toggleTheme() { 
+            const t = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; 
+            document.documentElement.setAttribute('data-theme', t); 
+        }
         render();
     </script>
 </body>
