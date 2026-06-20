@@ -138,23 +138,6 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.1s ease;
         }
         .modal-btn:active { transform: scale(0.97); }
-        .admin-panel {
-            display: none; width: 100%; background: rgba(30, 41, 59, 0.95);
-            backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1);
-            color: white; padding: 20px; border-radius: 24px; margin-top: 20px;
-        }
-        .admin-panel label { font-size: 13px; opacity: 0.85; }
-        .admin-panel input {
-            width: 100%; padding: 12px; margin: 6px 0 16px 0; border-radius: 12px;
-            border: none; background: rgba(255,255,255,0.15); color: white; font-size: 15px; outline: none;
-        }
-        .admin-panel h4 {
-            margin: 18px 0 8px 0; font-size: 14px; color: #93c5fd;
-            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 14px;
-        }
-        .admin-ticket-row { background: rgba(255,255,255,0.08); border-radius: 12px; padding: 8px 10px; margin-bottom: 6px; font-size: 12px; }
-        .admin-ticket-row .row-top { display:flex; justify-content:space-between; font-weight:700; }
-        .admin-ticket-row .row-sub { opacity:0.7; margin-top:2px; font-size:11px; }
     </style>
 </head>
 <body>
@@ -181,31 +164,19 @@
 
     <div class="scrollable-content" id="scrollContent">
         <div class="number-grid" id="numberGrid"></div>
-
-        <div class="admin-panel" id="adminPanel">
-            <h3 style="margin-top:0; color:#3b82f6;">🔐 የአድሚን ማስተካከያ</h3>
-            <label>የእጣዎች ጠቅላላ ብዛት (100 - 1000):</label>
-            <input type="number" id="adminTotalNumbers" value="100" min="100" max="1000">
-            <label>የአንዱ እጣ ዋጋ (ብር):</label>
-            <input type="number" id="adminPrice" value="20">
-            <button id="adminSaveBtn" style="width:100%; padding:12px; background:#3b82f6; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer;" onclick="saveAdminChanges()">ለውጦችን አስቀምጥ</button>
-
-            <h4>📋 ሁሉም ቲኬቶች (ደረሰኝ / ስም / ስልክ / ጊዜ)</h4>
-            <div id="adminTicketsList"></div>
-        </div>
     </div>
 
     <div class="modal-overlay" id="errorModal">
         <div class="modal-box">
-            <h3 id="modalTitle">⚠️ ገደብ አልፏል!</h3>
-            <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
-            <button class="modal-btn" id="modalOkBtn" onclick="closeModal()">እሺ ገብቶኛል</button>
+            <h3>⚠️ ገደብ አልፏል!</h3>
+            <p>በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
+            <button class="modal-btn" onclick="closeModal()">እሺ ገብቶኛል</button>
         </div>
     </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
@@ -226,47 +197,6 @@ const tgUser = tg?.initDataUnsafe?.user;
 const userId = tgUser?.id || 0;
 const userName = tgUser?.first_name || "Guest";
 
-// ── ቋንቋ ከ URL parameter (ቦቱ ይልካል) ──
-const urlParams = new URLSearchParams(window.location.search);
-const botLang = urlParams.get('lang') || 'am';
-
-const LANG_TEXT = {
-    am: {
-        cutBtn: "እጣ ቁረጥ",
-        quickPick: "Quick Pick",
-        modalTitle: "⚠️ ገደብ አልፏል!",
-        modalMsg: "በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት",
-        modalSuffix: "ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።",
-        modalOk: "እሺ ገብቶኛል",
-        openInTg: "Telegram ውስጥ ይክፈቱ።",
-        adminSaved: "✅ ተቀምጧል!",
-        adminSaveBtn: "ለውጦችን አስቀምጥ",
-    },
-    en: {
-        cutBtn: "Buy Tickets",
-        quickPick: "Quick Pick",
-        modalTitle: "⚠️ Limit Reached!",
-        modalMsg: "You can select a maximum of",
-        modalSuffix: "tickets at a time. Please proceed first.",
-        modalOk: "OK, Got it",
-        openInTg: "Please open in Telegram.",
-        adminSaved: "✅ Saved!",
-        adminSaveBtn: "Save Changes",
-    },
-    or: {
-        cutBtn: "Tikeetii Bitadhu",
-        quickPick: "Quick Pick",
-        modalTitle: "⚠️ Daangaa Darbeera!",
-        modalMsg: "Yookaan filachuu dandeessu",
-        modalSuffix: "qofa. Duraan tikeetiiwwan jiran kutaa.",
-        modalOk: "Galatoomaa",
-        openInTg: "Telegram keessatti banuuf.",
-        adminSaved: "✅ Qabame!",
-        adminSaveBtn: "Jijjiirama Qabi",
-    }
-};
-const L = LANG_TEXT[botLang] || LANG_TEXT['am'];
-
 const MAX_SELECT = 15;
 
 let ticketPrice = 20;
@@ -280,21 +210,13 @@ const cartPanel = document.getElementById('cartPanel');
 const chipsContainer = document.getElementById('chipsContainer');
 const chipsWrapper = document.getElementById('chipsWrapper');
 const priceTag = document.getElementById('priceTag');
-const adminPanel = document.getElementById('adminPanel');
 const scrollContent = document.getElementById('scrollContent');
 const themeToggleBtn = document.getElementById('themeToggleBtn');
 const errorModal = document.getElementById('errorModal');
 const quickPickBtn = document.getElementById('quickPickBtn');
 const extraBtn = document.getElementById('extraBtn');
 
-// ── ቋንቋ UI ላይ ተኩስ ──
 document.getElementById('maxLimitText').innerText = MAX_SELECT;
-document.getElementById('modalTitle').innerText = L.modalTitle;
-document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
-document.getElementById('modalOkBtn').innerText = L.modalOk;
-extraBtn.innerText = L.cutBtn;
-quickPickBtn.innerText = L.quickPick;
-document.getElementById('adminSaveBtn').innerText = L.adminSaveBtn;
 
 function initTheme() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -334,9 +256,7 @@ onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
     const d = snap.data();
     if (d.ticket_price) ticketPrice = parseInt(d.ticket_price);
     if (d.total_tickets) totalTickets = parseInt(d.total_tickets);
-    document.getElementById('adminPrice').value = ticketPrice;
-    document.getElementById('adminTotalNumbers').value = totalTickets;
-    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+    renderTickets(searchBar.value);
     updateCart();
 }, (err) => {
     console.error('Settings listener error:', err);
@@ -346,14 +266,10 @@ onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
 onSnapshot(collection(firestore, 'tickets'), (snap) => {
     ticketsData = {};
     snap.forEach(d => { ticketsData[parseInt(d.id)] = d.data().status; });
-    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
-    renderAdminTickets(snap);
+    renderTickets(searchBar.value);
 }, (err) => {
     console.error('Tickets listener error:', err);
 });
-
-// Render immediately on load with defaults, don't wait for Firestore
-renderTickets();
 
 function renderTickets(filterText = '') {
     numberGrid.innerHTML = '';
@@ -385,7 +301,7 @@ function toggleSelection(num) {
         mySelections.push(num);
     }
     updateCart();
-    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+    renderTickets(searchBar.value);
 }
 
 function showModal() { errorModal.style.display = 'flex'; }
@@ -419,82 +335,8 @@ function updateCart() {
 }
 
 searchBar.addEventListener('input', (e) => {
-    const val = e.target.value.trim();
-    if (val === 'admin123') {
-        adminPanel.style.display = 'block';
-        numberGrid.style.display = 'none';
-    } else {
-        adminPanel.style.display = 'none';
-        numberGrid.style.display = 'grid';
-        renderTickets(val);
-    }
+    renderTickets(e.target.value.trim());
 });
-
-window.saveAdminChanges = async function() {
-    let inputTotal = parseInt(document.getElementById('adminTotalNumbers').value);
-    if (isNaN(inputTotal)) { alert('⚠️ ቁጥር ብቻ ፃፍ።'); return; }
-    totalTickets = Math.min(Math.max(inputTotal, 100), 1000);
-
-    let inputPrice = parseInt(document.getElementById('adminPrice').value);
-    if (isNaN(inputPrice) || inputPrice <= 0) { alert('⚠️ ትክክለኛ ዋጋ ፃፍ።'); return; }
-    ticketPrice = inputPrice;
-
-    const btn = document.getElementById('adminSaveBtn');
-    btn.disabled = true;
-    btn.innerText = '⏳...';
-
-    try {
-        await setDoc(doc(firestore, 'settings', 'config'), {
-            total_tickets: totalTickets,
-            ticket_price: ticketPrice
-        }, { merge: true });
-    } catch(e) {
-        alert('❌ Error: ' + e.message);
-        btn.innerText = L.adminSaveBtn;
-        btn.disabled = false;
-        return;
-    }
-
-    // ── ቦቱን SQLite ማሳወቅ ──
-    if (tg && tg.sendData) {
-        const payload = JSON.stringify({
-            action: 'update_settings',
-            total_tickets: totalTickets,
-            ticket_price: ticketPrice
-        });
-        tg.sendData(payload);
-        tg.close();
-    } else {
-        btn.innerText = L.adminSaved;
-        setTimeout(() => { btn.innerText = L.adminSaveBtn; btn.disabled = false; }, 2000);
-        renderTickets();
-        updateCart();
-        adminPanel.style.display = 'none';
-        numberGrid.style.display = 'grid';
-        searchBar.value = '';
-    }
-};
-
-function renderAdminTickets(snap) {
-    const list = document.getElementById('adminTicketsList');
-    if (!list) return;
-    list.innerHTML = '';
-    const docs = [];
-    snap.forEach(d => docs.push({ id: d.id, ...d.data() }));
-    docs.sort((a,b) => parseInt(a.id) - parseInt(b.id));
-    docs.forEach(t => {
-        const row = document.createElement('div');
-        row.className = 'admin-ticket-row';
-        const statusLabel = t.status === 'taken' ? '✅ ተረጋግጧል' : '⏳ በሂደት';
-        const time = t.created_at || '';
-        row.innerHTML = `
-            <div class="row-top"><span>#${t.id}</span><span>${statusLabel}</span></div>
-            <div class="row-sub">👤 ${t.name || t.username || '-'} | 📞 ${t.phone || '-'}</div>
-            <div class="row-sub">🕐 ${time}</div>
-        `;
-        list.appendChild(row);
-    });
-}
 
 quickPickBtn.addEventListener('click', () => {
     const freeNums = [];
@@ -511,7 +353,7 @@ quickPickBtn.addEventListener('click', () => {
         freeNums.splice(idx, 1);
     }
     updateCart();
-    renderTickets(searchBar.value === 'admin123' ? '' : searchBar.value);
+    renderTickets(searchBar.value);
 });
 
 extraBtn.addEventListener('click', () => {
@@ -528,10 +370,11 @@ extraBtn.addEventListener('click', () => {
         tg.sendData(payload);
         tg.close();
     } else {
-        alert(L.openInTg);
+        alert('Telegram ውስጥ ይክፈቱ።');
     }
 });
 
+renderTickets();
 </script>
 </body>
 </html>
