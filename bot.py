@@ -224,28 +224,33 @@ async def firestore_delete_ticket(number):
         logger.error(f"Firestore delete ticket error: {e}")
 
 async def firestore_sync_settings(total=None, price=None, prize1=None, prize2=None, prize3=None, title=None):
-    """Firestore settings/config ያዘምናል - bot ላይ settings ሲቀየር app ላይ ይዘምናል"""
+    """Firestore settings/config ያዘምናል - bot ላይ settings ሲቀየር app ላይ ይዘምናል
+       ሁሌም ሙሉ settings ይልካል (partial overwrite እንዳይፍጠር)"""
     url = f"{FIRESTORE_BASE}/settings/config"
-    fields = {}
-    if total is not None:
-        fields["total_tickets"] = {"integerValue": str(total)}
-    if price is not None:
-        fields["ticket_price"] = {"integerValue": str(price)}
-    if prize1 is not None:
-        fields["prize_1"] = {"stringValue": str(prize1)}
-    if prize2 is not None:
-        fields["prize_2"] = {"stringValue": str(prize2)}
-    if prize3 is not None:
-        fields["prize_3"] = {"stringValue": str(prize3)}
-    if title is not None:
-        fields["lottery_title"] = {"stringValue": str(title)}
-    if not fields:
-        return
+
+    current_total = total if total is not None else await db.get_setting("total_tickets")
+    current_price = price if price is not None else await db.get_setting("ticket_price")
+    current_prize1 = prize1 if prize1 is not None else await db.get_setting("prize_1")
+    current_prize2 = prize2 if prize2 is not None else await db.get_setting("prize_2")
+    current_prize3 = prize3 if prize3 is not None else await db.get_setting("prize_3")
+    current_title = title if title is not None else await db.get_setting("lottery_title")
+
+    fields = {
+        "total_tickets": {"integerValue": str(current_total)},
+        "ticket_price": {"integerValue": str(current_price)},
+        "prize_1": {"stringValue": str(current_prize1)},
+        "prize_2": {"stringValue": str(current_prize2)},
+        "prize_3": {"stringValue": str(current_prize3)},
+        "lottery_title": {"stringValue": str(current_title)},
+    }
     payload = {"fields": fields}
-    update_mask = "&".join([f"updateMask.fieldPaths={k}" for k in fields.keys()])
     try:
         async with httpx.AsyncClient() as client:
-            await client.patch(f"{url}?{update_mask}", json=payload, timeout=10)
+            resp = await client.patch(url, json=payload, timeout=10)
+            if resp.status_code >= 300:
+                logger.error(f"Firestore sync settings FAILED [{resp.status_code}]: {resp.text}")
+            else:
+                logger.info(f"Firestore settings synced: {fields}")
     except Exception as e:
         logger.error(f"Firestore sync settings error: {e}")
 
@@ -1420,7 +1425,9 @@ async def post_init(application):
 
 def main():
     keep_alive()
-    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+    from telegram.ext import PicklePersistence
+    persistence = PicklePersistence(filepath="data/bot_persistence.pickle")
+    app = Application.builder().token(BOT_TOKEN).persistence(persistence).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
 
