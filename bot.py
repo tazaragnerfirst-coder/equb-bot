@@ -545,7 +545,7 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ─────────────────────────────────────────
 async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.user_data.get("waiting_receipt"):
-        await any_message_home(update, ctx)
+        # Photo ወደ ቦቱ ሲላክ ግን payment flow ካልተጀመረ — ችላ በለው
         return
 
     user = update.effective_user
