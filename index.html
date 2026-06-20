@@ -448,19 +448,31 @@ window.saveAdminChanges = async function() {
             total_tickets: totalTickets,
             ticket_price: ticketPrice
         }, { merge: true });
-        btn.innerText = L.adminSaved;
-        setTimeout(() => { btn.innerText = L.adminSaveBtn; btn.disabled = false; }, 2000);
     } catch(e) {
         alert('❌ Error: ' + e.message);
         btn.innerText = L.adminSaveBtn;
         btn.disabled = false;
         return;
     }
-    renderTickets();
-    updateCart();
-    adminPanel.style.display = 'none';
-    numberGrid.style.display = 'grid';
-    searchBar.value = '';
+
+    // ── ቦቱን SQLite ማሳወቅ ──
+    if (tg && tg.sendData) {
+        const payload = JSON.stringify({
+            action: 'update_settings',
+            total_tickets: totalTickets,
+            ticket_price: ticketPrice
+        });
+        tg.sendData(payload);
+        tg.close();
+    } else {
+        btn.innerText = L.adminSaved;
+        setTimeout(() => { btn.innerText = L.adminSaveBtn; btn.disabled = false; }, 2000);
+        renderTickets();
+        updateCart();
+        adminPanel.style.display = 'none';
+        numberGrid.style.display = 'grid';
+        searchBar.value = '';
+    }
 };
 
 function renderAdminTickets(snap) {
@@ -522,4 +534,4 @@ extraBtn.addEventListener('click', () => {
 
 </script>
 </body>
-</html> 
+</html>
