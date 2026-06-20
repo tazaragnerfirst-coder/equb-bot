@@ -67,13 +67,13 @@ async def get_tickets_range(start, end):
             return await cur.fetchall()
 
 async def get_all_tickets_full(total):
-    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል"""
+    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል (phone, status, username)"""
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
-            "SELECT number, phone, status FROM tickets WHERE number BETWEEN 1 AND ?", (total,)
+            "SELECT number, phone, status, username FROM tickets WHERE number BETWEEN 1 AND ?", (total,)
         ) as cur:
             rows = await cur.fetchall()
-            return {r[0]: (r[1], r[2]) for r in rows}  # number: (phone, status)
+            return {r[0]: (r[1], r[2], r[3]) for r in rows}  # number: (phone, status, username)
 
 async def reserve_tickets(numbers, user_id, username, phone):
     async with aiosqlite.connect(DB_PATH) as db:
@@ -118,6 +118,15 @@ async def get_pending_payments():
 async def get_payment(payment_id):
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute("SELECT * FROM payments WHERE id=?", (payment_id,)) as cur:
+            return await cur.fetchone()
+
+async def get_payment_by_number(number):
+    """አንድ ቁጥር የትኛው payment ጋር እንደተያያዘ ይፍልጋል (search feature)"""
+    async with aiosqlite.connect(DB_PATH) as db:
+        async with db.execute(
+            "SELECT * FROM payments WHERE ','||numbers||',' LIKE ? ORDER BY created_at DESC LIMIT 1",
+            (f"%,{number},%",)
+        ) as cur:
             return await cur.fetchone()
 
 async def get_all_approved_payments():
@@ -182,6 +191,11 @@ async def get_user_tickets(user_id, status):
             "SELECT number FROM tickets WHERE user_id=? AND status=?", (user_id, status)
         ) as cur:
             return await cur.fetchall()
+
+async def get_user_lang_from_payment(user_id):
+    """ተጠቃሚው lang ምን እንደተመረጠ ለማግኘት - SQLite ላይ lang አይቀመጥም
+       ስለዚህ ይህ function ምንም ጠቃሚ ነገር አይመልስም፤ bot.py ላይ ctx.user_data lang ብቻ ይታመንበት"""
+    return None
 
 async def get_newly_confirmed_tickets():
     async with aiosqlite.connect(DB_PATH) as db:
