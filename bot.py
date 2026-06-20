@@ -1230,13 +1230,32 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # WEB APP DATA HANDLER (Mini App → Bot)
 # ─────────────────────────────────────────
 async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    """Mini App ቁጥሮች ሲልክ ይቀበለዋል → payment flow ይጀምራል"""
+    """Mini App ቁጥሮች ሲልክ ይቀበለዋል → payment flow ይጀምራል
+       Admin settings ሲቀይር ደሞ SQLite ያዘምናል"""
     import json
     user = update.effective_user
     try:
         data = json.loads(update.effective_message.web_app_data.data)
     except Exception as e:
         logger.error(f"WebApp data parse error: {e}")
+        return
+
+    # ── Admin settings update from WebApp ──
+    if data.get("action") == "update_settings":
+        if not is_admin(user.id):
+            return
+        total = data.get("total_tickets")
+        price = data.get("ticket_price")
+        if total:
+            await db.set_setting("total_tickets", int(total))
+        if price:
+            await db.set_setting("ticket_price", int(price))
+        await update.message.reply_text(
+            f"✅ ቅንብሮች ተቀምጠዋል!\n🔢 ቁጥሮች: {total}\n💰 ዋጋ: {price} ETB",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
+            ]])
+        )
         return
 
     if data.get("action") != "buy_tickets":
