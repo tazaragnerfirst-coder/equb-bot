@@ -180,7 +180,7 @@ def mask_phone(phone):
     phone = str(phone).strip()
     if not phone:
         return ""
-    return phone + "#"
+    return phone[:-1] + "#" if len(phone) > 1 else phone
 
 def get_menu_keyboard(ctx):
     return ReplyKeyboardMarkup(
@@ -294,8 +294,7 @@ async def send_full_list_to_group(bot, total):
         for n in range(chunk_start, chunk_end + 1):
             info = ticket_map.get(n)
             if info and info["status"] == "taken":
-                name = info["username"] or ""
-                lines.append(f"{n} 👉 {mask_phone(info['phone'])} ✅ {name}")
+                lines.append(f"{n} 👉 {mask_phone(info['phone'])} ✅")
             else:
                 lines.append(f"{n} 👉")
         text = "\n".join(lines)
@@ -1490,4 +1489,3 @@ def main():
 
 if __name__ == "__main__":
     main()
- 
