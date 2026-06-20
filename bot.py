@@ -675,66 +675,84 @@ async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    await query.answer()
-    user = update.effective_user
-    selected = ctx.user_data.get("selected", [])
-    method = ctx.user_data.get("payment_method", "CBE")
-    full_name = ctx.user_data.get("full_name", user.full_name)
-    phone = ctx.user_data.get("user_phone", "")
-    file_id = ctx.user_data.get("receipt_file_id")
-    price = await db.get_setting("ticket_price")
-    total_price = len(selected) * int(price)
-    lang = ctx.user_data.get("lang", "am")
+    try:
+        await query.answer()
+    except Exception as e:
+        logger.warning(f"confirm_send_cb: query.answer() failed (likely expired): {e}")
+    try:
+        user = update.effective_user
+        selected = ctx.user_data.get("selected", [])
+        method = ctx.user_data.get("payment_method", "CBE")
+        full_name = ctx.user_data.get("full_name", user.full_name)
+        phone = ctx.user_data.get("user_phone", "")
+        file_id = ctx.user_data.get("receipt_file_id")
+        price = await db.get_setting("ticket_price")
+        total_price = len(selected) * int(price)
+        lang = ctx.user_data.get("lang", "am")
 
-    # Check numbers still free
-    for num in selected:
-        ticket = await db.get_ticket(num)
-        if ticket and ticket[4] == "taken":
-            await query.edit_message_text(t(ctx, "num_taken", num=num))
+        if not selected:
+            await query.edit_message_text("⚠️ ምንም ቁጥር አልተመረጠም። /start ይጫኑ።")
+            return
+        if not file_id:
+            await query.edit_message_text("⚠️ ደረሰኝ አልተገኘም። /start ብለው እንደገና ይሞክሩ።")
             return
 
-    username = f"@{user.username}" if user.username else full_name
-    payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, lang)
-    await db.reserve_tickets(selected, user.id, username, phone)
+        # Check numbers still free
+        for num in selected:
+            ticket = await db.get_ticket(num)
+            if ticket and ticket[4] == "taken":
+                await query.edit_message_text(t(ctx, "num_taken", num=num))
+                return
 
-    # ── Firestore sync: reserved/pending status (real-time yellow on app) ──
-    for num in selected:
-        await firestore_set_ticket(num, "pending", username, phone, full_name, method, file_id)
+        username = f"@{user.username}" if user.username else full_name
+        payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, lang)
+        await db.reserve_tickets(selected, user.id, username, phone)
 
-    await query.edit_message_text(
-        t(ctx, "sent_ok", name=full_name, phone=phone,
-          nums=', '.join(map(str, sorted(selected))),
-          total=total_price, method=method),
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")
+        # ── Firestore sync: reserved/pending status (real-time yellow on app) ──
+        for num in selected:
+            await firestore_set_ticket(num, "pending", username, phone, full_name, method, file_id)
+
+        await query.edit_message_text(
+            t(ctx, "sent_ok", name=full_name, phone=phone,
+              nums=', '.join(map(str, sorted(selected))),
+              total=total_price, method=method),
+            parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")
+            ]])
+        )
+
+        # ── Admin notification (receipt + approve/reject buttons) ──
+        admin_text = (
+            f"💳 *አዲስ ክፍያ!*\n{'─'*25}\n"
+            f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
+            f"🆔 `{user.id}`\n"
+            f"🎟 {', '.join(map(str, sorted(selected)))}\n"
+            f"💰 {total_price} ETB | {method}\n"
+            f"🕐 ቁ: #{payment_id}"
+        )
+        keyboard = InlineKeyboardMarkup([[
+            InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
+            InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
         ]])
-    )
+        for admin_id in ADMIN_IDS:
+            try:
+                await ctx.bot.send_photo(
+                    chat_id=admin_id, photo=file_id,
+                    caption=admin_text, parse_mode="Markdown",
+                    reply_markup=keyboard
+                )
+            except Exception as e:
+                logger.error(f"Admin notify: {e}")
 
-    # ── Admin notification (receipt + approve/reject buttons) ──
-    admin_text = (
-        f"💳 *አዲስ ክፍያ!*\n{'─'*25}\n"
-        f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
-        f"🆔 `{user.id}`\n"
-        f"🎟 {', '.join(map(str, sorted(selected)))}\n"
-        f"💰 {total_price} ETB | {method}\n"
-        f"🕐 ቁ: #{payment_id}"
-    )
-    keyboard = InlineKeyboardMarkup([[
-        InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
-        InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
-    ]])
-    for admin_id in ADMIN_IDS:
+        ctx.user_data["selected"] = []
+
+    except Exception as e:
+        logger.error(f"confirm_send_cb FAILED: {e}", exc_info=True)
         try:
-            await ctx.bot.send_photo(
-                chat_id=admin_id, photo=file_id,
-                caption=admin_text, parse_mode="Markdown",
-                reply_markup=keyboard
-            )
-        except Exception as e:
-            logger.error(f"Admin notify: {e}")
-
-    ctx.user_data["selected"] = []
+            await query.edit_message_text(f"❌ ስህተት ተፈጥሯል። /start ብለው እንደገና ይሞክሩ።\n\nDebug: {e}")
+        except:
+            pass
 
 async def edit_field_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
