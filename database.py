@@ -20,7 +20,8 @@ async def init_db():
             receipt_file_id TEXT, payment_method TEXT,
             status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            reviewed_by INTEGER, reviewed_at TIMESTAMP
+            reviewed_by INTEGER, reviewed_at TIMESTAMP,
+            lang TEXT DEFAULT 'am'
         )""")
         await db.execute("""CREATE TABLE IF NOT EXISTS group_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -36,9 +37,14 @@ async def init_db():
         }
         for key, value in defaults.items():
             await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, value))
-        for col in ["sent_to_group"]:
+        for col, coltype in [("sent_to_group", "INTEGER DEFAULT 0")]:
             try:
-                await db.execute(f"ALTER TABLE tickets ADD COLUMN {col} INTEGER DEFAULT 0")
+                await db.execute(f"ALTER TABLE tickets ADD COLUMN {col} {coltype}")
+            except:
+                pass
+        for col, coltype in [("lang", "TEXT DEFAULT 'am'")]:
+            try:
+                await db.execute(f"ALTER TABLE payments ADD COLUMN {col} {coltype}")
             except:
                 pass
         await db.commit()
@@ -67,13 +73,13 @@ async def get_tickets_range(start, end):
             return await cur.fetchall()
 
 async def get_all_tickets_full(total):
-    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል (phone, status, username)"""
+    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል (phone, status, username, full_name)"""
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
             "SELECT number, phone, status, username FROM tickets WHERE number BETWEEN 1 AND ?", (total,)
         ) as cur:
             rows = await cur.fetchall()
-            return {r[0]: (r[1], r[2], r[3]) for r in rows}  # number: (phone, status, username)
+            return {r[0]: {"phone": r[1], "status": r[2], "username": r[3]} for r in rows}
 
 async def reserve_tickets(numbers, user_id, username, phone):
     async with aiosqlite.connect(DB_PATH) as db:
@@ -99,12 +105,12 @@ async def free_tickets(numbers):
             await db.execute("DELETE FROM tickets WHERE number=?", (num,))
         await db.commit()
 
-async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
+async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method, lang="am"):
     async with aiosqlite.connect(DB_PATH) as db:
         numbers_str = ",".join(map(str, numbers))
         await db.execute(
-            "INSERT INTO payments (user_id, username, phone, numbers, receipt_file_id, payment_method) VALUES (?, ?, ?, ?, ?, ?)",
-            (user_id, username, phone, numbers_str, receipt_file_id, payment_method)
+            "INSERT INTO payments (user_id, username, phone, numbers, receipt_file_id, payment_method, lang) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (user_id, username, phone, numbers_str, receipt_file_id, payment_method, lang)
         )
         await db.commit()
         async with db.execute("SELECT last_insert_rowid()") as cur:
@@ -191,11 +197,6 @@ async def get_user_tickets(user_id, status):
             "SELECT number FROM tickets WHERE user_id=? AND status=?", (user_id, status)
         ) as cur:
             return await cur.fetchall()
-
-async def get_user_lang_from_payment(user_id):
-    """ተጠቃሚው lang ምን እንደተመረጠ ለማግኘት - SQLite ላይ lang አይቀመጥም
-       ስለዚህ ይህ function ምንም ጠቃሚ ነገር አይመልስም፤ bot.py ላይ ctx.user_data lang ብቻ ይታመንበት"""
-    return None
 
 async def get_newly_confirmed_tickets():
     async with aiosqlite.connect(DB_PATH) as db:
