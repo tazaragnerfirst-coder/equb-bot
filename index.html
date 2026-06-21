@@ -115,7 +115,7 @@
         .available { background: var(--available-color); color: var(--text-dark); border: 1px solid var(--glass-border); }
         .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; border: 1px solid rgba(254, 226, 226, 0.2); }
         .pending { background: var(--pending-color); color: var(--text-pending); cursor: not-allowed; border: 1px solid rgba(254, 243, 199, 0.3); }
-        .number-box.selected { background: var(--selected-blue) !important; color: white !important; border: none; box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35); }
+        .number-box.selected { background: var(--selected-blue) !important; color: white !important; border: 3px solid #ffffff !important; box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); transform: scale(1.05); }
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
@@ -178,7 +178,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
