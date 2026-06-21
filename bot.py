@@ -198,16 +198,6 @@ async def send_full_list_to_group(bot, total):
 
 # ─── LANGUAGE ───
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    # ቋንቋ user_data ውስጥ ካለ ወይም ዳታቤዝ ውስጥ ካለ ቀጥታ home ያሳይ
-    if not ctx.user_data.get("lang"):
-        saved_lang = await db.get_user_lang(update.effective_user.id)
-        if saved_lang:
-            ctx.user_data["lang"] = saved_lang
-
-    if ctx.user_data.get("lang"):
-        await show_home(update, ctx)
-        return
-
     keyboard = [
         [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
         [InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")],
@@ -223,19 +213,12 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     lang = query.data.split("_")[1]
     ctx.user_data["lang"] = lang
-    # ቋንቋ ዳታቤዝ ውስጥ ቀምጥ — restart ቢሆን አይጠፋም
-    await db.set_user_lang(update.effective_user.id, lang)
     await query.delete_message()
     await show_home(update, ctx)
 
 # ─── HOME ───
 async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    # ቋንቋ user_data ውስጥ ከሌለ ከዳታቤዝ ጫን
-    if not ctx.user_data.get("lang"):
-        saved_lang = await db.get_user_lang(user.id)
-        if saved_lang:
-            ctx.user_data["lang"] = saved_lang
     if not ctx.user_data.get("lang"):
         keyboard = [
             [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
@@ -347,16 +330,9 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if any(w in text for w in pick_words):
         return
 
-    # ቋንቋ user_data ውስጥ ከሌለ ከዳታቤዝ ጫን
-    if not ctx.user_data.get("lang"):
-        saved_lang = await db.get_user_lang(update.effective_user.id)
-        if saved_lang:
-            ctx.user_data["lang"] = saved_lang
-
     if ctx.user_data.get("waiting_name") or ctx.user_data.get("waiting_phone") or ctx.user_data.get("admin_action"):
         await handle_text_input(update, ctx)
     elif not ctx.user_data.get("lang"):
-        # ቋንቋ ምርጫ ያሳይ
         await show_home(update, ctx)
 
 # ─── PAYMENT FLOW (WebApp → Bot) ───
