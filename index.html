@@ -138,6 +138,7 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.1s ease;
         }
         .modal-btn:active { transform: scale(0.97); }
+
     </style>
 </head>
 <body>
@@ -164,19 +165,20 @@
 
     <div class="scrollable-content" id="scrollContent">
         <div class="number-grid" id="numberGrid"></div>
+
     </div>
 
     <div class="modal-overlay" id="errorModal">
         <div class="modal-box">
-            <h3>⚠️ ገደብ አልፏል!</h3>
-            <p>በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
-            <button class="modal-btn" onclick="closeModal()">እሺ ገብቶኛል</button>
+            <h3 id="modalTitle">⚠️ ገደብ አልፏል!</h3>
+            <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
+            <button class="modal-btn" id="modalOkBtn" onclick="closeModal()">እሺ ገብቶኛል</button>
         </div>
     </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, collection, setDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
@@ -197,6 +199,41 @@ const tgUser = tg?.initDataUnsafe?.user;
 const userId = tgUser?.id || 0;
 const userName = tgUser?.first_name || "Guest";
 
+// ── ቋንቋ ከ URL parameter (ቦቱ ይልካል) ──
+const urlParams = new URLSearchParams(window.location.search);
+const botLang = urlParams.get('lang') || 'am';
+
+const LANG_TEXT = {
+    am: {
+        cutBtn: "እጣ ቁረጥ",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ ገደብ አልፏል!",
+        modalMsg: "በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት",
+        modalSuffix: "ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።",
+        modalOk: "እሺ ገብቶኛል",
+        openInTg: "Telegram ውስጥ ይክፈቱ።",
+    },
+    en: {
+        cutBtn: "Buy Tickets",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ Limit Reached!",
+        modalMsg: "You can select a maximum of",
+        modalSuffix: "tickets at a time. Please proceed first.",
+        modalOk: "OK, Got it",
+        openInTg: "Please open in Telegram.",
+    },
+    or: {
+        cutBtn: "Tikeetii Bitadhu",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ Daangaa Darbeera!",
+        modalMsg: "Yookaan filachuu dandeessu",
+        modalSuffix: "qofa. Duraan tikeetiiwwan jiran kutaa.",
+        modalOk: "Galatoomaa",
+        openInTg: "Telegram keessatti banuuf.",
+    }
+};
+const L = LANG_TEXT[botLang] || LANG_TEXT['am'];
+
 const MAX_SELECT = 15;
 
 let ticketPrice = 20;
@@ -216,7 +253,13 @@ const errorModal = document.getElementById('errorModal');
 const quickPickBtn = document.getElementById('quickPickBtn');
 const extraBtn = document.getElementById('extraBtn');
 
+// ── ቋንቋ UI ላይ ተኩስ ──
 document.getElementById('maxLimitText').innerText = MAX_SELECT;
+document.getElementById('modalTitle').innerText = L.modalTitle;
+document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
+document.getElementById('modalOkBtn').innerText = L.modalOk;
+extraBtn.innerText = L.cutBtn;
+quickPickBtn.innerText = L.quickPick;
 
 function initTheme() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -256,7 +299,7 @@ onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
     const d = snap.data();
     if (d.ticket_price) ticketPrice = parseInt(d.ticket_price);
     if (d.total_tickets) totalTickets = parseInt(d.total_tickets);
-    renderTickets(searchBar.value);
+    renderTickets(searchBar.value.trim());
     updateCart();
 }, (err) => {
     console.error('Settings listener error:', err);
@@ -266,10 +309,13 @@ onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
 onSnapshot(collection(firestore, 'tickets'), (snap) => {
     ticketsData = {};
     snap.forEach(d => { ticketsData[parseInt(d.id)] = d.data().status; });
-    renderTickets(searchBar.value);
+    renderTickets(searchBar.value.trim());
 }, (err) => {
     console.error('Tickets listener error:', err);
 });
+
+// Render immediately on load with defaults, don't wait for Firestore
+renderTickets();
 
 function renderTickets(filterText = '') {
     numberGrid.innerHTML = '';
@@ -301,7 +347,7 @@ function toggleSelection(num) {
         mySelections.push(num);
     }
     updateCart();
-    renderTickets(searchBar.value);
+    renderTickets(searchBar.value.trim());
 }
 
 function showModal() { errorModal.style.display = 'flex'; }
@@ -335,8 +381,11 @@ function updateCart() {
 }
 
 searchBar.addEventListener('input', (e) => {
-    renderTickets(e.target.value.trim());
+    const val = e.target.value.trim();
+    renderTickets(val);
 });
+
+
 
 quickPickBtn.addEventListener('click', () => {
     const freeNums = [];
@@ -353,7 +402,7 @@ quickPickBtn.addEventListener('click', () => {
         freeNums.splice(idx, 1);
     }
     updateCart();
-    renderTickets(searchBar.value);
+    renderTickets(searchBar.value.trim());
 });
 
 extraBtn.addEventListener('click', () => {
@@ -370,11 +419,10 @@ extraBtn.addEventListener('click', () => {
         tg.sendData(payload);
         tg.close();
     } else {
-        alert('Telegram ውስጥ ይክፈቱ።');
+        alert(L.openInTg);
     }
 });
 
-renderTickets();
 </script>
 </body>
 </html>
