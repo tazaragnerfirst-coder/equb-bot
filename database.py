@@ -20,8 +20,7 @@ async def init_db():
             receipt_file_id TEXT, payment_method TEXT,
             status TEXT DEFAULT 'pending',
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            reviewed_by INTEGER, reviewed_at TIMESTAMP,
-            lang TEXT DEFAULT 'am'
+            reviewed_by INTEGER, reviewed_at TIMESTAMP
         )""")
         await db.execute("""CREATE TABLE IF NOT EXISTS group_messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -37,14 +36,9 @@ async def init_db():
         }
         for key, value in defaults.items():
             await db.execute("INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)", (key, value))
-        for col, coltype in [("sent_to_group", "INTEGER DEFAULT 0")]:
+        for col in ["sent_to_group"]:
             try:
-                await db.execute(f"ALTER TABLE tickets ADD COLUMN {col} {coltype}")
-            except:
-                pass
-        for col, coltype in [("lang", "TEXT DEFAULT 'am'")]:
-            try:
-                await db.execute(f"ALTER TABLE payments ADD COLUMN {col} {coltype}")
+                await db.execute(f"ALTER TABLE tickets ADD COLUMN {col} INTEGER DEFAULT 0")
             except:
                 pass
         await db.commit()
@@ -73,13 +67,13 @@ async def get_tickets_range(start, end):
             return await cur.fetchall()
 
 async def get_all_tickets_full(total):
-    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል (phone, status, username, full_name)"""
+    """ሁሉንም ቁጥሮች ከ1 እስከ total ያወጣል — phone, status, username"""
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
             "SELECT number, phone, status, username FROM tickets WHERE number BETWEEN 1 AND ?", (total,)
         ) as cur:
             rows = await cur.fetchall()
-            return {r[0]: {"phone": r[1], "status": r[2], "username": r[3]} for r in rows}
+            return {r[0]: (r[1], r[2], r[3]) for r in rows}  # number: (phone, status, username)
 
 async def reserve_tickets(numbers, user_id, username, phone):
     async with aiosqlite.connect(DB_PATH) as db:
@@ -105,12 +99,12 @@ async def free_tickets(numbers):
             await db.execute("DELETE FROM tickets WHERE number=?", (num,))
         await db.commit()
 
-async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method, lang="am"):
+async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
     async with aiosqlite.connect(DB_PATH) as db:
         numbers_str = ",".join(map(str, numbers))
         await db.execute(
-            "INSERT INTO payments (user_id, username, phone, numbers, receipt_file_id, payment_method, lang) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (user_id, username, phone, numbers_str, receipt_file_id, payment_method, lang)
+            "INSERT INTO payments (user_id, username, phone, numbers, receipt_file_id, payment_method) VALUES (?, ?, ?, ?, ?, ?)",
+            (user_id, username, phone, numbers_str, receipt_file_id, payment_method)
         )
         await db.commit()
         async with db.execute("SELECT last_insert_rowid()") as cur:
@@ -127,11 +121,15 @@ async def get_payment(payment_id):
             return await cur.fetchone()
 
 async def get_payment_by_number(number):
-    """አንድ ቁጥር የትኛው payment ጋር እንደተያያዘ ይፍልጋል (search feature)"""
+    """ቁጥር ፈልጎ ክፍያ ያወጣል"""
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute(
-            "SELECT * FROM payments WHERE ','||numbers||',' LIKE ? ORDER BY created_at DESC LIMIT 1",
-            (f"%,{number},%",)
+            """SELECT id, user_id, username, phone, numbers, receipt_file_id, 
+               payment_method, status, created_at, reviewed_at 
+               FROM payments 
+               WHERE (',' || numbers || ',') LIKE ('%,' || ? || ',%')
+               ORDER BY created_at DESC LIMIT 1""",
+            (str(number),)
         ) as cur:
             return await cur.fetchone()
 
@@ -212,7 +210,6 @@ async def mark_tickets_sent():
 
 # ── Group message tracking ──
 async def save_group_message_ids(chat_id, message_ids):
-    """አዲስ group message IDs ያስቀምጣል"""
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("DELETE FROM group_messages")
         for msg_id in message_ids:
@@ -223,7 +220,6 @@ async def save_group_message_ids(chat_id, message_ids):
         await db.commit()
 
 async def get_group_message_ids():
-    """ቀደም ብሎ የተላኩ group message IDs ያወጣል"""
     async with aiosqlite.connect(DB_PATH) as db:
         async with db.execute("SELECT message_id, chat_id FROM group_messages") as cur:
             return await cur.fetchall()
