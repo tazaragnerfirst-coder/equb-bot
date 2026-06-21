@@ -342,18 +342,6 @@ async def clear_group_messages():
         "message_ids": _sv(""),
     })
 
-# ─── USER LANGUAGE ───
-async def set_user_lang(user_id, lang):
-    await _set(f"user_lang/{user_id}", {
-        "lang": _sv(lang),
-    })
-
-async def get_user_lang(user_id):
-    doc = await _get(f"user_lang/{user_id}")
-    if not doc or not doc.get("fields"):
-        return None
-    return _parse_field(doc, "lang")
-
 # ─── RESET ───
 async def reset_lottery():
     tickets = await _list("tickets")
