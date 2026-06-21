@@ -213,12 +213,22 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     lang = query.data.split("_")[1]
     ctx.user_data["lang"] = lang
-    await query.delete_message()
+
+    # message ን ለማጥፍት ሞክር። ይህ ካልተቻለ ችላ በል - ግን ከዚህ በኋላ
+    # stale callback_query ላይ edit/reply ፈጽሞ አንሞክርም (ይህ ነበር ቀደም ሲል
+    # handler ን የሚያሰብር ችግር)።
+    try:
+        await query.delete_message()
+    except Exception as e:
+        logger.warning(f"lang_cb delete_message error: {e}")
+
     await show_home(update, ctx)
 
 # ─── HOME ───
 async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
+    chat_id = update.effective_chat.id
+
     if not ctx.user_data.get("lang"):
         keyboard = [
             [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
@@ -226,10 +236,10 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
         ]
         msg = "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:"
-        if update.callback_query:
-            await update.callback_query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
-        else:
-            await update.effective_message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
+        # ቀጥታ chat_id ላይ አዲስ message ላክ - stale callback_query.edit_message_text
+        # ወይም update.effective_message.reply_text (callback path) በፍጹም አንጠቅም፣
+        # ምክንያቱም callback ለመጣ message ቀደም ሲል ሊጠፋ ይችላል እና handler ይሰበራል።
+        await ctx.bot.send_message(chat_id=chat_id, text=msg, reply_markup=InlineKeyboardMarkup(keyboard))
         return
 
     title = await db.get_setting("lottery_title")
@@ -260,14 +270,14 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
     reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
-    if update.callback_query:
-        try:
-            await update.callback_query.edit_message_text(text, parse_mode="Markdown")
-        except:
-            pass
-        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-    else:
-        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+    # ሁልጊዜ ቀጥታ bot.send_message ተጠቀም (chat_id-based) - ይህ ከ update ዓይነት
+    # (message ወይም callback) ነጻ ስለሆነ stale-message bug ን ፈጽሞ አያመጣም።
+    await ctx.bot.send_message(
+        chat_id=chat_id,
+        text=text,
+        parse_mode="Markdown",
+        reply_markup=reply_markup
+    )
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1070,4 +1080,4 @@ async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
 if __name__ == "__main__":
-    main() 
+    main()
