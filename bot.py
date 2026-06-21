@@ -1,8 +1,6 @@
 import logging
 import asyncio
-import json
-import httpx
-from datetime import date, datetime
+from datetime import date
 from threading import Thread
 from flask import Flask
 from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
@@ -18,9 +16,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # ─── Constants ───
-PAGE_SIZE = 50
-MAX_TICKETS_PER_USER = 10
-FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/equb-c5f5f/databases/(default)/documents"
+PAGE_SIZE = 50          # በ1 ገፅ ላይ የሚታዩ ቁጥሮች
+MAX_TICKETS_PER_USER = 10  # አንድ ሰው መምረጥ የሚችላቸው ከፍተኛ ቁጥሮች
 
 # ─── Keep Alive ───
 flask_app = Flask('')
@@ -177,10 +174,13 @@ def is_admin(user_id):
     return user_id in ADMIN_IDS
 
 def mask_phone(phone):
+    """0911223344 → 091122334# (የመጨረሻው ቁጥር በ# ይቀየር)"""
     phone = str(phone).strip()
     if not phone:
         return ""
-    return phone[:-1] + "#" if len(phone) > 1 else phone
+    if len(phone) < 2:
+        return "#"
+    return phone[:-1] + "#"
 
 def get_menu_keyboard(ctx):
     return ReplyKeyboardMarkup(
@@ -192,89 +192,9 @@ def remove_menu():
     return ReplyKeyboardRemove()
 
 # ─────────────────────────────────────────
-# FIRESTORE SYNC HELPERS (defined early - used everywhere below)
-# ─────────────────────────────────────────
-async def firestore_set_ticket(number, status, username, phone, full_name="", payment_method="", receipt_file_id=""):
-    """Firestore ላይ ticket status ያዘምናል (taken ወይም pending)"""
-    url = f"{FIRESTORE_BASE}/tickets/{number}"
-    payload = {
-        "fields": {
-            "status": {"stringValue": status},
-            "username": {"stringValue": str(username)},
-            "phone": {"stringValue": str(phone)},
-            "name": {"stringValue": str(full_name)},
-            "payment_method": {"stringValue": str(payment_method)},
-            "receipt_file_id": {"stringValue": str(receipt_file_id)},
-            "created_at": {"stringValue": datetime.now().strftime("%Y-%m-%d %H:%M")},
-        }
-    }
-    try:
-        async with httpx.AsyncClient() as client:
-            await client.patch(url, json=payload, timeout=10)
-    except Exception as e:
-        logger.error(f"Firestore set ticket error: {e}")
-
-async def firestore_delete_ticket(number):
-    """Firestore ላይ ticket ይሰርዛል (free ሲሆን)"""
-    url = f"{FIRESTORE_BASE}/tickets/{number}"
-    try:
-        async with httpx.AsyncClient() as client:
-            await client.delete(url, timeout=10)
-    except Exception as e:
-        logger.error(f"Firestore delete ticket error: {e}")
-
-async def firestore_sync_settings(total=None, price=None, prize1=None, prize2=None, prize3=None, title=None):
-    """Firestore settings/config ያዘምናል - bot ላይ settings ሲቀየር app ላይ ይዘምናል
-       ሁሌም ሙሉ settings ይልካል (partial overwrite እንዳይፍጠር)"""
-    url = f"{FIRESTORE_BASE}/settings/config"
-
-    current_total = total if total is not None else await db.get_setting("total_tickets")
-    current_price = price if price is not None else await db.get_setting("ticket_price")
-    current_prize1 = prize1 if prize1 is not None else await db.get_setting("prize_1")
-    current_prize2 = prize2 if prize2 is not None else await db.get_setting("prize_2")
-    current_prize3 = prize3 if prize3 is not None else await db.get_setting("prize_3")
-    current_title = title if title is not None else await db.get_setting("lottery_title")
-
-    fields = {
-        "total_tickets": {"integerValue": str(current_total)},
-        "ticket_price": {"integerValue": str(current_price)},
-        "prize_1": {"stringValue": str(current_prize1)},
-        "prize_2": {"stringValue": str(current_prize2)},
-        "prize_3": {"stringValue": str(current_prize3)},
-        "lottery_title": {"stringValue": str(current_title)},
-    }
-    payload = {"fields": fields}
-    try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.patch(url, json=payload, timeout=10)
-            if resp.status_code >= 300:
-                logger.error(f"Firestore sync settings FAILED [{resp.status_code}]: {resp.text}")
-            else:
-                logger.info(f"Firestore settings synced: {fields}")
-    except Exception as e:
-        logger.error(f"Firestore sync settings error: {e}")
-
-async def sync_all_settings_to_firestore():
-    """ሁሉንም current settings ከ SQLite ወደ Firestore ይልካል"""
-    total = await db.get_setting("total_tickets")
-    price = await db.get_setting("ticket_price")
-    prize1 = await db.get_setting("prize_1")
-    prize2 = await db.get_setting("prize_2")
-    prize3 = await db.get_setting("prize_3")
-    title = await db.get_setting("lottery_title")
-    await firestore_sync_settings(total, price, prize1, prize2, prize3, title)
-
-# ─────────────────────────────────────────
-# GROUP LIST SENDER — ሁሉንም ቁጥሮች (1-total) ይልካል፣ ስም ጨምሮ
+# GROUP LIST SENDER — ሁሉንም ቁጥሮች ይልካል
 # ─────────────────────────────────────────
 async def send_full_list_to_group(bot, total):
-    """
-    ሁሉም ቁጥሮች (taken + free) ወደ ግሩፕ ይላካሉ፣ ምንም ተጨማሪ header ሳይኖር።
-    Format:
-        12 👉 0912345678# ✅ አበበ
-        13 👉
-    ቀደም ብሎ የተላኩ messages ይሰረዛሉ።
-    """
     old_msgs = await db.get_group_message_ids()
     for msg_id, chat_id in old_msgs:
         try:
@@ -293,15 +213,16 @@ async def send_full_list_to_group(bot, total):
         lines = []
         for n in range(chunk_start, chunk_end + 1):
             info = ticket_map.get(n)
-            if info and info["status"] == "taken":
-                lines.append(f"{n} 👉 {mask_phone(info['phone'])} ✅")
+            if info and info[1] == "taken":
+                # info: (phone, status, username)
+                lines.append(f"{n} 👉 {mask_phone(info[0])} ✅")
             else:
                 lines.append(f"{n} 👉")
         text = "\n".join(lines)
         try:
             msg = await bot.send_message(chat_id=GROUP_ID, text=text)
             new_msg_ids.append(msg.message_id)
-            await asyncio.sleep(0.7)
+            await asyncio.sleep(0.8)
         except Exception as e:
             logger.error(f"Chunk send error: {e}")
 
@@ -368,11 +289,12 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         f"🥉 {prize3}\n{sep}"
     )
 
+    # ── Menu buttons (ReplyKeyboard) ──
     lang = ctx.user_data.get("lang", "am")
-    mini_app_url = f"https://tazaragnerfirst-coder.github.io/equb-bot/?lang={lang}&uid={user.id}"
+    lang_url = f"https://tazaragnerfirst-coder.github.io/equb-bot/?lang={lang}"
 
     rows = [
-        [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=mini_app_url))],
+        [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=lang_url))],
         [KeyboardButton(t(ctx, "my_tickets_btn"))],
     ]
     if is_admin(user.id):
@@ -382,15 +304,19 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if update.callback_query:
         try:
-            await update.callback_query.delete_message()
+            await update.callback_query.edit_message_text(
+                text, parse_mode="Markdown"
+            )
         except:
             pass
         await update.effective_message.reply_text(
-            text, parse_mode="Markdown", reply_markup=reply_markup
+            text, parse_mode="Markdown",
+            reply_markup=reply_markup
         )
     else:
         await update.effective_message.reply_text(
-            text, parse_mode="Markdown", reply_markup=reply_markup
+            text, parse_mode="Markdown",
+            reply_markup=reply_markup
         )
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -460,27 +386,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await show_home(update, ctx)
 
 # ─────────────────────────────────────────
-# PAYMENT FLOW (shared by both inline-picker and WebApp)
-# ─────────────────────────────────────────
-async def begin_payment_flow(update: Update, ctx: ContextTypes.DEFAULT_TYPE, numbers, price, send_func):
-    """numbers ተመርጦ payment method selection ያሳያል"""
-    total_price = len(numbers) * int(price)
-    lang = ctx.user_data.get("lang", "am")
-    text = (
-        f"{T[lang]['payment_title']}\n{'─'*25}\n"
-        f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(numbers)))}\n"
-        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*25}\n"
-        f"{T[lang]['choose_payment']}"
-    )
-    keyboard = [
-        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe")],
-        [InlineKeyboardButton("📱 Telebirr", callback_data="pay_telebirr")],
-        [InlineKeyboardButton(t(ctx, "back_btn"), callback_data="pick_numbers")],
-    ]
-    await send_func(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
-
-# ─────────────────────────────────────────
-# NUMBER PICKER (inline, fallback)
+# NUMBER PICKER
 # ─────────────────────────────────────────
 async def show_number_page(update: Update, ctx: ContextTypes.DEFAULT_TYPE, page: int = 0):
     total = int(await db.get_setting("total_tickets"))
@@ -491,7 +397,7 @@ async def show_number_page(update: Update, ctx: ContextTypes.DEFAULT_TYPE, page:
     end_num = min(start_num + PAGE_SIZE - 1, total)
 
     tickets = await db.get_tickets_range(start_num, end_num)
-    ticket_map = {t[0]: t[2] for t in tickets}
+    ticket_map = {t[0]: t[2] for t in tickets}  # number: status
 
     buttons = []
     row = []
@@ -608,7 +514,20 @@ async def proceed_payment_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await query.answer("!", show_alert=True)
         return
     price = await db.get_setting("ticket_price")
-    await begin_payment_flow(update, ctx, selected, price, query.edit_message_text)
+    total_price = len(selected) * int(price)
+    lang = ctx.user_data.get("lang", "am")
+    text = (
+        f"{T[lang]['payment_title']}\n{'─'*25}\n"
+        f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(selected)))}\n"
+        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*25}\n"
+        f"{T[lang]['choose_payment']}"
+    )
+    keyboard = [
+        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe")],
+        [InlineKeyboardButton("📱 Telebirr", callback_data="pay_telebirr")],
+        [InlineKeyboardButton(t(ctx, "back_btn"), callback_data="pick_numbers")],
+    ]
+    await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
 async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -629,6 +548,7 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ─────────────────────────────────────────
 async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not ctx.user_data.get("waiting_receipt"):
+        # Photo ወደ ቦቱ ሲላክ ግን payment flow ካልተጀመረ — ችላ በለው
         return
 
     user = update.effective_user
@@ -662,9 +582,6 @@ async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
     keyboard = [
         [InlineKeyboardButton(t(ctx, "confirm_send"), callback_data="confirm_send")],
-        [InlineKeyboardButton(t(ctx, "edit_name"), callback_data="edit_name")],
-        [InlineKeyboardButton(t(ctx, "edit_phone"), callback_data="edit_phone")],
-        [InlineKeyboardButton(t(ctx, "edit_nums"), callback_data="pick_numbers")],
         [InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")],
     ]
     await update.message.reply_text(
@@ -674,84 +591,64 @@ async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    try:
-        await query.answer()
-    except Exception as e:
-        logger.warning(f"confirm_send_cb: query.answer() failed (likely expired): {e}")
-    try:
-        user = update.effective_user
-        selected = ctx.user_data.get("selected", [])
-        method = ctx.user_data.get("payment_method", "CBE")
-        full_name = ctx.user_data.get("full_name", user.full_name)
-        phone = ctx.user_data.get("user_phone", "")
-        file_id = ctx.user_data.get("receipt_file_id")
-        price = await db.get_setting("ticket_price")
-        total_price = len(selected) * int(price)
-        lang = ctx.user_data.get("lang", "am")
+    await query.answer()
+    user = update.effective_user
+    selected = ctx.user_data.get("selected", [])
+    method = ctx.user_data.get("payment_method", "CBE")
+    full_name = ctx.user_data.get("full_name", user.full_name)
+    phone = ctx.user_data.get("user_phone", "")
+    file_id = ctx.user_data.get("receipt_file_id")
+    price = await db.get_setting("ticket_price")
+    total_price = len(selected) * int(price)
 
-        if not selected:
-            await query.edit_message_text("⚠️ ምንም ቁጥር አልተመረጠም። /start ይጫኑ።")
-            return
-        if not file_id:
-            await query.edit_message_text("⚠️ ደረሰኝ አልተገኘም። /start ብለው እንደገና ይሞክሩ።")
+    # Check numbers still free
+    for num in selected:
+        ticket = await db.get_ticket(num)
+        if ticket and ticket[4] == "taken":
+            await query.edit_message_text(t(ctx, "num_taken", num=num))
             return
 
-        # Check numbers still free
-        for num in selected:
-            ticket = await db.get_ticket(num)
-            if ticket and ticket[4] == "taken":
-                await query.edit_message_text(t(ctx, "num_taken", num=num))
-                return
+    username = f"@{user.username}" if user.username else full_name
+    payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method)
+    await db.reserve_tickets(selected, user.id, username, phone)
+    # ── Firestore sync — reserved (pending color app ላይ) ──
+    for num in selected:
+        await firestore_set_ticket(num, "reserved", username, phone, full_name, method)
 
-        username = f"@{user.username}" if user.username else full_name
-        payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, lang)
-        await db.reserve_tickets(selected, user.id, username, phone)
-
-        # ── Firestore sync: reserved/pending status (real-time yellow on app) ──
-        for num in selected:
-            await firestore_set_ticket(num, "pending", username, phone, full_name, method, file_id)
-
-        await query.edit_message_text(
-            t(ctx, "sent_ok", name=full_name, phone=phone,
-              nums=', '.join(map(str, sorted(selected))),
-              total=total_price, method=method),
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")
-            ]])
-        )
-
-        # ── Admin notification (receipt + approve/reject buttons) ──
-        admin_text = (
-            f"💳 *አዲስ ክፍያ!*\n{'─'*25}\n"
-            f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
-            f"🆔 `{user.id}`\n"
-            f"🎟 {', '.join(map(str, sorted(selected)))}\n"
-            f"💰 {total_price} ETB | {method}\n"
-            f"🕐 ቁ: #{payment_id}"
-        )
-        keyboard = InlineKeyboardMarkup([[
-            InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
-            InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
+    await query.edit_message_text(
+        t(ctx, "sent_ok", name=full_name, phone=phone,
+          nums=', '.join(map(str, sorted(selected))),
+          total=total_price, method=method),
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([[
+            InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")
         ]])
-        for admin_id in ADMIN_IDS:
-            try:
-                await ctx.bot.send_photo(
-                    chat_id=admin_id, photo=file_id,
-                    caption=admin_text, parse_mode="Markdown",
-                    reply_markup=keyboard
-                )
-            except Exception as e:
-                logger.error(f"Admin notify: {e}")
+    )
 
-        ctx.user_data["selected"] = []
-
-    except Exception as e:
-        logger.error(f"confirm_send_cb FAILED: {e}", exc_info=True)
+    # ── Admin notification (receipt + approve/reject buttons) ──
+    admin_text = (
+        f"💳 *አዲስ ክፍያ!*\n{'─'*25}\n"
+        f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
+        f"🆔 `{user.id}`\n"
+        f"🎟 {', '.join(map(str, sorted(selected)))}\n"
+        f"💰 {total_price} ETB | {method}\n"
+        f"🕐 ቁ: #{payment_id}"
+    )
+    keyboard = InlineKeyboardMarkup([[
+        InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
+        InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
+    ]])
+    for admin_id in ADMIN_IDS:
         try:
-            await query.edit_message_text(f"❌ ስህተት ተፈጥሯል። /start ብለው እንደገና ይሞክሩ።\n\nDebug: {e}")
-        except:
-            pass
+            await ctx.bot.send_photo(
+                chat_id=admin_id, photo=file_id,
+                caption=admin_text, parse_mode="Markdown",
+                reply_markup=keyboard
+            )
+        except Exception as e:
+            logger.error(f"Admin notify: {e}")
+
+    ctx.user_data["selected"] = []
 
 async def edit_field_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -765,7 +662,7 @@ async def edit_field_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(t(ctx, "ask_phone"), parse_mode="Markdown")
 
 # ─────────────────────────────────────────
-# APPROVE / REJECT — auto group + firestore update, correct language
+# APPROVE / REJECT — auto group update
 # ─────────────────────────────────────────
 async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -780,10 +677,7 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not payment:
         return
 
-    # payments columns: id, user_id, username, phone, numbers, receipt_file_id, payment_method, status, created_at, reviewed_by, reviewed_at, lang
     p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status = payment[:8]
-    p_lang = payment[11] if len(payment) > 11 and payment[11] else "am"
-
     if p_status != "pending":
         await query.answer("Already reviewed!", show_alert=True)
         return
@@ -797,11 +691,11 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await db.update_payment_status(payment_id, "approved", user.id)
         await db.confirm_tickets(numbers, p_user_id, p_username, p_phone)
 
-        # ── User notification (በተጠቃሚው ቋንቋ) ──
+        # ── User notification ──
         try:
             await ctx.bot.send_message(
                 chat_id=p_user_id,
-                text=T[p_lang]["approved"].format(
+                text=T["am"]["approved"].format(
                     nums=', '.join(map(str, sorted(numbers))),
                     total=total_price
                 ),
@@ -815,7 +709,7 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
-        # ── Firestore sync: taken (real-time gray/sold on app) ──
+        # ── Firestore sync ──
         for num in numbers:
             await firestore_set_ticket(num, "taken", p_username, p_phone, p_username, p_method, p_receipt)
 
@@ -825,6 +719,7 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Group update error: {e}")
 
+        # All sold check
         taken = await db.count_taken_tickets()
         if taken >= total:
             for admin_id in ADMIN_IDS:
@@ -840,16 +735,14 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     else:  # reject
         await db.update_payment_status(payment_id, "rejected", user.id)
         await db.free_tickets(numbers)
-
-        # ── Firestore sync: remove (back to free/red-available on app) ──
         for num in numbers:
             await firestore_delete_ticket(num)
 
-        # ── User notification (በተጠቃሚው ቋንቋ) ──
+        # ── User notification ──
         try:
             await ctx.bot.send_message(
                 chat_id=p_user_id,
-                text=T[p_lang]["rejected"].format(
+                text=T["am"]["rejected"].format(
                     nums=', '.join(map(str, sorted(numbers)))
                 ),
                 parse_mode="Markdown"
@@ -893,7 +786,7 @@ async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
 
 # ─────────────────────────────────────────
-# ADMIN PANEL (Telegram-side only)
+# ADMIN PANEL
 # ─────────────────────────────────────────
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -919,7 +812,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     )
     keyboard = [
         [InlineKeyboardButton(f"⏳ Pending ({pending_count})", callback_data="admin_pending")],
-        [InlineKeyboardButton("🔍 ቁጥር ፍለጋ", callback_data="admin_search")],
+        [InlineKeyboardButton("🔍 ቁጥር ፈልግ", callback_data="admin_search")],
         [InlineKeyboardButton("📊 ስታቲስቲክስ", callback_data="admin_stats")],
         [InlineKeyboardButton("📋 ሁሉም ቲኬቶች", callback_data="admin_all_tickets")],
         [InlineKeyboardButton("📤 ዝርዝር ወደ ግሩፕ ላክ", callback_data="admin_send_list")],
@@ -946,7 +839,8 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-# ── Search by number (አዲስ feature) ──
+
+# ── Admin search by number ──
 async def admin_search_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -954,7 +848,7 @@ async def admin_search_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     ctx.user_data["admin_action"] = "search_number"
     await query.edit_message_text(
-        "🔍 *የቁጥር ፍለጋ*\nመፍለግ የሚፈልጉትን ቁጥር ይፃፉ:",
+        "🔍 *ቁጥር ፈልግ*\n\nየትኬት ቁጥር ፃፍ (ምሳሌ: 45):",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton("◀️ ተመለስ", callback_data="admin_panel")
@@ -1070,8 +964,9 @@ async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     price = await db.get_setting("ticket_price")
+    chat_id = update.effective_chat.id
     await query.edit_message_text(f"⏳ {len(pending)} pending ክፍያዎች:")
-    for p in pending[:10]:
+    for p in pending:
         p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status = p[:8]
         numbers = list(map(int, p_numbers.split(",")))
         total_price = len(numbers) * int(price)
@@ -1085,14 +980,14 @@ async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ]])
         try:
             await ctx.bot.send_photo(
-                chat_id=update.effective_user.id,
+                chat_id=chat_id,
                 photo=p_receipt, caption=caption,
                 parse_mode="Markdown", reply_markup=keyboard
             )
         except Exception as e:
             logger.error(f"Pending photo: {e}")
 
-# ── Admin settings (Telegram bot side) ──
+# ── Admin settings ──
 async def admin_settings_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -1304,49 +1199,13 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     ctx.user_data["admin_action"] = None
 
-    if action == "search_number":
-        try:
-            num = int(text_input)
-        except:
-            await update.message.reply_text("⚠️ ቁጥር ብቻ ፃፍ።")
-            return
-        ticket = await db.get_ticket(num)
-        payment = await db.get_payment_by_number(num)
-        if not ticket and not payment:
-            await update.message.reply_text(
-                f"🔍 ቁጥር *{num}* — ⬜ ነፃ ነው።",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[
-                    InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
-                ]])
-            )
-            return
-        status_label = "✅ ተረጋግጧል" if ticket and ticket[4] == "taken" else "⏳ በሂደት" if ticket else "❓"
-        text = f"🔍 *ቁጥር {num}*\n{'─'*20}\n📌 ሁኔታ: {status_label}\n"
-        if payment:
-            p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method = payment[:7]
-            text += f"👤 {p_username}\n📞 {p_phone}\n💳 {p_method}\n🆔 ክፍያ #{p_id}"
-            if p_receipt:
-                await update.message.reply_photo(
-                    photo=p_receipt, caption=text, parse_mode="Markdown",
-                    reply_markup=InlineKeyboardMarkup([[
-                        InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
-                    ]])
-                )
-                return
-        await update.message.reply_text(
-            text, parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
-            ]])
-        )
-
-    elif action == "set_tickets":
+    if action == "set_tickets":
         try:
             val = int(text_input)
             if 10 <= val <= 1000:
                 await db.set_setting("total_tickets", val)
-                await firestore_sync_settings(total=val)
+                price = await db.get_setting("ticket_price")
+                await firestore_sync_config(val, int(price))
                 await update.message.reply_text(f"✅ ቁጥሮች → {val}")
             else:
                 await update.message.reply_text("⚠️ 10-1000 መካከል ፃፍ።")
@@ -1357,7 +1216,8 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         try:
             val = int(text_input)
             await db.set_setting("ticket_price", val)
-            await firestore_sync_settings(price=val)
+            total = await db.get_setting("total_tickets")
+            await firestore_sync_config(int(total), val)
             await update.message.reply_text(f"✅ ዋጋ → {val} ETB")
         except:
             await update.message.reply_text("⚠️ ቁጥር ብቻ ፃፍ።")
@@ -1365,8 +1225,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     elif action in ["set_prize_1", "set_prize_2", "set_prize_3"]:
         key = action.replace("set_", "")
         await db.set_setting(key, text_input)
-        kwargs = {key: text_input}
-        await firestore_sync_settings(**kwargs)
         await update.message.reply_text(f"✅ {text_input}")
 
     elif action == "broadcast":
@@ -1393,16 +1251,99 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await db.set_setting("draw_message", text_input)
             await update.message.reply_text("✅ መልዕክት ተቀምጧል!")
 
+    elif action == "search_number":
+        try:
+            num = int(text_input.strip())
+        except:
+            await update.message.reply_text("⚠️ ቁጥር ብቻ ፃፍ። ምሳሌ: 45")
+            return
+        ticket = await db.get_ticket(num)
+        payment = await db.get_payment_by_number(num)
+        if not ticket and not payment:
+            await update.message.reply_text(
+                f"❌ ቁጥር {num} — ምንም መረጃ የለም። ነፃ ሊሆን ይችላል።",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
+                ]])
+            )
+            return
+        price = int(await db.get_setting("ticket_price"))
+        status_map = {"taken": "✅ የተረጋገጠ", "reserved": "⏳ Pending", "free": "⬜ ነፃ"}
+        t_status = status_map.get(ticket[4] if ticket else "free", "❓")
+        t_phone = ticket[3] if ticket else "—"
+        t_username = ticket[2] if ticket else "—"
+        info_text = (
+            f"🔍 *ቁጥር {num} መረጃ*\n{'─'*25}\n"
+            f"📌 Status: {t_status}\n"
+            f"👤 Username: {t_username}\n"
+            f"📞 ስልክ: {t_phone}\n"
+        )
+        if payment:
+            p_id, p_user_id, p_uname, p_phone, p_numbers, p_receipt, p_method, p_status, p_created, p_reviewed = payment
+            nums = list(map(int, p_numbers.split(",")))
+            total_price = len(nums) * price
+            info_text += (
+                f"{'─'*25}\n"
+                f"💳 *ክፍያ #{p_id}*\n"
+                f"💰 {total_price} ETB | {p_method}\n"
+                f"📅 {str(p_created)[:16]}\n"
+                f"Status: {'✅ Approved' if p_status == 'approved' else '⏳ Pending' if p_status == 'pending' else '❌ Rejected'}"
+            )
+            kb = [[InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")]]
+            if p_status == "pending":
+                kb.insert(0, [
+                    InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{p_id}"),
+                    InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{p_id}")
+                ])
+            if p_receipt:
+                await update.message.reply_photo(
+                    photo=p_receipt, caption=info_text,
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(kb)
+                )
+            else:
+                await update.message.reply_text(
+                    info_text, parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(kb)
+                )
+        else:
+            await update.message.reply_text(
+                info_text, parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[
+                    InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
+                ]])
+            )
+
 # ─────────────────────────────────────────
 # WEB APP DATA HANDLER (Mini App → Bot)
 # ─────────────────────────────────────────
 async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    """Mini App ቁጥሮች ሲልክ ይቀበለዋል → payment flow ይጀምራል"""
+    """Mini App ቁጥሮች ሲልክ ይቀበለዋል → payment flow ይጀምራል
+       Admin settings ሲቀይር ደሞ SQLite ያዘምናል"""
+    import json
     user = update.effective_user
     try:
         data = json.loads(update.effective_message.web_app_data.data)
     except Exception as e:
         logger.error(f"WebApp data parse error: {e}")
+        return
+
+    # ── Admin settings update from WebApp ──
+    if data.get("action") == "update_settings":
+        if not is_admin(user.id):
+            return
+        total = data.get("total_tickets")
+        price = data.get("ticket_price")
+        if total:
+            await db.set_setting("total_tickets", int(total))
+        if price:
+            await db.set_setting("ticket_price", int(price))
+        await update.message.reply_text(
+            f"✅ ቅንብሮች ተቀምጠዋል!\n🔢 ቁጥሮች: {total}\n💰 ዋጋ: {price} ETB",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")
+            ]])
+        )
         return
 
     if data.get("action") != "buy_tickets":
@@ -1413,6 +1354,7 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     price = await db.get_setting("ticket_price")
+    total_price = len(numbers) * int(price)
 
     # Check availability
     for num in numbers:
@@ -1423,31 +1365,181 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             )
             return
 
+    # Save to user_data and show payment method selection
     ctx.user_data["selected"] = numbers
     ctx.user_data["waiting_name"] = False
     ctx.user_data["waiting_phone"] = False
     ctx.user_data["waiting_receipt"] = False
 
-    async def send_func(text, **kwargs):
-        await update.message.reply_text(text, **kwargs)
+    lang = ctx.user_data.get("lang", "am")
+    text = (
+        f"{T[lang]['payment_title']}\n{'─'*25}\n"
+        f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(numbers)))}\n"
+        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*25}\n"
+        f"{T[lang]['choose_payment']}"
+    )
+    keyboard = [
+        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe")],
+        [InlineKeyboardButton("📱 Telebirr", callback_data="pay_telebirr")],
+        [InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")],
+    ]
+    await update.message.reply_text(
+        text, parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
-    await begin_payment_flow(update, ctx, numbers, price, send_func)
+
+# ─────────────────────────────────────────
+# FIRESTORE SYNC HELPERS
+# ─────────────────────────────────────────
+import httpx
+
+FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/equb-c5f5f/databases/(default)/documents"
+
+async def firestore_sync_config(total_tickets, ticket_price):
+    """Firestore settings/config ያዘምናል — app ይነባዋል"""
+    url = f"{FIRESTORE_BASE}/settings/config"
+    payload = {
+        "fields": {
+            "total_tickets": {"integerValue": str(total_tickets)},
+            "ticket_price": {"integerValue": str(ticket_price)},
+        }
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(url, json=payload, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore sync config error: {e}")
+
+async def firestore_set_ticket(number, status, username, phone, full_name, payment_method, receipt_file_id=""):
+    """Firestore ላይ ticket status ያዘምናል"""
+    from datetime import datetime
+    url = f"{FIRESTORE_BASE}/tickets/{number}"
+    payload = {
+        "fields": {
+            "status": {"stringValue": status},
+            "username": {"stringValue": str(username)},
+            "phone": {"stringValue": str(phone)},
+            "full_name": {"stringValue": str(full_name)},
+            "payment_method": {"stringValue": str(payment_method)},
+            "receipt_file_id": {"stringValue": str(receipt_file_id)},
+            "created_at": {"stringValue": datetime.now().isoformat()},
+        }
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(url, json=payload, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore set ticket error: {e}")
+
+async def firestore_delete_ticket(number):
+    """Firestore ላይ ticket ይሰርዛል (free ሲሆን)"""
+    url = f"{FIRESTORE_BASE}/tickets/{number}"
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.delete(url, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore delete ticket error: {e}")
+
+async def firestore_sync_settings(total, price, prize1, prize2, prize3, title):
+    """Firestore settings ያዘምናል"""
+    url = f"{FIRESTORE_BASE}/settings/main"
+    payload = {
+        "fields": {
+            "total_tickets": {"integerValue": str(total)},
+            "ticket_price": {"integerValue": str(price)},
+            "prize_1": {"stringValue": str(prize1)},
+            "prize_2": {"stringValue": str(prize2)},
+            "prize_3": {"stringValue": str(prize3)},
+            "lottery_title": {"stringValue": str(title)},
+        }
+    }
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.patch(url, json=payload, timeout=10)
+    except Exception as e:
+        logger.error(f"Firestore sync settings error: {e}")
 
 # ─────────────────────────────────────────
 # MAIN
 # ─────────────────────────────────────────
 async def post_init(application):
     await db.init_db()
-    await sync_all_settings_to_firestore()
+
+async def search_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """Admin /search 45 — ቁጥር ፈልግ"""
+    if not is_admin(update.effective_user.id):
+        return
+    args = ctx.args
+    if not args:
+        await update.message.reply_text("ምሳሌ: /search 45")
+        return
+    try:
+        num = int(args[0])
+    except:
+        await update.message.reply_text("⚠️ ቁጥር ብቻ ፃፍ። ምሳሌ: /search 45")
+        return
+
+    ticket = await db.get_ticket(num)
+    if not ticket:
+        await update.message.reply_text(f"🔍 ቁጥር {num} — ⬜ ነፃ (ምንም ክፍያ የለም)")
+        return
+
+    t_number, t_user_id, t_username, t_phone, t_status, t_created_at, _ = ticket
+    status_label = {"taken": "✅ ተረጋግጧል", "reserved": "⏳ በሂደት", "free": "⬜ ነፃ"}.get(t_status, t_status)
+    sep = "─" * 25
+
+    payment = await db.get_payment_by_number(num)
+    if payment:
+        p_id, p_user_id, p_uname, p_phone, p_numbers, p_receipt, p_method, p_pstatus, p_created_at = payment[:9]
+        price = await db.get_setting("ticket_price")
+        nums_list = list(map(int, p_numbers.split(",")))
+        total_price = len(nums_list) * int(price)
+        caption = (
+            f"🔍 *ቁጥር {num}*\n{sep}\n"
+            f"📊 {status_label}\n"
+            f"👤 {p_uname}\n"
+            f"📞 {p_phone}\n"
+            f"🎟 ቁጥሮቹ: {p_numbers}\n"
+            f"💰 {total_price} ETB | {p_method}\n"
+            f"🕐 {str(p_created_at)[:16]}\n"
+            f"{sep}\n"
+            f"💳 ክፍያ #{p_id} | {p_pstatus}"
+        )
+        keyboard = []
+        if p_pstatus == "pending":
+            keyboard = [[
+                InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{p_id}"),
+                InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{p_id}")
+            ]]
+        try:
+            await ctx.bot.send_photo(
+                chat_id=update.effective_user.id,
+                photo=p_receipt,
+                caption=caption,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard) if keyboard else None
+            )
+        except Exception as e:
+            await update.message.reply_text(caption, parse_mode="Markdown")
+    else:
+        await update.message.reply_text(
+            f"🔍 *ቁጥር {num}*\n{sep}\n"
+            f"📊 {status_label}\n"
+            f"👤 {t_username or '-'}\n"
+            f"📞 {t_phone or '-'}\n"
+            f"🕐 {str(t_created_at)[:16] if t_created_at else '-'}",
+            parse_mode="Markdown"
+        )
+
+
 
 def main():
     keep_alive()
-    from telegram.ext import PicklePersistence
-    persistence = PicklePersistence(filepath="data/bot_persistence.pickle")
-    app = Application.builder().token(BOT_TOKEN).persistence(persistence).post_init(post_init).build()
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
-
+    app.add_handler(CommandHandler("search", search_cmd))
     async def admin_cmd(update, ctx):
         if is_admin(update.effective_user.id):
             await show_admin_panel(update, ctx)
