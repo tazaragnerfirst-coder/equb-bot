@@ -354,4 +354,4 @@ async def reset_lottery():
         name = doc.get("name", "")
         p_id = name.split("/")[-1]
         await _delete(f"payments/{p_id}")
-    await clear_group_messages()
+    await clear_group_messages() 
