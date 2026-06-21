@@ -466,23 +466,27 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")]])
     )
 
-    admin_text = (
-        f"💳 *አዲስ ክፍያ!*\n{'─'*25}\n"
+            admin_text = (
+        f"💳 <b>አዲስ ክፍያ!</b>\n{'-'*25}\n"
         f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
-        f"🆔 `{user.id}`\n"
-        f"🎟 {', '.join(map(str, sorted(selected)))}\n"
+        f"🆔 <code>{user.id}</code>\n"
+        f"🎫 {', '.join(map(str, sorted(selected)))}\n"
         f"💰 {total_price} ETB | {method}\n"
-        f"🕐 ቁ: #{payment_id}"
+        f"🕒 ቆይ: #{payment_id}"
     )
+    
     keyboard = InlineKeyboardMarkup([[
         InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
         InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
     ]])
+    
     for admin_id in ADMIN_IDS:
         try:
             await ctx.bot.send_photo(
-                chat_id=admin_id, photo=file_id,
-                caption=admin_text, parse_mode="Markdown",
+                chat_id=admin_id, 
+                photo=file_id,
+                caption=admin_text, 
+                parse_mode="HTML",
                 reply_markup=keyboard
             )
         except Exception as e:
