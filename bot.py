@@ -51,8 +51,8 @@ T = {
         "sent_ok": "✅ *ደረሰኝዎ ተልኳል!*\n👤 ስም: {name}\n📞 ስልክ: {phone}\n🎟 የመረጡት ቁጥር: {nums}\n💰 ድምር: {total} ብር\n💳 ዘዴ: {method}\n⏳ አድሚን ሲያረጋግጥ notification ይደርስዎታል። እናመሰግናለን! Developed by @Taza4Business",
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
         "receipt_only": "⚠️ እባክዎ *screenshot (ፎቶ)* ይላኩ።",
-        "approved": "🎉 *ክፍያዎ ተረጋግጧል!*\n🎟 ቁጥሮቾ: {nums}\n💰 {total} ብር\n✅ ቁጥሮቾ ተያዘ። እጣ እስኪቆረጥ ድረስ ይጠብቁ!",
-        "rejected": "❌ *ክፍያዎ አልተረጋገጠም።*\n🎟 ቁጥሮች: {nums}\nለጥያቄ አድሚን ያናግሩ።",
+        "approved": "🎉 *ክፍያዎ ተረጋግጧል!*\n🎟 ቁጥሮቾ: {nums}\n💰 {total} ብር\n✅ ቁጥሮቹ የእርስዎ ሆነዋል። እጣ እስኪቆረጥ ድረስ ይጠብቁ! እናመሰግናለን!",
+        "rejected": "❌ *ክፍያዎ አልተረጋገጠም።*\n🎟 ቁጥሮች: {nums}\nእባክዎ ትክክለኛ ማስረጃ ይላኩ ወይም ድጋሚ ይሞክሩ።",
         "my_tickets_title": "🎟 *የእኔ ትኬቶች*",
         "no_tickets": "ምንም ትኬት የለዎትም።",
         "confirmed_label": "✅ የተረጋገጡ",
@@ -275,7 +275,7 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
     home_words = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "/start"]
-    cancel_words = ["✖️ ተመለስ", "Cancel", "Haquu"]
+    cancel_words = ["❌ ተመለስ", "Cancel", "Haquu"]
     tickets_words = ["📋 የእኔ ትኬቶች", "📋 My Tickets", "📋 Tikeetii Koo"]
     admin_words = ["👨‍💼 አድሚን ፓነል", "👨‍💼 Admin Panel"]
     pick_words = ["🎟 ቁጥር ምረጥ", "🎟 Pick Numbers", "🎟 Lakkoofsa Filadhu"]
@@ -293,7 +293,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ctx.user_data["waiting_phone"] = False
         ctx.user_data["waiting_receipt"] = False
         ctx.user_data["admin_action"] = None
-        await update.message.reply_text("✖️", reply_markup=remove_menu())
+        await update.message.reply_text("❌", reply_markup=remove_menu())
         await show_home(update, ctx)
         return
 
@@ -458,7 +458,7 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     # FIX #7: Show both username and full_name in admin notification
     tg_username = f"@{user.username}" if user.username else "—"
     admin_text = (
-        f"💳 <b>አዲስ ክፍያ!</b>\n{'-'*25}\n"
+        f"💳 <b>አዲስ ክፍያ!</b>\n{'-'*15}\n"
         f"👤 {full_name}\n"
         f"🔗 {tg_username}\n"
         f"📞 {phone}\n"
@@ -605,7 +605,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("📤 ዝርዝር ወደ ግሩፕ ላክ", callback_data="admin_send_list")],
         [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")],
         [InlineKeyboardButton(f"{draw_btn_name}", callback_data="admin_draw_msg")],
-        [InlineKeyboardButton("⚙️ ቅንብሮች", callback_data="admin_settings")],
+        [InlineKeyboardButton("⚙️ ማስተካከያ", callback_data="admin_settings")],
         [InlineKeyboardButton("🔄 Reset", callback_data="admin_reset_confirm")],
         [InlineKeyboardButton("🏠 ዋና ገጽ", callback_data="main_menu")],
     ]
@@ -681,7 +681,7 @@ async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     ctx.user_data["admin_action"] = "find_ticket"
     await query.edit_message_text(
-        "🔍 *የቲኬት ቁጥር ፃፍ:*\nምሳሌ: 45",
+        "🔍 *የትኛው ትኬት ቁጥር በማን እንደተያዘ እና መች እንተያዘ ማወቅ ይፈልጋሉ? ይፈለጉትን ቁጥር ፃፍ:*\nምሳሌ: 45",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ሰርዝ", callback_data="admin_panel")]])
     )
@@ -697,11 +697,11 @@ async def admin_stats_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     pending = len(await db.get_pending_payments())
 
     text = (
-        f"📊 *ስታቲስቲክስ*\n{'─'*25}\n"
+        f"📊 *ስታቲስቲክስ*\n{'─'*15}\n"
         f"🎟 የተሸጡ: {taken}/{total}\n"
         f"⏳ Pending: {pending}\n"
         f"✅ የቀሩ: {total - taken}\n"
-        f"📅 ዛሬ approved: {today_count}\n{'─'*25}\n"
+        f"📅 ዛሬ approved: {today_count}\n{'─'*15}\n"
         f"💰 ጠቅላላ ገቢ: *{taken * price:,} ETB*\n"
         f"⏳ Pending ገቢ: *{pending * price:,} ETB*"
     )
@@ -735,7 +735,7 @@ async def admin_settings_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
     text = (
-        f"⚙️ *ቅንብሮች*\n{'─'*15}\n"
+        f"⚙️ *ማስተካከያ*\n{'─'*15}\n"
         f"🔢 ቁጥሮች: {total}\n💰 ዋጋ: {price} ETB\n"
         f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}"
     )
@@ -774,7 +774,7 @@ async def admin_broadcast_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     ctx.user_data["admin_action"] = "broadcast"
     await query.edit_message_text(
-        "📢 *Broadcast መልዕክት ፃፍ:*",
+        "📢 *Broadcast መልዕክት ወደ ግሩፕ አባላት እና ወደ ቦቱ ተጠቃሚዎች የመላክ የፈለጉትን መልክት ይፃፉ:*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ሰርዝ", callback_data="admin_panel")]])
     )
@@ -825,7 +825,7 @@ async def admin_draw_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     draw_msg = await db.get_setting("draw_message") or "🎊 እጣ ተቆርጧል!"
     await query.edit_message_text(
-        f"📋 *Preview:*\n{'─'*15}\n{draw_msg}\n{'─'*25}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
+        f"📋 *Preview:*\n{'─'*15}\n{draw_msg}\n{'─'*15}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ አዎ፣ ላክ", callback_data="admin_draw_confirm")],
@@ -907,7 +907,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         lang = ctx.user_data.get("lang", "am")
 
         preview = (
-            f"{T[lang]['preview_title']}\n{'─'*25}\n"
+            f"{T[lang]['preview_title']}\n{'─'*15}\n"
             f"{T[lang]['nums_label']}: {', '.join(map(str, sorted(selected)))}\n"
             f"{T[lang]['name_label']}: {full_name}\n"
             f"{T[lang]['phone_label']}: {digits}\n"
@@ -1078,7 +1078,7 @@ async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
     else:
         price = await db.get_setting("ticket_price")
-        text = f"{T[lang]['my_tickets_title']}\n{'─'*25}\n"
+        text = f"{T[lang]['my_tickets_title']}\n{'─'*15}\n"
         if confirmed:
             nums = sorted([r[0] for r in confirmed])
             text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
