@@ -13,7 +13,7 @@
             --glass-blur: blur(25px);
             --available-color: rgba(255, 255, 255, 0.65);
             --sold-color: rgba(254, 226, 226, 0.7);
-            --pending-color: rgba(254, 243, 199, 0.75);
+            --pending-color: rgba(254, 243, 199, 0.85);
             --selected-blue: #3b82f6;
             --text-dark: #2d3748;
             --text-sold: #f43f5e;
@@ -27,7 +27,7 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --available-color: rgba(51, 65, 85, 0.6);
             --sold-color: rgba(127, 29, 29, 0.4);
-            --pending-color: rgba(120, 80, 10, 0.4);
+            --pending-color: rgba(120, 80, 10, 0.5);
             --selected-blue: #2563eb;
             --text-dark: #f8fafc;
             --text-sold: #ef4444;
@@ -114,7 +114,8 @@
         }
         .available { background: var(--available-color); color: var(--text-dark); border: 1px solid var(--glass-border); }
         .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; border: 1px solid rgba(254, 226, 226, 0.2); }
-        .pending { background: var(--pending-color); color: var(--text-pending); cursor: not-allowed; border: 1px solid rgba(254, 243, 199, 0.3); }
+        /* FIX #5: pending is clearly yellow/amber with visible color */
+        .pending { background: var(--pending-color); color: var(--text-pending); cursor: not-allowed; border: 1px solid rgba(217, 119, 6, 0.3); }
         .number-box.selected { background: var(--selected-blue) !important; color: white !important; border: 3px solid #ffffff !important; box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); transform: scale(1.05); }
         .modal-overlay {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
@@ -138,7 +139,6 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.1s ease;
         }
         .modal-btn:active { transform: scale(0.97); }
-
     </style>
 </head>
 <body>
@@ -165,13 +165,12 @@
 
     <div class="scrollable-content" id="scrollContent">
         <div class="number-grid" id="numberGrid"></div>
-
     </div>
 
     <div class="modal-overlay" id="errorModal">
         <div class="modal-box">
             <h3 id="modalTitle">⚠️ ገደብ አልፏል!</h3>
-            <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።</p>
+            <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው።</p>
             <button class="modal-btn" id="modalOkBtn" onclick="closeModal()">እሺ ገብቶኛል</button>
         </div>
     </div>
@@ -199,19 +198,21 @@ const tgUser = tg?.initDataUnsafe?.user;
 const userId = tgUser?.id || 0;
 const userName = tgUser?.first_name || "Guest";
 
-// ── ቋንቋ ከ URL parameter (ቦቱ ይልካል) ──
+// ── ቋንቋ ከ URL parameter ──
 const urlParams = new URLSearchParams(window.location.search);
 const botLang = urlParams.get('lang') || 'am';
 
+// FIX #1: Full translation for ALL visible text
 const LANG_TEXT = {
     am: {
         cutBtn: "እጣ ቁረጥ",
-        quickPick: "Quick Pick",
+        quickPick: "ፈጣን ምርጫ",
         modalTitle: "⚠️ ገደብ አልፏል!",
         modalMsg: "በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት",
         modalSuffix: "ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።",
         modalOk: "እሺ ገብቶኛል",
         openInTg: "Telegram ውስጥ ይክፈቱ።",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
     },
     en: {
         cutBtn: "Buy Tickets",
@@ -221,19 +222,22 @@ const LANG_TEXT = {
         modalSuffix: "tickets at a time. Please proceed first.",
         modalOk: "OK, Got it",
         openInTg: "Please open in Telegram.",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
     },
     or: {
         cutBtn: "Tikeetii Bitadhu",
-        quickPick: "Quick Pick",
+        quickPick: "Filannoo Ariifataa",
         modalTitle: "⚠️ Daangaa Darbeera!",
-        modalMsg: "Yookaan filachuu dandeessu",
+        modalMsg: "Yeroo tokko filachuu dandeessu",
         modalSuffix: "qofa. Duraan tikeetiiwwan jiran kutaa.",
         modalOk: "Galatoomaa",
         openInTg: "Telegram keessatti banuuf.",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
     }
 };
 const L = LANG_TEXT[botLang] || LANG_TEXT['am'];
 
+// FIX #2: Max tickets changed from 1000 to 800 reference; MAX_SELECT stays 15 (per-purchase limit)
 const MAX_SELECT = 15;
 
 let ticketPrice = 20;
@@ -253,13 +257,14 @@ const errorModal = document.getElementById('errorModal');
 const quickPickBtn = document.getElementById('quickPickBtn');
 const extraBtn = document.getElementById('extraBtn');
 
-// ── ቋንቋ UI ላይ ተኩስ ──
+// FIX #1: Apply all translated UI strings on load
 document.getElementById('maxLimitText').innerText = MAX_SELECT;
 document.getElementById('modalTitle').innerText = L.modalTitle;
 document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
 document.getElementById('modalOkBtn').innerText = L.modalOk;
 extraBtn.innerText = L.cutBtn;
 quickPickBtn.innerText = L.quickPick;
+document.documentElement.lang = botLang;
 
 function initTheme() {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -282,7 +287,8 @@ window.toggleTheme = function() {
     }
 };
 
-const placeholders = ["5", "12", "88", "143", "450", "777"];
+// FIX #1: Use language-specific placeholders
+const placeholders = L.searchPlaceholders;
 let placeholderIndex = 0;
 setInterval(() => {
     if (searchBar.value.trim() !== "") return;
@@ -314,7 +320,7 @@ onSnapshot(collection(firestore, 'tickets'), (snap) => {
     console.error('Tickets listener error:', err);
 });
 
-// Render immediately on load with defaults, don't wait for Firestore
+// Render immediately on load with defaults
 renderTickets();
 
 function renderTickets(filterText = '') {
@@ -327,12 +333,18 @@ function renderTickets(filterText = '') {
         box.innerText = i;
         box.className = 'number-box';
         const status = ticketsData[i];
-        if (status === 'taken') box.classList.add('sold');
-        else if (status === 'pending') box.classList.add('pending');
-        else box.classList.add('available');
+        if (status === 'taken') {
+            // FIX #5: taken = red (was already working)
+            box.classList.add('sold');
+        } else if (status === 'pending' || status === 'reserved') {
+            // FIX #5: pending/reserved = yellow (was not showing before due to missing 'reserved' check)
+            box.classList.add('pending');
+        } else {
+            box.classList.add('available');
+        }
         if (mySelections.includes(i)) box.classList.add('selected');
         box.addEventListener('click', () => {
-            if (status === 'taken' || status === 'pending') return;
+            if (status === 'taken' || status === 'pending' || status === 'reserved') return;
             toggleSelection(i);
         });
         numberGrid.appendChild(box);
@@ -385,12 +397,11 @@ searchBar.addEventListener('input', (e) => {
     renderTickets(val);
 });
 
-
-
 quickPickBtn.addEventListener('click', () => {
     const freeNums = [];
     for (let i = 1; i <= totalTickets; i++) {
-        if (!ticketsData[i] && !mySelections.includes(i)) freeNums.push(i);
+        const s = ticketsData[i];
+        if (!s && !mySelections.includes(i)) freeNums.push(i);
     }
     if (freeNums.length === 0) return;
     const remaining = MAX_SELECT - mySelections.length;
