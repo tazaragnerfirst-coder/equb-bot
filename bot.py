@@ -466,7 +466,7 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")]])
     )
 
-            admin_text = (
+    admin_text = (
         f"💳 <b>አዲስ ክፍያ!</b>\n{'-'*25}\n"
         f"👤 {full_name}\n📞 {phone}\n🔗 {username}\n"
         f"🆔 <code>{user.id}</code>\n"
