@@ -39,16 +39,16 @@ T = {
         "choose_payment": "የክፍያ ዘዴ ይምረጡ:",
         "ask_account": "✅ ወደ ታች ያለውን አካውንት ተጠቀሙ እና ክፍያ ፈጽሙ፣ ከዚያ ደረሰኝ ይላኩ።",
         "ask_receipt": "✅ ክፍያ ከፈፀሙ በኋላ *ደረሰኝ (screenshot)* ይላኩ።",
-        "ask_name": "👤 *ሙሉ ስምዎን ይፃፉ:*\nምሳሌ: አበበ ከበደ",
-        "ask_phone": "📞 *ስልክ ቁጥርዎን ይፃፉ:*\nምሳሌ: 0912345678",
-        "invalid_phone": "⚠️ ትክክለኛ ስልክ ቁጥር ይፃፉ። ምሳሌ: 0912345678",
-        "preview_title": "📋 *ማረጋገጫ - ከመላኩ በፊት ይፈትሹ:*",
+        "ask_name": "👤 *ሙሉ ስምዎን ይፃፉ:*\nምሳሌ: አበበ ባልቻ",
+        "ask_phone": "📞 *ስልክ ቁጥርዎን ይፃፉ:*\nምሳሌ: 09########",
+        "invalid_phone": "⚠️ ትክክለኛ ስልክ ቁጥር ይፃፉ። ምሳሌ: 0911223344",
+        "preview_title": "📋 *ማረጋገጫ - ከመላኩ በፊት ትክከለኛ መረጃ መላኮን ይፈትሹ:*",
         "name_label": "👤 ስም",
         "phone_label": "📞 ስልክ",
         "method_label": "💳 ዘዴ",
         "nums_label": "🎟 ቁጥሮች",
         "confirm_send": "✅ ልክ ነው፣ ላክ",
-        "sent_ok": "✅ *ደረሰኝዎ ተልኳል!*\n👤 ስም: {name}\n📞 ስልክ: {phone}\n🎟 ቁጥሮች: {nums}\n💰 ድምር: {total} ብር\n💳 ዘዴ: {method}\n⏳ አድሚን ሲያረጋግጥ notification ይደርስዎታል።",
+        "sent_ok": "✅ *ደረሰኝዎ ተልኳል!*\n👤 ስም: {name}\n📞 ስልክ: {phone}\n🎟 የመረጡት ቁጥር: {nums}\n💰 ድምር: {total} ብር\n💳 ዘዴ: {method}\n⏳ አድሚን ሲያረጋግጥ notification ይደርስዎታል። እናመሰግናለን! Developed by @Taza4Business",
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
         "receipt_only": "⚠️ እባክዎ *screenshot (ፎቶ)* ይላኩ።",
         "approved": "🎉 *ክፍያዎ ተረጋግጧል!*\n🎟 ቁጥሮቾ: {nums}\n💰 {total} ብር\n✅ ቁጥሮቾ ተያዘ። እጣ እስኪቆረጥ ድረስ ይጠብቁ!",
@@ -74,7 +74,7 @@ T = {
         "ask_account": "✅ Use the account below and complete your payment, then send the receipt.",
         "ask_receipt": "✅ After payment, please send your *receipt (screenshot)*.",
         "ask_name": "👤 *Enter your full name:*\nExample: Abebe Kebede",
-        "ask_phone": "📞 *Enter your phone number:*\nExample: 0912345678",
+        "ask_phone": "📞 *Enter your phone number:*\nExample: 09########",
         "invalid_phone": "⚠️ Please enter a valid phone number.",
         "preview_title": "📋 *Confirmation - Please review:*",
         "name_label": "👤 Name",
@@ -85,7 +85,7 @@ T = {
         "sent_ok": "✅ *Receipt sent!*\n👤 Name: {name}\n📞 Phone: {phone}\n🎟 Numbers: {nums}\n💰 Total: {total} ETB\n💳 Method: {method}\n⏳ You will be notified once admin confirms.",
         "num_taken": "⚠️ Number {num} is already taken! Please pick again.",
         "receipt_only": "⚠️ Please send a *screenshot (photo)*.",
-        "approved": "🎉 *Payment confirmed!*\n🎟 Numbers: {nums}\n💰 {total} ETB\n✅ Your numbers are reserved. Wait for the draw!",
+        "approved": "🎉 *Payment confirmed!*\n🎟 Numbers: {nums}\n💰 {total} ETB\n✅ Your numbers are reserved. Wait for the draw! Developed by @Taza4Business",
         "rejected": "❌ *Payment not confirmed.*\n🎟 Numbers: {nums}\nPlease contact admin.",
         "my_tickets_title": "🎟 *My Tickets*",
         "no_tickets": "You have no tickets.",
@@ -108,7 +108,7 @@ T = {
         "ask_account": "✅ Akkaawuntii armaan gadii fayyadami kaffaltii rawwadhu, booda beeksisa ergi.",
         "ask_receipt": "✅ Kaffaltiis booda *beeksisa (screenshot)* ergi.",
         "ask_name": "👤 *Maqaa guutuu kee barreessi:*\nFkn: Abebe Kebede",
-        "ask_phone": "📞 *Lakkoofsa bilbilaa kee barreessi:*\nFkn: 0912345678",
+        "ask_phone": "📞 *Lakkoofsa bilbilaa kee barreessi:*\nFkn: 09########",
         "invalid_phone": "⚠️ Lakkoofsa bilbilaa sirrii barreessi.",
         "preview_title": "📋 *Mirkaneessaa - Erguun dura ilaali:*",
         "name_label": "👤 Maqaa",
@@ -119,7 +119,7 @@ T = {
         "sent_ok": "✅ *Beeksisni ergame!*\n👤 Maqaa: {name}\n📞 Bilbila: {phone}\n🎟 Lakkoofsa: {nums}\n💰 Waliigala: {total} ETB\n💳 Mala: {method}\n⏳ Admin mirkaneesu booda beeksifama.",
         "num_taken": "⚠️ Lakkoofsi {num} fudhataame! Ammas filadhu.",
         "receipt_only": "⚠️ *Screenshot (suuraa)* ergi.",
-        "approved": "🎉 *Kaffaltiins mirkanaa'e!*\n🎟 Lakkoofsa: {nums}\n💰 {total} ETB\n✅ Lakkoofsi kee qabame. Fiigichaa eegi!",
+        "approved": "🎉 *Kaffaltiins mirkanaa'e!*\n🎟 Lakkoofsa: {nums}\n💰 {total} ETB\n✅ Lakkoofsi kee qabame. Fiigichaa eegi! Developed by @Taza4Business",
         "rejected": "❌ *Kaffaltiins hin mirkanaa'in.*\n🎟 Lakkoofsa: {nums}\nAdmin quunnamaa.",
         "my_tickets_title": "🎟 *Tikeetii Koo*",
         "no_tickets": "Tikeetii hin qabdu.",
@@ -235,7 +235,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
 
-    sep = "─" * 28
+    sep = "─" * 15
     text = (
         f"🎉 *{title}*\n{sep}\n"
         f"🎟 ዋጋ: *{price} ETB*\n"
@@ -275,7 +275,7 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
     home_words = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "/start"]
-    cancel_words = ["❌ ሰርዝ", "Cancel", "Haquu"]
+    cancel_words = ["✖️ ተመለስ", "Cancel", "Haquu"]
     tickets_words = ["📋 የእኔ ትኬቶች", "📋 My Tickets", "📋 Tikeetii Koo"]
     admin_words = ["👨‍💼 አድሚን ፓነል", "👨‍💼 Admin Panel"]
     pick_words = ["🎟 ቁጥር ምረጥ", "🎟 Pick Numbers", "🎟 Lakkoofsa Filadhu"]
@@ -293,7 +293,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ctx.user_data["waiting_phone"] = False
         ctx.user_data["waiting_receipt"] = False
         ctx.user_data["admin_action"] = None
-        await update.message.reply_text("❌", reply_markup=remove_menu())
+        await update.message.reply_text("✖️", reply_markup=remove_menu())
         await show_home(update, ctx)
         return
 
@@ -306,7 +306,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             reply_text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
         else:
             price = await db.get_setting("ticket_price")
-            reply_text = f"{T[lang]['my_tickets_title']}\n{'─'*25}\n"
+            reply_text = f"{T[lang]['my_tickets_title']}\n{'─'*15}\n"
             if confirmed:
                 nums = sorted([r[0] for r in confirmed])
                 reply_text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
@@ -362,9 +362,9 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     lang = ctx.user_data.get("lang", "am")
     text = (
-        f"{T[lang]['payment_title']}\n{'─'*25}\n"
+        f"{T[lang]['payment_title']}\n{'─'*15}\n"
         f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(numbers)))}\n"
-        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*25}\n"
+        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*15}\n"
         f"{T[lang]['choose_payment']}"
     )
     keyboard = [
@@ -395,7 +395,7 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         account_text = f"📱 *Telebirr*\n`{TELEBIRR_ACCOUNT}`\n👤 {TELEBIRR_NAME}"
 
     await update.effective_message.reply_text(
-        f"{account_text}\n{'─'*25}\n💰 *{total_price} ETB*\n{'─'*25}\n{t(ctx, 'ask_receipt')}",
+        f"{account_text}\n{'─'*15}\n💰 *{total_price} ETB*\n{'─'*15}\n{t(ctx, 'ask_receipt')}",
         parse_mode="Markdown",
         reply_markup=get_menu_keyboard(ctx)
     )
@@ -593,10 +593,10 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
 
     text = (
-        f"👨‍💼 *Admin Panel*\n{'─'*25}\n"
+        f"👨‍💼 *Admin Panel*\n{'─'*15}\n"
         f"🎟 ቁጥሮች: {taken}/{total}\n"
         f"💰 ጠቅላላ ገቢ: {total_revenue:,} ETB\n"
-        f"⏳ Pending: {pending_count}\n{'─'*25}"
+        f"⏳ Pending: {pending_count}\n{'─'*15}"
     )
     keyboard = [
         [InlineKeyboardButton(f"⏳ Pending ({pending_count})", callback_data="admin_pending")],
@@ -735,7 +735,7 @@ async def admin_settings_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
     text = (
-        f"⚙️ *ቅንብሮች*\n{'─'*25}\n"
+        f"⚙️ *ቅንብሮች*\n{'─'*15}\n"
         f"🔢 ቁጥሮች: {total}\n💰 ዋጋ: {price} ETB\n"
         f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}"
     )
@@ -812,7 +812,7 @@ async def admin_draw_msg_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
     current_msg = await db.get_setting("draw_message") or ""
     await query.edit_message_text(
-        f"🎊 *Draw Settings*\n{'─'*25}\nአሁን: {draw_btn_name}\nመልዕክት: {current_msg or 'N/A'}\n\nአዲስ ፃፍ (ቅርጸ: `ስም | መልዕክት`):",
+        f"🎊 *Draw Settings*\n{'─'*15}\nአሁን: {draw_btn_name}\nመልዕክት: {current_msg or 'N/A'}\n\nአዲስ ፃፍ (ቅርጸ: `ስም | መልዕክት`):",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("📤 አሁን ያለውን ላክ", callback_data="admin_draw_send")],
@@ -825,11 +825,11 @@ async def admin_draw_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     draw_msg = await db.get_setting("draw_message") or "🎊 እጣ ተቆርጧል!"
     await query.edit_message_text(
-        f"📋 *Preview:*\n{'─'*25}\n{draw_msg}\n{'─'*25}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
+        f"📋 *Preview:*\n{'─'*15}\n{draw_msg}\n{'─'*25}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ አዎ፣ ላክ", callback_data="admin_draw_confirm")],
-            [InlineKeyboardButton("❌ አይ", callback_data="admin_panel")]
+            [InlineKeyboardButton("✖️ አይ", callback_data="admin_panel")]
         ])
     )
 
@@ -865,7 +865,7 @@ async def admin_reset_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ አዎ Reset", callback_data="admin_reset_yes")],
-            [InlineKeyboardButton("❌ አይ", callback_data="admin_panel")]
+            [InlineKeyboardButton("✖️ አይ", callback_data="admin_panel")]
         ])
     )
 
@@ -911,7 +911,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             f"{T[lang]['nums_label']}: {', '.join(map(str, sorted(selected)))}\n"
             f"{T[lang]['name_label']}: {full_name}\n"
             f"{T[lang]['phone_label']}: {digits}\n"
-            f"{T[lang]['total_label']}: {total_price} ETB\n{'─'*25}"
+            f"{T[lang]['total_label']}: {total_price} ETB\n{'─'*15}"
         )
         keyboard = [
             [InlineKeyboardButton(t(ctx, "confirm_send"), callback_data="confirm_send")],
@@ -948,7 +948,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             status_label = {"pending": "⏳ Pending", "approved": "✅ Approved", "rejected": "❌ Rejected"}.get(p_status, p_status)
             # FIX #7: show full_name stored in p_username field alongside tg username
             caption = (
-                f"🔍 *ቁጥር {num} ፍለጋ*\n{'─'*20}\n"
+                f"🔍 *ቁጥር {num} ፍለጋ*\n{'─'*10}\n"
                 f"💳 Payment #{p_id}\n"
                 f"👤 {p_username}\n📞 {p_phone}\n"
                 f"🎟 {p_numbers}\n💰 {total_price} ETB | {p_method}\n"
@@ -1002,12 +1002,12 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     elif action == "broadcast":
         ctx.user_data["broadcast_msg"] = text_input
         await update.message.reply_text(
-            f"📋 *Preview:*\n{'─'*25}\n📢 {text_input}\n{'─'*25}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
+            f"📋 *Preview:*\n{'─'*15}\n📢 {text_input}\n{'─'*15}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ አዎ፣ ላክ", callback_data="broadcast_confirm")],
                 [InlineKeyboardButton("✏️ ቀይር", callback_data="admin_broadcast")],
-                [InlineKeyboardButton("❌ ሰርዝ", callback_data="admin_panel")]
+                [InlineKeyboardButton("✖️ ሰርዝ", callback_data="admin_panel")]
             ])
         )
 
