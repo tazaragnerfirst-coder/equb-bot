@@ -628,42 +628,53 @@ async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
+    
     if not is_admin(update.effective_user.id):
         return
-
+        
     pending = await db.get_pending_payments()
     if not pending:
         await query.edit_message_text(
             "✅ Pending ክፍያ የለም።",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ተመለስ", callback_data="admin_panel")]])
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("◀️ ተመለስ", callback_data="admin_panel")
+            ]])
         )
         return
-
+        
     price = await db.get_setting("ticket_price")
-    await query.edit_message_text(f"⏳ *{len(pending)} pending ክፍያዎች* — ወደ DM እየተላኩ ነው...", parse_mode="Markdown")
-
+    await query.edit_message_text(f"⏳ *{len(pending)}* pending ክፍያዎችን ወደ DM እየላክኩ ነው...", parse_mode="Markdown")
+    
     for p in pending:
         p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status = p[:8]
         numbers = list(map(int, p_numbers.split(",")))
         total_price = len(numbers) * int(price)
+        
+        # ደህንነቱ የተጠበቀ HTML አጻጻፍ (ማርክዳውን ዩዘርኔም ላይ ባለው '_' ምክንያት እንዳይበላሽ)
         caption = (
-            f"💳 *#{p_id}*\n{'─'*20}\n"
+            f"💳 <b>#{p_id}</b>\n{'-'*20}\n"
             f"👤 {p_username}\n📞 {p_phone}\n"
-            f"🎟 {p_numbers}\n💰 {total_price} ETB | {p_method}"
+            f"🎫 {p_numbers}\n"
+            f"💰 {total_price} ETB | {p_method}"
         )
+        
         keyboard = InlineKeyboardMarkup([[
             InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{p_id}"),
             InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{p_id}")
         ]])
+        
         try:
             await ctx.bot.send_photo(
                 chat_id=update.effective_user.id,
-                photo=p_receipt, caption=caption,
-                parse_mode="Markdown", reply_markup=keyboard
+                photo=p_receipt,
+                caption=caption,
+                parse_mode="HTML",
+                reply_markup=keyboard
             )
-            await asyncio.sleep(0.3)
         except Exception as e:
-            logger.error(f"Pending photo: {e}")
+            logger.error(f"Pending send error: {e}")
+            
+        await asyncio.sleep(0.3)
 
 # ─── FIND TICKET ───
 async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
