@@ -1185,7 +1185,6 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     pending_count = len(pending_list)
     price         = int(await db.get_setting("ticket_price"))
     total_revenue = taken * price
-    draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
 
     text = (
         f"🎴 *ADMIN PANEL* 🎴\n"
@@ -1205,7 +1204,6 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton(f"⏳ Pending...({pending_count})", callback_data="admin_pending"),
          InlineKeyboardButton("📊 STATISTICS", callback_data="admin_stats")],
         [InlineKeyboardButton("🔍 SEARCH", callback_data="admin_find")],
-        [InlineKeyboardButton(f"{draw_btn_name}", callback_data="admin_draw_msg")],
     ])
 
     # ReplyKeyboard: Send to Group, Broadcast, Setting
@@ -1395,62 +1393,6 @@ async def broadcast_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ]])
     )
 
-# ── Draw ──
-async def admin_draw_msg_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    if not is_admin(update.effective_user.id):
-        return
-    ctx.user_data["admin_action"] = "set_draw_msg"
-    draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
-    current_msg   = await db.get_setting("draw_message") or ""
-    await query.edit_message_text(
-        f"🎊 *Draw Settings*\n━━━━━━━━━━━━━━━\nCurrent: {draw_btn_name}\nMessage: {current_msg or 'N/A'}\n\nWrite new (format: `Name | Message`):",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("📤 Send Current", callback_data="admin_draw_send")],
-            [InlineKeyboardButton("◀️ Back",         callback_data="admin_panel")]
-        ])
-    )
-
-async def admin_draw_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query    = update.callback_query
-    await query.answer()
-    draw_msg = await db.get_setting("draw_message") or "🎊 እጣ ተቆርጧል!"
-    await query.edit_message_text(
-        f"📋 *Preview:*\n━━━━━━━━━━━━━━━\n{draw_msg}\n━━━━━━━━━━━━━━━\nSend to all + group?",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([
-            [InlineKeyboardButton("✅ Yes, Send", callback_data="admin_draw_confirm")],
-            [InlineKeyboardButton("✖️ No",        callback_data="admin_panel")]
-        ])
-    )
-
-async def admin_draw_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query    = update.callback_query
-    await query.answer()
-    if not is_admin(update.effective_user.id):
-        return
-    draw_msg = await db.get_setting("draw_message") or "🎊 እጣ ተቆርጧል!"
-    users    = await db.get_all_users()
-    sent     = 0
-    for (uid,) in users:
-        try:
-            await ctx.bot.send_message(chat_id=uid, text=f"🎊 {draw_msg}")
-            sent += 1
-        except:
-            pass
-    try:
-        await ctx.bot.send_message(chat_id=GROUP_ID, text=f"🎊 {draw_msg}")
-    except Exception as e:
-        logger.error(f"Group draw: {e}")
-    await query.edit_message_text(
-        f"✅ Sent to {sent} users + group!",
-        reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("◀️ Back", callback_data="admin_panel")
-        ]])
-    )
-
 # ── Reset ──
 async def admin_reset_yes_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1458,23 +1400,8 @@ async def admin_reset_yes_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_user.id):
         return
 
-    # Referral payout notification before reset
-    referral_summary = await db.get_all_referral_counts()
-    if referral_summary:
-        lines = ["💰 *Referral Payout Summary*\n━━━━━━━━━━━━━━━"]
-        total_payout = 0
-        for user_id, count in referral_summary:
-            reward = count * 2
-            total_payout += reward
-            lines.append(f"🆔 {user_id} → {count} referrals → {reward} ብር")
-        lines.append(f"━━━━━━━━━━━━━━━\n💎 ጠቅላላ: {total_payout} ብር")
-        summary_text = "\n".join(lines)
-        for admin_id in ADMIN_IDS:
-            try:
-                await ctx.bot.send_message(chat_id=admin_id, text=summary_text, parse_mode="Markdown")
-            except:
-                pass
-
+    # Note: referral counts are NOT touched or summarized here — they persist
+    # permanently across lottery rounds and are tracked separately.
     await db.reset_lottery()
     await query.edit_message_text(
         "✅ *New lottery started!*",
@@ -1626,18 +1553,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             ])
         )
 
-    elif action == "set_draw_msg":
-        parts = text_input.split("|", 1)
-        if len(parts) == 2:
-            btn_name = parts[0].strip()
-            msg      = parts[1].strip()
-            await db.set_setting("draw_button_name", btn_name)
-            await db.set_setting("draw_message",     msg)
-            await update.message.reply_text(f"✅ Name: {btn_name}\nMessage: {msg}")
-        else:
-            await db.set_setting("draw_message", text_input)
-            await update.message.reply_text("✅ Message saved!")
-
 # ══════════════════════════════════════════
 # MY TICKETS (inline callback version)
 # ══════════════════════════════════════════
@@ -1707,9 +1622,6 @@ def main():
     app.add_handler(CallbackQueryHandler(admin_pending_cb,    pattern="^admin_pending$"))
     app.add_handler(CallbackQueryHandler(admin_stats_cb,      pattern="^admin_stats$"))
     app.add_handler(CallbackQueryHandler(admin_find_cb,       pattern="^admin_find$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_msg_cb,   pattern="^admin_draw_msg$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_send_cb,  pattern="^admin_draw_send$"))
-    app.add_handler(CallbackQueryHandler(admin_draw_confirm_cb,pattern="^admin_draw_confirm$"))
     app.add_handler(CallbackQueryHandler(admin_reset_yes_cb,  pattern="^admin_reset_yes$"))
     app.add_handler(CallbackQueryHandler(broadcast_confirm_cb,pattern="^broadcast_confirm$"))
 
