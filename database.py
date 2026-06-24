@@ -64,7 +64,6 @@ def _parse_field(doc, key):
 
 # ─── INIT ───
 async def init_db():
-    # defaults
     doc = await _get("settings/config")
     if not doc or not doc.get("fields"):
         await _set("settings/config", {
@@ -287,7 +286,6 @@ async def update_payment_status(payment_id, status, reviewed_by):
     await _set(f"payments/{payment_id}", fields)
 
 async def find_payment_by_number(number):
-    """ቁጥር ፈልግ — admin feature"""
     docs = await _list("payments")
     for doc in docs:
         nums = _parse_field(doc, "numbers") or ""
@@ -342,6 +340,44 @@ async def clear_group_messages():
         "message_ids": _sv(""),
     })
 
+# ─── REFERRAL SYSTEM ───
+async def add_referral(referrer_id: str, new_user_id: str):
+    """አዲስ referral ጨምር — referrer_id ሰው new_user_id ጋብዟል"""
+    # Already referred check
+    doc = await _get(f"referrals/{new_user_id}")
+    if doc and doc.get("fields"):
+        return  # Already tracked
+
+    await _set(f"referrals/{new_user_id}", {
+        "referrer_id": _sv(referrer_id),
+        "referred_at": _sv(datetime.now().isoformat()),
+    })
+
+    # Update referrer count
+    count_doc = await _get(f"referral_counts/{referrer_id}")
+    current = 0
+    if count_doc and count_doc.get("fields"):
+        val = _parse_field(count_doc, "count")
+        try:
+            current = int(val)
+        except:
+            current = 0
+    await _set(f"referral_counts/{referrer_id}", {
+        "count": _iv(current + 1),
+        "updated_at": _sv(datetime.now().isoformat()),
+    })
+
+async def get_referral_count(user_id: str) -> int:
+    """የ user_id referral count አምጣ"""
+    doc = await _get(f"referral_counts/{user_id}")
+    if not doc or not doc.get("fields"):
+        return 0
+    val = _parse_field(doc, "count")
+    try:
+        return int(val)
+    except:
+        return 0
+
 # ─── RESET ───
 async def reset_lottery():
     tickets = await _list("tickets")
@@ -354,4 +390,4 @@ async def reset_lottery():
         name = doc.get("name", "")
         p_id = name.split("/")[-1]
         await _delete(f"payments/{p_id}")
-    await clear_group_messages() 
+    await clear_group_messages()
