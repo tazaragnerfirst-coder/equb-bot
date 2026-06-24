@@ -73,8 +73,6 @@ async def init_db():
             "prize_2": _sv("2ኛ ሽልማት"),
             "prize_3": _sv("3ኛ ሽልማት"),
             "lottery_title": _sv("GETU DURESA - EQUB"),
-            "draw_button_name": _sv("🎊 እጣ ቁረጥ"),
-            "draw_message": _sv("🎊 እጣ ተቆርጧል!"),
         })
 
 # ─── SETTINGS ───
@@ -378,8 +376,26 @@ async def get_referral_count(user_id: str) -> int:
     except:
         return 0
 
+async def get_all_referral_counts():
+    """ሁሉንም referrer_id + count ጥንዶች መልሶ ይመጣል (ለ reset payout summary ይጠቅማል)"""
+    docs = await _list("referral_counts")
+    result = []
+    for doc in docs:
+        name = doc.get("name", "")
+        user_id = name.split("/")[-1]
+        val = _parse_field(doc, "count")
+        try:
+            count = int(val)
+        except:
+            count = 0
+        if count > 0:
+            result.append((user_id, count))
+    return sorted(result, key=lambda x: x[1], reverse=True)
+
 # ─── RESET ───
 async def reset_lottery():
+    # Note: referrals and referral_counts are intentionally NOT cleared here.
+    # Referral data persists permanently across lottery rounds (not tied to a round).
     tickets = await _list("tickets")
     for doc in tickets:
         name = doc.get("name", "")
