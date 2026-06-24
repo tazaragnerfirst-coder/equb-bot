@@ -27,9 +27,10 @@ def keep_alive():
 
 T = {
     "am": {
-        "pick_btn": "🎟 ቁጥር ምረጥ",
-        "my_tickets_btn": "📋 የእኔ ትኬቶች",
-        "admin_btn": "👨‍💼 አድሚን ፓነል",
+        "pick_btn": "➕ ቁጥር ምረጥ ➕",
+        "my_tickets_btn": "🌟 የኔ ትኬቶች 🌟",
+        "info_btn": "ℹ️ አጠቃቀም ℹ️",
+        "admin_btn": "🎴 ADMIN 🎴",
         "home_btn": "🏠 ዋና ገጽ",
         "cancel_btn": "❌ ሰርዝ",
         "back_btn": "◀️ ተመለስ",
@@ -53,17 +54,32 @@ T = {
         "receipt_only": "⚠️ እባክዎ *screenshot (ፎቶ)* ይላኩ።",
         "approved": "🎉 *ክፍያዎ ተረጋግጧል!*\n🎟 ቁጥሮቾ: {nums}\n💰 {total} ብር\n✅ ቁጥሮቹ የእርስዎ ሆነዋል። እጣ እስኪቆረጥ ድረስ ይጠብቁ! እናመሰግናለን!",
         "rejected": "❌ *ክፍያዎ አልተረጋገጠም።*\n🎟 ቁጥሮች: {nums}\nእባክዎ ትክክለኛ ማስረጃ ይላኩ ወይም ድጋሚ ይሞክሩ።",
-        "my_tickets_title": "🎟 *የእኔ ትኬቶች*",
+        "my_tickets_title": "🌟 *የኔ ትኬቶች 🌟*",
         "no_tickets": "ምንም ትኬት የለዎትም።",
         "confirmed_label": "✅ የተረጋገጡ",
         "pending_label": "⏳ በሂደት",
         "limit_reached": "⚠️ እስከ {max} ትኬት ብቻ መምረጥ ይቻላል!",
         "choose_lang": "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
+        "info_text": (
+            "ℹ️ *አጠቃቀም መመሪያ*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "1️⃣ *➕ ቁጥር ምረጥ* — ቁጥሮቾን ከ WebApp ይምረጡ\n"
+            "2️⃣ *ክፍያ* — CBE ወይም Telebirr ይምረጡ\n"
+            "3️⃣ *ደረሰኝ ላክ* — Screenshot ይላኩ\n"
+            "4️⃣ *ስም እና ስልክ* — መረጃዎን ይሙሉ\n"
+            "5️⃣ *አረጋግጥ* — አድሚን ያረጋግጥልዎታል\n"
+            "━━━━━━━━━━━━━━━\n"
+            "📌 *ማሳሰቢያ:*\n"
+            "— የምሉ ቁጥሮች ደረሰኝ ትክካለኛ እና ከላይ ያለውን አካውንት ቢሆን ብቻ ተቀባይነት ያሉዋቸው ናቸው\n"
+            "— ደረሰኝ ካቀሩ ወደ ሌሎ ወይም ትርጉም የሌለው ፎቶ ካቀሩ ያለ notification ውድቅ ይሆናል"
+        ),
+        "referral_info": "👥 *Referral ስርዓት*\n━━━━━━━━━━━━━━━\n🔗 የእርስዎ Referral ሊንክ:\n`{link}`\n━━━━━━━━━━━━━━━\n👥 የጋበዟቸው: *{count}* ሰዎች\n🎟 ያገኙት ነፃ ትኬቶች: *{tickets}*\n━━━━━━━━━━━━━━━\n📌 ለእያንዳንዱ የሚጋብዟቸው ሰው *1 ነፃ ትኬት* ያገኛሉ!",
     },
     "en": {
-        "pick_btn": "🎟 Pick Numbers",
-        "my_tickets_btn": "📋 My Tickets",
-        "admin_btn": "👨‍💼 Admin Panel",
+        "pick_btn": "➕ Pick Numbers ➕",
+        "my_tickets_btn": "🌟 My Tickets 🌟",
+        "info_btn": "ℹ️ How to Use ℹ️",
+        "admin_btn": "🎴 ADMIN 🎴",
         "home_btn": "🏠 Home",
         "cancel_btn": "❌ Cancel",
         "back_btn": "◀️ Back",
@@ -87,17 +103,30 @@ T = {
         "receipt_only": "⚠️ Please send a *screenshot (photo)*.",
         "approved": "🎉 *Payment confirmed!*\n🎟 Numbers: {nums}\n💰 {total} ETB\n✅ Your numbers are reserved. Wait for the draw! Developed by @Taza4Business",
         "rejected": "❌ *Payment not confirmed.*\n🎟 Numbers: {nums}\nPlease contact admin.",
-        "my_tickets_title": "🎟 *My Tickets*",
+        "my_tickets_title": "🌟 *My Tickets* 🌟",
         "no_tickets": "You have no tickets.",
         "confirmed_label": "✅ Confirmed",
         "pending_label": "⏳ Pending",
         "limit_reached": "⚠️ Max {max} tickets allowed!",
         "choose_lang": "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
+        "info_text": (
+            "ℹ️ *How to Use*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "1️⃣ *➕ Pick Numbers* — Select numbers from WebApp\n"
+            "2️⃣ *Payment* — Choose CBE or Telebirr\n"
+            "3️⃣ *Send Receipt* — Send screenshot\n"
+            "4️⃣ *Name & Phone* — Fill your info\n"
+            "5️⃣ *Confirm* — Admin will verify\n"
+            "━━━━━━━━━━━━━━━\n"
+            "📌 *Note:* Only valid receipts are accepted."
+        ),
+        "referral_info": "👥 *Referral System*\n━━━━━━━━━━━━━━━\n🔗 Your Referral Link:\n`{link}`\n━━━━━━━━━━━━━━━\n👥 Referred: *{count}* people\n🎟 Free Tickets Earned: *{tickets}*\n━━━━━━━━━━━━━━━\n📌 Earn *1 free ticket* for every person you invite!",
     },
     "or": {
-        "pick_btn": "🎟 Lakkoofsa Filadhu",
-        "my_tickets_btn": "📋 Tikeetii Koo",
-        "admin_btn": "👨‍💼 Admin Panel",
+        "pick_btn": "➕ Lakkoofsa Filadhu ➕",
+        "my_tickets_btn": "🌟 Tikeetii Koo 🌟",
+        "info_btn": "ℹ️ Akkamitti itti fayyadamuu ℹ️",
+        "admin_btn": "🎴 ADMIN 🎴",
         "home_btn": "🏠 Fuula Jalqabaa",
         "cancel_btn": "❌ Haquu",
         "back_btn": "◀️ Deebi'i",
@@ -121,12 +150,24 @@ T = {
         "receipt_only": "⚠️ *Screenshot (suuraa)* ergi.",
         "approved": "🎉 *Kaffaltiins mirkanaa'e!*\n🎟 Lakkoofsa: {nums}\n💰 {total} ETB\n✅ Lakkoofsi kee qabame. Fiigichaa eegi! Developed by @Taza4Business",
         "rejected": "❌ *Kaffaltiins hin mirkanaa'in.*\n🎟 Lakkoofsa: {nums}\nAdmin quunnamaa.",
-        "my_tickets_title": "🎟 *Tikeetii Koo*",
+        "my_tickets_title": "🌟 *Tikeetii Koo* 🌟",
         "no_tickets": "Tikeetii hin qabdu.",
         "confirmed_label": "✅ Mirkanaa'e",
         "pending_label": "⏳ Eegaa jira",
         "limit_reached": "⚠️ Tikeetii {max} qofa filachu dandeessa!",
         "choose_lang": "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
+        "info_text": (
+            "ℹ️ *Akkamitti itti fayyadamuu*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "1️⃣ *➕ Lakkoofsa Filadhu* — WebApp irraa filadhu\n"
+            "2️⃣ *Kaffaltii* — CBE ykn Telebirr filadhu\n"
+            "3️⃣ *Beeksisa Ergi* — Screenshot ergi\n"
+            "4️⃣ *Maqaa fi Bilbila* — Odeeffannoo guuti\n"
+            "5️⃣ *Mirkaneessi* — Admin si beeksisa\n"
+            "━━━━━━━━━━━━━━━\n"
+            "📌 *Yaadadhu:* Beeksisa sirrii qofa fudhatama."
+        ),
+        "referral_info": "👥 *Referral*\n━━━━━━━━━━━━━━━\n🔗 Link kee:\n`{link}`\n━━━━━━━━━━━━━━━\n👥 Affeerre: *{count}* namoota\n🎟 Tikeetii bilisaa: *{tickets}*\n━━━━━━━━━━━━━━━\n📌 Nama hunda affeerteef *tikeetii 1 bilisaa* argatta!",
     }
 }
 
@@ -192,6 +233,14 @@ async def send_full_list_to_group(bot, total):
 
 # ─── LANGUAGE ───
 async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    # Referral tracking
+    args = ctx.args
+    if args and args[0].startswith("ref_"):
+        referrer_id = args[0].replace("ref_", "")
+        if referrer_id != str(user.id):
+            await db.add_referral(referrer_id, str(user.id))
+
     keyboard = [
         [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
         [InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")],
@@ -235,13 +284,17 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
 
-    sep = "─" * 15
+    sep = "━━━━━━━━━━━━━━━"
     text = (
         f"🎉 *{title}*\n{sep}\n"
-        f"🎟 ዋጋ: *{price} ETB*\n"
-        f"🔢 ጠቅላላ: *{total}*\n"
-        f"✅ የቀሩ: *{remaining}*\n{sep}\n"
-        f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}\n{sep}"
+        f"1️⃣ አንደኛ እጣ ◀️\n"
+        f"2️⃣ ሁለተኛ እጣ ◀️\n"
+        f"3️⃣ ሦስተኛ እጣ ◀️\n{sep}\n"
+        f"የትኬት ብዛት = {total}\n"
+        f"የአንዱ ትኬት ዋጋ = {price}\n{sep}\n"
+        f"የምሉልን ትኬት ቁጥር ለመምረጥ\n"
+        f"ከስር ያለውን 👇 \" ➕ ቁጥር ምረጥ ➕ \"\n"
+        f"የሚለውን ቁልፍ ይጫኑ!\n{sep}"
     )
 
     lang = ctx.user_data.get("lang", "am")
@@ -249,6 +302,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     rows = [
         [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=lang_url))],
         [KeyboardButton(t(ctx, "my_tickets_btn"))],
+        [KeyboardButton(t(ctx, "info_btn"))],
     ]
     if is_admin(user.id):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
@@ -275,10 +329,11 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
     home_words = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "/start"]
-    cancel_words = ["❌ ተመለስ", "Cancel", "Haquu"]
-    tickets_words = ["📋 የእኔ ትኬቶች", "📋 My Tickets", "📋 Tikeetii Koo"]
-    admin_words = ["👨‍💼 አድሚን ፓነል", "👨‍💼 Admin Panel"]
-    pick_words = ["🎟 ቁጥር ምረጥ", "🎟 Pick Numbers", "🎟 Lakkoofsa Filadhu"]
+    cancel_words = ["❌ ተመለስ", "Cancel", "Haquu", "❌ ሰርዝ"]
+    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟"]
+    admin_words = ["🎴 ADMIN 🎴"]
+    info_words = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti itti fayyadamuu ℹ️"]
+    pick_words = ["➕ ቁጥር ምረጥ ➕", "➕ Pick Numbers ➕", "➕ Lakkoofsa Filadhu ➕"]
 
     if any(w in text for w in home_words):
         ctx.user_data["waiting_name"] = False
@@ -306,7 +361,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             reply_text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
         else:
             price = await db.get_setting("ticket_price")
-            reply_text = f"{T[lang]['my_tickets_title']}\n{'─'*15}\n"
+            reply_text = f"{T[lang]['my_tickets_title']}\n{'━'*15}\n"
             if confirmed:
                 nums = sorted([r[0] for r in confirmed])
                 reply_text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
@@ -314,6 +369,11 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 nums = sorted([r[0] for r in pending])
                 reply_text += f"{T[lang]['pending_label']}: {', '.join(map(str, nums))}\n"
         await update.message.reply_text(reply_text, parse_mode="Markdown")
+        return
+
+    if any(w in text for w in info_words):
+        lang = ctx.user_data.get("lang", "am")
+        await update.message.reply_text(T[lang]["info_text"], parse_mode="Markdown")
         return
 
     if any(w in text for w in admin_words):
@@ -361,20 +421,23 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["waiting_receipt"] = False
 
     lang = ctx.user_data.get("lang", "am")
+    sep = "━━━━━━━━━━━━━━━"
     text = (
-        f"{T[lang]['payment_title']}\n{'─'*15}\n"
-        f"{T[lang]['selected_nums_label']}: {', '.join(map(str, sorted(numbers)))}\n"
-        f"{T[lang]['total_label']}: *{total_price} ETB*\n{'─'*15}\n"
-        f"{T[lang]['choose_payment']}"
+        f"💳 *ክፍያ*\n{sep}\n"
+        f"🎟 {', '.join(map(str, sorted(numbers)))}\n"
+        f"📊 ትኬት ብዛት = {len(numbers)}\n"
+        f"💰 ዋጋ = {total_price}\n{sep}\n"
+        f"ክፍያ ለመፈጸም ከስር ያለውን 👇\n"
+        f"💳 የክፍያ አሰራር ምረጥ ➕ \"\n"
+        f"የሚለውን ቁልፍ ይጫኑ!\n{sep}"
     )
     keyboard = [
-        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe")],
-        [InlineKeyboardButton("📱 Telebirr", callback_data="pay_telebirr")],
-        [InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")],
+        [InlineKeyboardButton("🏦 CBE", callback_data="pay_cbe"),
+         InlineKeyboardButton("📱 TELE BIRR", callback_data="pay_telebirr")],
+        [InlineKeyboardButton("◀️ ተመለስ", callback_data="main_menu")],
     ]
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
-# FIX #6: Flow changed to: payment method → show account → ask receipt → ask name → ask phone → preview → send
 async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -389,13 +452,28 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     price = await db.get_setting("ticket_price")
     total_price = len(selected) * int(price)
 
+    sep = "━━━━━━━━━━━━━━━"
     if method == "CBE":
-        account_text = f"🏦 *CBE*\n`{CBE_ACCOUNT}`\n👤 {CBE_NAME}"
+        account_text = f"🏦 *CBE*\nአካዉንት ቁጥር ◀️ `{CBE_ACCOUNT}`\nስም ◀️ {CBE_NAME}"
     else:
-        account_text = f"📱 *Telebirr*\n`{TELEBIRR_ACCOUNT}`\n👤 {TELEBIRR_NAME}"
+        account_text = f"📱 *TELE BIRR*\nአካዉንት ቁጥር ◀️ `{TELEBIRR_ACCOUNT}`\nስም ◀️ {TELEBIRR_NAME}"
+
+    text = (
+        f"{account_text}\n{sep}\n"
+        f"ድምር ዋጋ = {total_price} ብር\n{sep}\n"
+        f"ክፍያ ለመፈጸም ከነዚህ አካዉንቶች ለማስተናገጫ\n"
+        f"አንዱን ተጠቀሙ እና ክፍያ ፈጽሙ:\n"
+        f"ከዚህ ክፍያ ደረሰኝዎን (screenshot) ወይም ደረሰኝ\n"
+        f"ምስል ይላኩልን 👆\n{sep}\n"
+        f"⚠️ ማሳሰቢያ ⚠️\n"
+        f"— የሚላኩት ደረሰኝም ሆነ ስክሪን ሾት (screenshot) ትክክለኛ\n"
+        f"  እና ተቀባይነት ያለው የሆነ መሆኑን አለበት።\n"
+        f"— የሚላኩት ደረሰኝ ትክክለኛ እና ትርጉም ፣ ቦደንብ የሚታይ እና ጥራት\n"
+        f"  ያለው መሆኑን አለበት።"
+    )
 
     await update.effective_message.reply_text(
-        f"{account_text}\n{'─'*15}\n💰 *{total_price} ETB*\n{'─'*15}\n{t(ctx, 'ask_receipt')}",
+        text,
         parse_mode="Markdown",
         reply_markup=get_menu_keyboard(ctx)
     )
@@ -416,7 +494,6 @@ async def handle_receipt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     file_id = photo[-1].file_id if photo else document.file_id
     ctx.user_data["receipt_file_id"] = file_id
     ctx.user_data["waiting_receipt"] = False
-    # FIX #6: After receipt, ask name
     ctx.user_data["waiting_name"] = True
     ctx.user_data["waiting_phone"] = False
 
@@ -447,6 +524,7 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method)
     await db.reserve_tickets(selected, user.id, username, phone)
 
+    sep = "━━━━━━━━━━━━━━━"
     await query.edit_message_text(
         t(ctx, "sent_ok", name=full_name, phone=phone,
           nums=', '.join(map(str, sorted(selected))),
@@ -455,20 +533,26 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")]])
     )
 
-    # FIX #7: Show both username and full_name in admin notification
     tg_username = f"@{user.username}" if user.username else "—"
     admin_text = (
         f"💳 <b>አዲስ ክፍያ!</b>\n{'-'*15}\n"
+        f"ዉድ [user name] 👤\n"
+        f"{sep}\n"
+        f"አሁን የቀዩበት ቁጥሮች 👇\n"
+        f"{sep}\n"
+        f"{', '.join(map(str, sorted(selected)))}\n"
+        f"{sep}\n"
+        f"የትኬት ብዛት = {len(selected)}\n"
+        f"ዋጋ = {total_price}\n"
+        f"{sep}\n"
         f"👤 {full_name}\n"
         f"🔗 {tg_username}\n"
         f"📞 {phone}\n"
         f"🆔 <code>{user.id}</code>\n"
-        f"🎫 {', '.join(map(str, sorted(selected)))}\n"
-        f"💰 {total_price} ETB | {method}\n"
-        f"🕒 ቆይ: #{payment_id}"
+        f"💳 {method}\n"
+        f"🕒 #{payment_id}"
     )
 
-    # FIX #3: After approve/reject buttons are used, they will be removed via edit in approve_reject_cb
     keyboard = InlineKeyboardMarkup([[
         InlineKeyboardButton("✅ አረጋግጥ", callback_data=f"approve_{payment_id}"),
         InlineKeyboardButton("❌ ውድቅ", callback_data=f"reject_{payment_id}")
@@ -504,7 +588,6 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status = payment[:8]
 
-    # FIX #3: If already reviewed, remove buttons silently
     if p_status != "pending":
         try:
             await query.edit_message_reply_markup(reply_markup=None)
@@ -522,6 +605,15 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await db.update_payment_status(payment_id, "approved", user.id)
         await db.confirm_tickets(numbers, p_user_id, p_username, p_phone)
 
+        sep = "━━━━━━━━━━━━━━━"
+        approved_text = (
+            f"🎉 *ክፍያዎ ተረጋግጧል!*\n{sep}\n"
+            f"✅ ክፍያዎ ተረጋግጧል!\n{sep}\n"
+            f"የላኩት ቁጥሮች ◀️\n{sep}\n"
+            f"🌟 እናመሰጋናለን! 🌟\n"
+            f"Developed by @Taza4Business"
+        )
+
         try:
             await ctx.bot.send_message(
                 chat_id=p_user_id,
@@ -531,7 +623,6 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"User approved notify: {e}")
 
-        # FIX #3: Remove buttons after action
         try:
             await query.edit_message_caption(
                 caption=f"✅ <b>Approved</b>\n👤 {p_username}\n📞 {p_phone}\n🎟 {p_numbers}\n💰 {total_price} ETB",
@@ -541,7 +632,6 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Edit caption error: {e}")
 
-        # FIX #4: Auto-send group list on ticket approval
         try:
             await send_full_list_to_group(ctx.bot, total)
         except Exception as e:
@@ -572,7 +662,6 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"User rejected notify: {e}")
 
-        # FIX #3: Remove buttons after action
         try:
             await query.edit_message_caption(
                 caption=f"❌ <b>Rejected</b>\n👤 {p_username}\n📞 {p_phone}\n🎟 {p_numbers}",
@@ -592,21 +681,24 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_revenue = taken * int(price)
     draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
 
+    sep = "━━━━━━━━━━━━━━━"
     text = (
-        f"👨‍💼 *Admin Panel*\n{'─'*15}\n"
-        f"🎟 ቁጥሮች: {taken}/{total}\n"
-        f"💰 ጠቅላላ ገቢ: {total_revenue:,} ETB\n"
-        f"⏳ Pending: {pending_count}\n{'─'*15}"
+        f"🎴 *ADMIN PANEL* 🎴\n{sep}\n"
+        f"የትኬት ብዛት = {total}\n"
+        f"የተሸጠ = {taken}\n"
+        f"ቀሪ = {total - taken}\n{sep}\n"
+        f"ገቢ = {total_revenue:,} ብር\n"
+        f"በሂደት ላይ ያለ = {pending_count}\n{sep}\n"
+        f"for admin only!"
     )
     keyboard = [
-        [InlineKeyboardButton(f"⏳ Pending ({pending_count})", callback_data="admin_pending")],
-        [InlineKeyboardButton("📊 ስታቲስቲክስ", callback_data="admin_stats")],
-        [InlineKeyboardButton("🔍 ቁጥር ፈልግ", callback_data="admin_find")],
+        [InlineKeyboardButton(f"⏳ Pending...({pending_count})", callback_data="admin_pending"),
+         InlineKeyboardButton("📊 STATISTICS", callback_data="admin_stats")],
+        [InlineKeyboardButton("🔍 SEARCH", callback_data="admin_find")],
         [InlineKeyboardButton("📤 ዝርዝር ወደ ግሩፕ ላክ", callback_data="admin_send_list")],
-        [InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast")],
+        [InlineKeyboardButton("📢 BROADCAST 📢", callback_data="admin_broadcast"),
+         InlineKeyboardButton("⚙️ SETTING ⚙️", callback_data="admin_settings")],
         [InlineKeyboardButton(f"{draw_btn_name}", callback_data="admin_draw_msg")],
-        [InlineKeyboardButton("⚙️ ማስተካከያ", callback_data="admin_settings")],
-        [InlineKeyboardButton("🔄 Reset", callback_data="admin_reset_confirm")],
         [InlineKeyboardButton("🏠 ዋና ገጽ", callback_data="main_menu")],
     ]
     if update.callback_query:
@@ -624,7 +716,7 @@ async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     await show_admin_panel(update, ctx)
 
-# ─── PENDING (ሙሉ info + photo) ───
+# ─── PENDING ───
 async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -675,18 +767,7 @@ async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
         await asyncio.sleep(0.3)
 
-# ─── FIND TICKET ───
-async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    ctx.user_data["admin_action"] = "find_ticket"
-    await query.edit_message_text(
-        "🔍 *የትኛው ትኬት ቁጥር በማን እንደተያዘ እና መች እንተያዘ ማወቅ ይፈልጋሉ? ይፈለጉትን ቁጥር ፃፍ:*\nምሳሌ: 45",
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ሰርዝ", callback_data="admin_panel")]])
-    )
-
-# ─── STATS ───
+# ─── STATISTICS (ተሻሽሎ) ───
 async def admin_stats_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -694,20 +775,45 @@ async def admin_stats_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     taken = await db.count_taken_tickets()
     price = int(await db.get_setting("ticket_price"))
     today_count = await db.count_tickets_today()
-    pending = len(await db.get_pending_payments())
+    pending_count = len(await db.get_pending_payments())
+    reserved = await db.count_pending_tickets()
+    percent = round((taken / total) * 100, 1) if total > 0 else 0
 
+    # Progress bar
+    filled = int(percent / 10)
+    bar = "█" * filled + "░" * (10 - filled)
+
+    sep = "━━━━━━━━━━━━━━━"
     text = (
-        f"📊 *ስታቲስቲክስ*\n{'─'*15}\n"
-        f"🎟 የተሸጡ: {taken}/{total}\n"
-        f"⏳ Pending: {pending}\n"
-        f"✅ የቀሩ: {total - taken}\n"
-        f"📅 ዛሬ approved: {today_count}\n{'─'*15}\n"
-        f"💰 ጠቅላላ ገቢ: *{taken * price:,} ETB*\n"
-        f"⏳ Pending ገቢ: *{pending * price:,} ETB*"
+        f"📊 *STATISTICS*\n{sep}\n"
+        f"🎟 ጠቅላላ ቁጥሮች: *{total}*\n"
+        f"✅ የተሸጡ (Approved): *{taken}*\n"
+        f"⏳ Reserved (Pending): *{reserved}*\n"
+        f"🆓 ነፃ ቁጥሮች: *{total - taken - reserved}*\n"
+        f"⌛ Pending ክፍያዎች: *{pending_count}*\n"
+        f"📅 ዛሬ Approved: *{today_count}*\n"
+        f"{sep}\n"
+        f"📈 የሽያጭ እድገት:\n"
+        f"[{bar}] {percent}%\n"
+        f"{sep}\n"
+        f"💰 Approved ገቢ: *{taken * price:,} ETB*\n"
+        f"⏳ Pending ገቢ: *{pending_count * price:,} ETB*\n"
+        f"💎 ጠቅላላ ሊሆን የሚችል: *{total * price:,} ETB*"
     )
     await query.edit_message_text(
         text, parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ተመለስ", callback_data="admin_panel")]])
+    )
+
+# ─── FIND TICKET ───
+async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    ctx.user_data["admin_action"] = "find_ticket"
+    await query.edit_message_text(
+        "🔍 *SEARCH*\n━━━━━━━━━━━━━━━\nየትኛው ትኬት ቁጥር በማን እንደተያዘ ለማወቅ\nቁጥሩን ወይም ስሙን ፃፍ:\nምሳሌ: 45",
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ሰርዝ", callback_data="admin_panel")]])
     )
 
 # ─── SEND LIST ───
@@ -734,17 +840,19 @@ async def admin_settings_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     prize1 = await db.get_setting("prize_1")
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
+    sep = "━━━━━━━━━━━━━━━"
     text = (
-        f"⚙️ *ማስተካከያ*\n{'─'*15}\n"
+        f"⚙️ *SETTING* ⚙️\n{sep}\n"
         f"🔢 ቁጥሮች: {total}\n💰 ዋጋ: {price} ETB\n"
         f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}"
     )
     keyboard = [
-        [InlineKeyboardButton("🔢 ቁጥሮች ብዛት", callback_data="set_tickets")],
-        [InlineKeyboardButton("💰 ዋጋ", callback_data="set_price")],
-        [InlineKeyboardButton("🥇 1ኛ ሽልማት", callback_data="set_prize_1")],
-        [InlineKeyboardButton("🥈 2ኛ ሽልማት", callback_data="set_prize_2")],
-        [InlineKeyboardButton("🥉 3ኛ ሽልማት", callback_data="set_prize_3")],
+        [InlineKeyboardButton("CHANGE NUMBER 🔢", callback_data="set_tickets"),
+         InlineKeyboardButton("CHANGE PRICE 💰", callback_data="set_price")],
+        [InlineKeyboardButton("PRIZE 1️⃣", callback_data="set_prize_1"),
+         InlineKeyboardButton("PRIZE 2️⃣", callback_data="set_prize_2"),
+         InlineKeyboardButton("PRIZE 3️⃣", callback_data="set_prize_3")],
+        [InlineKeyboardButton("⚠️ RESET ⚠️", callback_data="admin_reset_confirm")],
         [InlineKeyboardButton("◀️ ተመለስ", callback_data="admin_panel")],
     ]
     await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -774,7 +882,7 @@ async def admin_broadcast_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     ctx.user_data["admin_action"] = "broadcast"
     await query.edit_message_text(
-        "📢 *Broadcast መልዕክት ወደ ግሩፕ አባላት እና ወደ ቦቱ ተጠቃሚዎች የመላክ የፈለጉትን መልክት ይፃፉ:*",
+        "📢 *BROADCAST*\n━━━━━━━━━━━━━━━\nወደ ሁሉም ተጠቃሚዎች እና ግሩፕ\nየሚፈልጉትን መልዕክት ይፃፉ:",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ሰርዝ", callback_data="admin_panel")]])
     )
@@ -812,7 +920,7 @@ async def admin_draw_msg_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     draw_btn_name = await db.get_setting("draw_button_name") or "🎊 እጣ ቁረጥ"
     current_msg = await db.get_setting("draw_message") or ""
     await query.edit_message_text(
-        f"🎊 *Draw Settings*\n{'─'*15}\nአሁን: {draw_btn_name}\nመልዕክት: {current_msg or 'N/A'}\n\nአዲስ ፃፍ (ቅርጸ: `ስም | መልዕክት`):",
+        f"🎊 *Draw Settings*\n━━━━━━━━━━━━━━━\nአሁን: {draw_btn_name}\nመልዕክት: {current_msg or 'N/A'}\n\nአዲስ ፃፍ (ቅርጸ: `ስም | መልዕክት`):",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("📤 አሁን ያለውን ላክ", callback_data="admin_draw_send")],
@@ -825,7 +933,7 @@ async def admin_draw_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     draw_msg = await db.get_setting("draw_message") or "🎊 እጣ ተቆርጧል!"
     await query.edit_message_text(
-        f"📋 *Preview:*\n{'─'*15}\n{draw_msg}\n{'─'*15}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
+        f"📋 *Preview:*\n━━━━━━━━━━━━━━━\n{draw_msg}\n━━━━━━━━━━━━━━━\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ አዎ፣ ላክ", callback_data="admin_draw_confirm")],
@@ -865,7 +973,7 @@ async def admin_reset_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE)
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([
             [InlineKeyboardButton("✅ አዎ Reset", callback_data="admin_reset_yes")],
-            [InlineKeyboardButton("✖️ አይ", callback_data="admin_panel")]
+            [InlineKeyboardButton("✖️ አይ", callback_data="admin_settings")]
         ])
     )
 
@@ -877,6 +985,26 @@ async def admin_reset_yes_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "✅ *አዲስ እጣ ተጀምሯል!*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ወደ ፓነል", callback_data="admin_panel")]])
+    )
+
+# ─── REFERRAL ───
+async def referral_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user = update.effective_user
+    bot_username = (await ctx.bot.get_me()).username
+    ref_link = f"https://t.me/{bot_username}?start=ref_{user.id}"
+    count = await db.get_referral_count(str(user.id))
+    free_tickets = count  # 1 free ticket per referral
+    lang = ctx.user_data.get("lang", "am")
+    text = T[lang]["referral_info"].format(
+        link=ref_link,
+        count=count,
+        tickets=free_tickets
+    )
+    await query.edit_message_text(
+        text, parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("◀️ ተመለስ", callback_data="main_menu")]])
     )
 
 # ─── TEXT INPUT ───
@@ -898,7 +1026,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ctx.user_data["user_phone"] = digits
         ctx.user_data["waiting_phone"] = False
 
-        # FIX #6: After name+phone collected, show simplified preview (no edit buttons)
         selected = ctx.user_data.get("selected", [])
         method = ctx.user_data.get("payment_method", "CBE")
         full_name = ctx.user_data.get("full_name", update.effective_user.full_name)
@@ -906,12 +1033,14 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         total_price = len(selected) * int(price)
         lang = ctx.user_data.get("lang", "am")
 
+        sep = "━━━━━━━━━━━━━━━"
         preview = (
-            f"{T[lang]['preview_title']}\n{'─'*15}\n"
-            f"{T[lang]['nums_label']}: {', '.join(map(str, sorted(selected)))}\n"
-            f"{T[lang]['name_label']}: {full_name}\n"
-            f"{T[lang]['phone_label']}: {digits}\n"
-            f"{T[lang]['total_label']}: {total_price} ETB\n{'─'*15}"
+            f"📋 *ማረጋገጫ*\n{sep}\n"
+            f"🎟 ቁጥሮች: {', '.join(map(str, sorted(selected)))}\n"
+            f"👤 ስም: {full_name}\n"
+            f"📞 ስልክ: {digits}\n"
+            f"💰 ዋጋ: {total_price} ETB\n"
+            f"💳 ዘዴ: {method}\n{sep}"
         )
         keyboard = [
             [InlineKeyboardButton(t(ctx, "confirm_send"), callback_data="confirm_send")],
@@ -933,6 +1062,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         try:
             num = int(text_input)
         except:
+            # Try name search
             await update.message.reply_text("⚠️ ቁጥር ብቻ ፃፍ።")
             return
         payment = await db.find_payment_by_number(num)
@@ -946,9 +1076,8 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             nums_list = list(map(int, p_numbers.split(",")))
             total_price = len(nums_list) * int(price)
             status_label = {"pending": "⏳ Pending", "approved": "✅ Approved", "rejected": "❌ Rejected"}.get(p_status, p_status)
-            # FIX #7: show full_name stored in p_username field alongside tg username
             caption = (
-                f"🔍 *ቁጥር {num} ፍለጋ*\n{'─'*10}\n"
+                f"🔍 *ቁጥር {num} ፍለጋ*\n━━━━━━━━━━\n"
                 f"💳 Payment #{p_id}\n"
                 f"👤 {p_username}\n📞 {p_phone}\n"
                 f"🎟 {p_numbers}\n💰 {total_price} ETB | {p_method}\n"
@@ -977,7 +1106,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if action == "set_tickets":
         try:
             val = int(text_input)
-            # FIX #2: max changed from 1000 to 800
             if 10 <= val <= 800:
                 await db.set_setting("total_tickets", val)
                 await update.message.reply_text(f"✅ ቁጥሮች → {val}")
@@ -1002,7 +1130,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     elif action == "broadcast":
         ctx.user_data["broadcast_msg"] = text_input
         await update.message.reply_text(
-            f"📋 *Preview:*\n{'─'*15}\n📢 {text_input}\n{'─'*15}\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
+            f"📋 *Preview:*\n━━━━━━━━━━━━━━━\n📢 {text_input}\n━━━━━━━━━━━━━━━\nለሁሉም + ግሩፕ ይላካል። ትክክል ነው?",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("✅ አዎ፣ ላክ", callback_data="broadcast_confirm")],
@@ -1023,6 +1151,36 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await db.set_setting("draw_message", text_input)
             await update.message.reply_text("✅ መልዕክት ተቀምጧል!")
 
+# ─── MY TICKETS CB ───
+async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    user = update.effective_user
+    confirmed = await db.get_user_tickets(user.id, "taken")
+    pending = await db.get_user_tickets(user.id, "reserved")
+    lang = ctx.user_data.get("lang", "am")
+
+    if not confirmed and not pending:
+        text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
+    else:
+        price = await db.get_setting("ticket_price")
+        text = f"{T[lang]['my_tickets_title']}\n{'━'*15}\n"
+        if confirmed:
+            nums = sorted([r[0] for r in confirmed])
+            text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
+        if pending:
+            nums = sorted([r[0] for r in pending])
+            text += f"{T[lang]['pending_label']}: {', '.join(map(str, nums))}\n"
+
+    keyboard = [
+        [InlineKeyboardButton("👥 Referral", callback_data="show_referral")],
+        [InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")],
+    ]
+    await query.edit_message_text(
+        text, parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
 # ─── MAIN ───
 async def post_init(application):
     await db.init_db()
@@ -1042,6 +1200,7 @@ def main():
     app.add_handler(CallbackQueryHandler(payment_method_cb, pattern="^pay_(cbe|telebirr)$"))
     app.add_handler(CallbackQueryHandler(confirm_send_cb, pattern="^confirm_send$"))
     app.add_handler(CallbackQueryHandler(my_tickets_cb, pattern="^my_tickets$"))
+    app.add_handler(CallbackQueryHandler(referral_cb, pattern="^show_referral$"))
 
     app.add_handler(CallbackQueryHandler(admin_panel_cb, pattern="^admin_panel$"))
     app.add_handler(CallbackQueryHandler(admin_pending_cb, pattern="^admin_pending$"))
@@ -1065,31 +1224,6 @@ def main():
 
     logger.info("Bot started!")
     app.run_polling(drop_pending_updates=True)
-
-async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    user = update.effective_user
-    confirmed = await db.get_user_tickets(user.id, "taken")
-    pending = await db.get_user_tickets(user.id, "reserved")
-    lang = ctx.user_data.get("lang", "am")
-
-    if not confirmed and not pending:
-        text = f"{T[lang]['my_tickets_title']}\n\n{T[lang]['no_tickets']}"
-    else:
-        price = await db.get_setting("ticket_price")
-        text = f"{T[lang]['my_tickets_title']}\n{'─'*15}\n"
-        if confirmed:
-            nums = sorted([r[0] for r in confirmed])
-            text += f"{T[lang]['confirmed_label']}: {', '.join(map(str, nums))}\n💰 {len(nums)*int(price)} ETB\n\n"
-        if pending:
-            nums = sorted([r[0] for r in pending])
-            text += f"{T[lang]['pending_label']}: {', '.join(map(str, nums))}\n"
-
-    await query.edit_message_text(
-        text, parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton(t(ctx, "home_btn"), callback_data="main_menu")]])
-    )
 
 if __name__ == "__main__":
     main()
