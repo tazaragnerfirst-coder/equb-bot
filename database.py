@@ -1,409 +1,389 @@
-import httpx
+import os
+import json
+import asyncio
 import logging
 from datetime import date, datetime
 
+import firebase_admin
+from firebase_admin import credentials, firestore
+
 logger = logging.getLogger(__name__)
 
-FIRESTORE_BASE = "https://firestore.googleapis.com/v1/projects/equb-c5f5f/databases/(default)/documents"
+# ─── INIT ADMIN SDK ───
+_cred_json = os.environ.get("FIREBASE_CREDENTIALS_JSON")
+if _cred_json and not firebase_admin._apps:
+    cred = credentials.Certificate(json.loads(_cred_json))
+    firebase_admin.initialize_app(cred)
 
-async def _get(path):
-    url = f"{FIRESTORE_BASE}/{path}"
-    async with httpx.AsyncClient() as c:
-        r = await c.get(url, timeout=10)
-        if r.status_code == 200:
-            return r.json()
-        return None
+db = firestore.client()
 
-async def _set(path, fields):
-    url = f"{FIRESTORE_BASE}/{path}"
-    payload = {"fields": fields}
-    async with httpx.AsyncClient() as c:
-        await c.patch(url, json=payload, timeout=10)
 
-async def _delete(path):
-    url = f"{FIRESTORE_BASE}/{path}"
-    async with httpx.AsyncClient() as c:
-        await c.delete(url, timeout=10)
+# ─── HELPER: run sync Firestore calls in a thread (keeps async bot non-blocking) ───
+async def _run(func, *args, **kwargs):
+    return await asyncio.to_thread(func, *args, **kwargs)
 
-async def _list(collection, page_size=1000):
-    url = f"{FIRESTORE_BASE}/{collection}?pageSize={page_size}"
-    async with httpx.AsyncClient() as c:
-        r = await c.get(url, timeout=15)
-        if r.status_code == 200:
-            return r.json().get("documents", [])
-        return []
-
-async def _query(collection, field, op, value, value_type="stringValue"):
-    url = f"{FIRESTORE_BASE}:runQuery"
-    body = {
-        "structuredQuery": {
-            "from": [{"collectionId": collection}],
-            "where": {
-                "fieldFilter": {
-                    "field": {"fieldPath": field},
-                    "op": op,
-                    "value": {value_type: value}
-                }
-            }
-        }
-    }
-    async with httpx.AsyncClient() as c:
-        r = await c.post(url, json=body, timeout=15)
-        if r.status_code == 200:
-            return [d["document"] for d in r.json() if "document" in d]
-        return []
-
-def _sv(v): return {"stringValue": str(v)}
-def _iv(v): return {"integerValue": str(int(v))}
-def _fv(v): return {"fields": v}
-
-def _parse_field(doc, key):
-    fields = doc.get("fields", {})
-    f = fields.get(key, {})
-    return f.get("stringValue") or f.get("integerValue") or f.get("booleanValue") or None
 
 # ─── INIT ───
-async def init_db():
-    doc = await _get("settings/config")
-    if not doc or not doc.get("fields"):
-        await _set("settings/config", {
-            "total_tickets": _iv(1000),
-            "ticket_price": _iv(400),
-            "prize_1": _sv("1ኛ ሽልማት"),
-            "prize_2": _sv("2ኛ ሽልማት"),
-            "prize_3": _sv("3ኛ ሽልማት"),
-            "lottery_title": _sv("GETU DURESA - EQUB"),
+def _init_db_sync():
+    ref = db.collection("settings").document("config")
+    doc = ref.get()
+    if not doc.exists:
+        ref.set({
+            "total_tickets": 1000,
+            "ticket_price": 400,
+            "prize_1": "1ኛ ሽልማት",
+            "prize_2": "2ኛ ሽልማት",
+            "prize_3": "3ኛ ሽልማት",
+            "lottery_title": "GETU DURESA - EQUB",
         })
 
+async def init_db():
+    await _run(_init_db_sync)
+
+
 # ─── SETTINGS ───
-async def get_setting(key):
-    doc = await _get("settings/config")
-    if not doc:
+def _get_setting_sync(key):
+    doc = db.collection("settings").document("config").get()
+    if not doc.exists:
         return None
-    return _parse_field(doc, key)
+    return doc.to_dict().get(key)
+
+async def get_setting(key):
+    return await _run(_get_setting_sync, key)
+
+def _set_setting_sync(key, value):
+    db.collection("settings").document("config").set({key: value}, merge=True)
 
 async def set_setting(key, value):
-    doc = await _get("settings/config")
-    fields = doc.get("fields", {}) if doc else {}
-    if isinstance(value, int) or str(value).isdigit():
-        fields[key] = _iv(value)
-    else:
-        fields[key] = _sv(value)
-    await _set("settings/config", fields)
+    if isinstance(value, str) and value.isdigit():
+        value = int(value)
+    await _run(_set_setting_sync, key, value)
+
 
 # ─── TICKETS ───
-async def get_ticket(number):
-    doc = await _get(f"tickets/{number}")
-    if not doc or not doc.get("fields"):
+def _get_ticket_sync(number):
+    doc = db.collection("tickets").document(str(number)).get()
+    if not doc.exists:
         return None
-    f = doc["fields"]
+    d = doc.to_dict()
     return (
         number,
-        _parse_field(doc, "user_id"),
-        _parse_field(doc, "username"),
-        _parse_field(doc, "phone"),
-        _parse_field(doc, "status"),
+        d.get("user_id"),
+        d.get("username"),
+        d.get("phone"),
+        d.get("status"),
     )
 
-async def get_tickets_range(start, end):
-    docs = await _list("tickets")
+async def get_ticket(number):
+    return await _run(_get_ticket_sync, number)
+
+def _get_tickets_range_sync(start, end):
+    docs = db.collection("tickets").stream()
     result = []
     for doc in docs:
-        name = doc.get("name", "")
-        num = int(name.split("/")[-1])
+        num = int(doc.id)
         if start <= num <= end:
-            result.append((
-                num,
-                _parse_field(doc, "user_id"),
-                _parse_field(doc, "status"),
-                _parse_field(doc, "phone"),
-            ))
+            d = doc.to_dict()
+            result.append((num, d.get("user_id"), d.get("status"), d.get("phone")))
+    return result
+
+async def get_tickets_range(start, end):
+    return await _run(_get_tickets_range_sync, start, end)
+
+def _get_all_tickets_full_sync(total):
+    docs = db.collection("tickets").stream()
+    result = {}
+    for doc in docs:
+        num = int(doc.id)
+        if 1 <= num <= total:
+            d = doc.to_dict()
+            result[num] = (d.get("phone") or "", d.get("status") or "free")
     return result
 
 async def get_all_tickets_full(total):
-    docs = await _list("tickets")
-    result = {}
-    for doc in docs:
-        name = doc.get("name", "")
-        num = int(name.split("/")[-1])
-        if 1 <= num <= total:
-            result[num] = (
-                _parse_field(doc, "phone") or "",
-                _parse_field(doc, "status") or "free",
-            )
-    return result
+    return await _run(_get_all_tickets_full_sync, total)
+
+def _reserve_tickets_sync(numbers, user_id, username, phone):
+    batch = db.batch()
+    for num in numbers:
+        ref = db.collection("tickets").document(str(num))
+        batch.set(ref, {
+            "status": "reserved",
+            "user_id": str(user_id),
+            "username": str(username),
+            "phone": str(phone),
+            "created_at": datetime.now().isoformat(),
+        })
+    batch.commit()
 
 async def reserve_tickets(numbers, user_id, username, phone):
+    await _run(_reserve_tickets_sync, numbers, user_id, username, phone)
+
+def _confirm_tickets_sync(numbers, user_id, username, phone):
+    batch = db.batch()
     for num in numbers:
-        await _set(f"tickets/{num}", {
-            "status": _sv("reserved"),
-            "user_id": _sv(str(user_id)),
-            "username": _sv(str(username)),
-            "phone": _sv(str(phone)),
-            "created_at": _sv(datetime.now().isoformat()),
+        ref = db.collection("tickets").document(str(num))
+        batch.set(ref, {
+            "status": "taken",
+            "user_id": str(user_id),
+            "username": str(username),
+            "phone": str(phone),
+            "created_at": datetime.now().isoformat(),
         })
+    batch.commit()
 
 async def confirm_tickets(numbers, user_id, username, phone):
+    await _run(_confirm_tickets_sync, numbers, user_id, username, phone)
+
+def _free_tickets_sync(numbers):
+    batch = db.batch()
     for num in numbers:
-        await _set(f"tickets/{num}", {
-            "status": _sv("taken"),
-            "user_id": _sv(str(user_id)),
-            "username": _sv(str(username)),
-            "phone": _sv(str(phone)),
-            "created_at": _sv(datetime.now().isoformat()),
-        })
+        batch.delete(db.collection("tickets").document(str(num)))
+    batch.commit()
 
 async def free_tickets(numbers):
-    for num in numbers:
-        await _delete(f"tickets/{num}")
+    await _run(_free_tickets_sync, numbers)
+
+def _count_taken_tickets_sync():
+    docs = db.collection("tickets").where("status", "==", "taken").stream()
+    return sum(1 for _ in docs)
 
 async def count_taken_tickets():
-    docs = await _list("tickets")
-    return sum(1 for d in docs if _parse_field(d, "status") == "taken")
+    return await _run(_count_taken_tickets_sync)
+
+def _count_pending_tickets_sync():
+    docs = db.collection("tickets").where("status", "==", "reserved").stream()
+    return sum(1 for _ in docs)
 
 async def count_pending_tickets():
-    docs = await _list("tickets")
-    return sum(1 for d in docs if _parse_field(d, "status") == "reserved")
+    return await _run(_count_pending_tickets_sync)
 
-async def count_tickets_today():
-    docs = await _list("payments")
+def _count_tickets_today_sync():
     today = date.today().isoformat()
+    docs = db.collection("payments").where("status", "==", "approved").stream()
     count = 0
     for doc in docs:
-        if _parse_field(doc, "status") == "approved":
-            reviewed = _parse_field(doc, "reviewed_at") or ""
-            if reviewed.startswith(today):
-                nums = _parse_field(doc, "numbers") or ""
-                count += len(nums.split(",")) if nums else 0
+        d = doc.to_dict()
+        reviewed = d.get("reviewed_at") or ""
+        if reviewed.startswith(today):
+            nums = d.get("numbers") or ""
+            count += len(nums.split(",")) if nums else 0
     return count
 
+async def count_tickets_today():
+    return await _run(_count_tickets_today_sync)
+
+def _get_user_tickets_sync(user_id, status):
+    docs = db.collection("tickets").where("user_id", "==", str(user_id)).where("status", "==", status).stream()
+    return [(int(doc.id),) for doc in docs]
+
 async def get_user_tickets(user_id, status):
-    docs = await _list("tickets")
-    result = []
-    for doc in docs:
-        if _parse_field(doc, "user_id") == str(user_id) and _parse_field(doc, "status") == status:
-            name = doc.get("name", "")
-            num = int(name.split("/")[-1])
-            result.append((num,))
-    return result
+    return await _run(_get_user_tickets_sync, user_id, status)
+
 
 # ─── PAYMENTS ───
-async def _next_payment_id():
-    docs = await _list("payments")
-    if not docs:
-        return 1
-    ids = []
-    for d in docs:
-        name = d.get("name", "")
-        try:
-            ids.append(int(name.split("/")[-1]))
-        except:
-            pass
+def _next_payment_id_sync():
+    docs = db.collection("payments").stream()
+    ids = [int(doc.id) for doc in docs]
     return max(ids) + 1 if ids else 1
 
-async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
-    p_id = await _next_payment_id()
+def _add_payment_sync(user_id, username, phone, numbers, receipt_file_id, payment_method):
+    p_id = _next_payment_id_sync()
     numbers_str = ",".join(map(str, numbers))
-    await _set(f"payments/{p_id}", {
-        "user_id": _sv(str(user_id)),
-        "username": _sv(str(username)),
-        "phone": _sv(str(phone)),
-        "numbers": _sv(numbers_str),
-        "receipt_file_id": _sv(str(receipt_file_id)),
-        "payment_method": _sv(str(payment_method)),
-        "status": _sv("pending"),
-        "created_at": _sv(datetime.now().isoformat()),
-        "reviewed_by": _sv(""),
-        "reviewed_at": _sv(""),
+    db.collection("payments").document(str(p_id)).set({
+        "user_id": str(user_id),
+        "username": str(username),
+        "phone": str(phone),
+        "numbers": numbers_str,
+        "receipt_file_id": str(receipt_file_id),
+        "payment_method": str(payment_method),
+        "status": "pending",
+        "created_at": datetime.now().isoformat(),
+        "reviewed_by": "",
+        "reviewed_at": "",
     })
     return p_id
 
-async def get_payment(payment_id):
-    doc = await _get(f"payments/{payment_id}")
-    if not doc or not doc.get("fields"):
+async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
+    return await _run(_add_payment_sync, user_id, username, phone, numbers, receipt_file_id, payment_method)
+
+def _get_payment_sync(payment_id):
+    doc = db.collection("payments").document(str(payment_id)).get()
+    if not doc.exists:
         return None
+    d = doc.to_dict()
     return (
-        payment_id,
-        _parse_field(doc, "user_id"),
-        _parse_field(doc, "username"),
-        _parse_field(doc, "phone"),
-        _parse_field(doc, "numbers"),
-        _parse_field(doc, "receipt_file_id"),
-        _parse_field(doc, "payment_method"),
-        _parse_field(doc, "status"),
-        _parse_field(doc, "created_at"),
-        _parse_field(doc, "reviewed_by"),
-        _parse_field(doc, "reviewed_at"),
+        payment_id, d.get("user_id"), d.get("username"), d.get("phone"),
+        d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"),
+        d.get("status"), d.get("created_at"), d.get("reviewed_by"), d.get("reviewed_at"),
     )
 
-async def get_pending_payments():
-    docs = await _list("payments")
+async def get_payment(payment_id):
+    return await _run(_get_payment_sync, payment_id)
+
+def _get_pending_payments_sync():
+    docs = db.collection("payments").where("status", "==", "pending").stream()
     result = []
     for doc in docs:
-        if _parse_field(doc, "status") == "pending":
-            name = doc.get("name", "")
-            p_id = int(name.split("/")[-1])
-            result.append((
-                p_id,
-                _parse_field(doc, "user_id"),
-                _parse_field(doc, "username"),
-                _parse_field(doc, "phone"),
-                _parse_field(doc, "numbers"),
-                _parse_field(doc, "receipt_file_id"),
-                _parse_field(doc, "payment_method"),
-                _parse_field(doc, "status"),
-            ))
+        d = doc.to_dict()
+        result.append((
+            int(doc.id), d.get("user_id"), d.get("username"), d.get("phone"),
+            d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"), d.get("status"),
+        ))
     return sorted(result, key=lambda x: x[0])
 
-async def get_all_approved_payments():
-    docs = await _list("payments")
+async def get_pending_payments():
+    return await _run(_get_pending_payments_sync)
+
+def _get_all_approved_payments_sync():
+    docs = db.collection("payments").where("status", "==", "approved").stream()
     result = []
     for doc in docs:
-        if _parse_field(doc, "status") == "approved":
-            name = doc.get("name", "")
-            p_id = int(name.split("/")[-1])
-            result.append((
-                p_id,
-                _parse_field(doc, "username"),
-                _parse_field(doc, "phone"),
-                _parse_field(doc, "numbers"),
-                _parse_field(doc, "receipt_file_id"),
-                _parse_field(doc, "payment_method"),
-                _parse_field(doc, "reviewed_at"),
-            ))
+        d = doc.to_dict()
+        result.append((
+            int(doc.id), d.get("username"), d.get("phone"), d.get("numbers"),
+            d.get("receipt_file_id"), d.get("payment_method"), d.get("reviewed_at"),
+        ))
     return sorted(result, key=lambda x: x[0], reverse=True)
 
-async def update_payment_status(payment_id, status, reviewed_by):
-    doc = await _get(f"payments/{payment_id}")
-    if not doc:
-        return
-    fields = doc.get("fields", {})
-    fields["status"] = _sv(status)
-    fields["reviewed_by"] = _sv(str(reviewed_by))
-    fields["reviewed_at"] = _sv(datetime.now().isoformat())
-    await _set(f"payments/{payment_id}", fields)
+async def get_all_approved_payments():
+    return await _run(_get_all_approved_payments_sync)
 
-async def find_payment_by_number(number):
-    docs = await _list("payments")
+def _update_payment_status_sync(payment_id, status, reviewed_by):
+    db.collection("payments").document(str(payment_id)).set({
+        "status": status,
+        "reviewed_by": str(reviewed_by),
+        "reviewed_at": datetime.now().isoformat(),
+    }, merge=True)
+
+async def update_payment_status(payment_id, status, reviewed_by):
+    await _run(_update_payment_status_sync, payment_id, status, reviewed_by)
+
+def _find_payment_by_number_sync(number):
+    docs = db.collection("payments").stream()
     for doc in docs:
-        nums = _parse_field(doc, "numbers") or ""
+        d = doc.to_dict()
+        nums = d.get("numbers") or ""
         if str(number) in nums.split(","):
-            name = doc.get("name", "")
-            p_id = int(name.split("/")[-1])
             return (
-                p_id,
-                _parse_field(doc, "user_id"),
-                _parse_field(doc, "username"),
-                _parse_field(doc, "phone"),
-                _parse_field(doc, "numbers"),
-                _parse_field(doc, "receipt_file_id"),
-                _parse_field(doc, "payment_method"),
-                _parse_field(doc, "status"),
-                _parse_field(doc, "reviewed_at"),
+                int(doc.id), d.get("user_id"), d.get("username"), d.get("phone"),
+                d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"),
+                d.get("status"), d.get("reviewed_at"),
             )
     return None
 
+async def find_payment_by_number(number):
+    return await _run(_find_payment_by_number_sync, number)
+
+
 # ─── USERS ───
-async def get_all_users():
-    docs = await _list("payments")
-    seen = set()
-    result = []
+def _get_all_users_sync():
+    docs = db.collection("payments").stream()
+    seen, result = set(), []
     for doc in docs:
-        uid = _parse_field(doc, "user_id")
+        uid = doc.to_dict().get("user_id")
         if uid and uid not in seen:
             seen.add(uid)
             result.append((uid,))
     return result
 
+async def get_all_users():
+    return await _run(_get_all_users_sync)
+
+
 # ─── GROUP MESSAGES ───
-async def save_group_message_ids(chat_id, message_ids):
-    await _set("meta/group_messages", {
-        "chat_id": _sv(str(chat_id)),
-        "message_ids": _sv(",".join(map(str, message_ids))),
+def _save_group_message_ids_sync(chat_id, message_ids):
+    db.collection("meta").document("group_messages").set({
+        "chat_id": str(chat_id),
+        "message_ids": ",".join(map(str, message_ids)),
     })
 
-async def get_group_message_ids():
-    doc = await _get("meta/group_messages")
-    if not doc or not doc.get("fields"):
+async def save_group_message_ids(chat_id, message_ids):
+    await _run(_save_group_message_ids_sync, chat_id, message_ids)
+
+def _get_group_message_ids_sync():
+    doc = db.collection("meta").document("group_messages").get()
+    if not doc.exists:
         return []
-    ids_str = _parse_field(doc, "message_ids") or ""
-    chat_id = _parse_field(doc, "chat_id") or ""
+    d = doc.to_dict()
+    ids_str = d.get("message_ids") or ""
+    chat_id = d.get("chat_id") or ""
     if not ids_str or not chat_id:
         return []
     return [(int(i), int(chat_id)) for i in ids_str.split(",") if i]
 
+async def get_group_message_ids():
+    return await _run(_get_group_message_ids_sync)
+
+def _clear_group_messages_sync():
+    db.collection("meta").document("group_messages").set({"chat_id": "", "message_ids": ""})
+
 async def clear_group_messages():
-    await _set("meta/group_messages", {
-        "chat_id": _sv(""),
-        "message_ids": _sv(""),
-    })
+    await _run(_clear_group_messages_sync)
+
 
 # ─── REFERRAL SYSTEM ───
-async def add_referral(referrer_id: str, new_user_id: str):
-    """አዲስ referral ጨምር — referrer_id ሰው new_user_id ጋብዟል"""
-    # Already referred check
-    doc = await _get(f"referrals/{new_user_id}")
-    if doc and doc.get("fields"):
-        return  # Already tracked
-
-    await _set(f"referrals/{new_user_id}", {
-        "referrer_id": _sv(referrer_id),
-        "referred_at": _sv(datetime.now().isoformat()),
+def _add_referral_sync(referrer_id, new_user_id):
+    ref_doc = db.collection("referrals").document(str(new_user_id))
+    if ref_doc.get().exists:
+        return
+    ref_doc.set({
+        "referrer_id": str(referrer_id),
+        "referred_at": datetime.now().isoformat(),
     })
-
-    # Update referrer count
-    count_doc = await _get(f"referral_counts/{referrer_id}")
+    count_ref = db.collection("referral_counts").document(str(referrer_id))
+    snap = count_ref.get()
     current = 0
-    if count_doc and count_doc.get("fields"):
-        val = _parse_field(count_doc, "count")
+    if snap.exists:
         try:
-            current = int(val)
-        except:
+            current = int(snap.to_dict().get("count", 0))
+        except (TypeError, ValueError):
             current = 0
-    await _set(f"referral_counts/{referrer_id}", {
-        "count": _iv(current + 1),
-        "updated_at": _sv(datetime.now().isoformat()),
+    count_ref.set({
+        "count": current + 1,
+        "updated_at": datetime.now().isoformat(),
     })
+
+async def add_referral(referrer_id: str, new_user_id: str):
+    await _run(_add_referral_sync, referrer_id, new_user_id)
+
+def _get_referral_count_sync(user_id):
+    doc = db.collection("referral_counts").document(str(user_id)).get()
+    if not doc.exists:
+        return 0
+    try:
+        return int(doc.to_dict().get("count", 0))
+    except (TypeError, ValueError):
+        return 0
 
 async def get_referral_count(user_id: str) -> int:
-    """የ user_id referral count አምጣ"""
-    doc = await _get(f"referral_counts/{user_id}")
-    if not doc or not doc.get("fields"):
-        return 0
-    val = _parse_field(doc, "count")
-    try:
-        return int(val)
-    except:
-        return 0
+    return await _run(_get_referral_count_sync, user_id)
 
-async def get_all_referral_counts():
-    """ሁሉንም referrer_id + count ጥንዶች መልሶ ይመጣል (ለ reset payout summary ይጠቅማል)"""
-    docs = await _list("referral_counts")
+def _get_all_referral_counts_sync():
+    docs = db.collection("referral_counts").stream()
     result = []
     for doc in docs:
-        name = doc.get("name", "")
-        user_id = name.split("/")[-1]
-        val = _parse_field(doc, "count")
         try:
-            count = int(val)
-        except:
+            count = int(doc.to_dict().get("count", 0))
+        except (TypeError, ValueError):
             count = 0
         if count > 0:
-            result.append((user_id, count))
+            result.append((doc.id, count))
     return sorted(result, key=lambda x: x[1], reverse=True)
 
+async def get_all_referral_counts():
+    return await _run(_get_all_referral_counts_sync)
+
+
 # ─── RESET ───
-async def reset_lottery():
+def _reset_lottery_sync():
     # Note: referrals and referral_counts are intentionally NOT cleared here.
     # Referral data persists permanently across lottery rounds (not tied to a round).
-    tickets = await _list("tickets")
-    for doc in tickets:
-        name = doc.get("name", "")
-        num = name.split("/")[-1]
-        await _delete(f"tickets/{num}")
-    payments = await _list("payments")
-    for doc in payments:
-        name = doc.get("name", "")
-        p_id = name.split("/")[-1]
-        await _delete(f"payments/{p_id}")
-    await clear_group_messages()
+    for doc in db.collection("tickets").stream():
+        doc.reference.delete()
+    for doc in db.collection("payments").stream():
+        doc.reference.delete()
+    _clear_group_messages_sync()
+
+async def reset_lottery():
+    await _run(_reset_lottery_sync)
