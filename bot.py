@@ -820,19 +820,8 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except:
             pass
         await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-    else:
-        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-
-    # ── Admin tools inline buttons (ADMIN PANEL + CARDS አንድ ላይ) ──
-    if is_admin(user.id):
-        await update.effective_message.reply_text(
-            "🔧 *Admin Tools*",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("🎴 ADMIN PANEL", callback_data="admin_panel"),
-                InlineKeyboardButton("📋 CARDS", web_app=WebAppInfo(url=f"{PUBLIC_URL}/admin.html"))
-            ]])
-        )
+    
+  
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
