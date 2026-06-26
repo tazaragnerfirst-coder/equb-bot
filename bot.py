@@ -1052,7 +1052,7 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             return
 
     username   = f"@{user.username}" if user.username else full_name
-    payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method)
+    payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, full_name=full_name)
     await db.reserve_tickets(selected, user.id, username, phone)
 
     await query.edit_message_text(
