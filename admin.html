@@ -9,13 +9,16 @@
   :root{
     --bg:#0f1117; --card:#1a1d27; --border:#2a2e3a;
     --text:#e8e9ed; --dim:#8b8f9c; --accent:#5b8def; --danger:#ef4444;
+    --green:#22c55e;
   }
   *{box-sizing:border-box;}
   body{
     margin:0; background:var(--bg); color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    min-height:100vh; padding-bottom:24px;
+    min-height:100vh; padding-bottom:32px;
   }
+
+  /* ── Search bar ── */
   #searchWrap{
     position:sticky; top:0; background:var(--bg); padding:14px 14px 10px;
     z-index:10; border-bottom:1px solid var(--border);
@@ -23,19 +26,81 @@
   #searchBar{
     width:100%; padding:11px 14px; border-radius:12px; border:1px solid var(--border);
     background:var(--card); color:var(--text); font-size:15px; outline:none;
+    transition: border-color .2s;
   }
-  #statusLine{ padding:10px 14px 0; color:var(--dim); font-size:13px; }
-  #cardList{ padding:10px 14px; display:flex; flex-direction:column; gap:10px; }
+  #searchBar:focus{ border-color: var(--accent); }
+
+  #statusLine{ padding:10px 14px 2px; color:var(--dim); font-size:13px; }
+
+  /* ── Cards ── */
+  #cardList{ padding:10px 14px; display:flex; flex-direction:column; gap:12px; }
+
   .card{
-    background:var(--card); border:1px solid var(--border); border-radius:14px;
-    padding:14px 16px;
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    overflow:hidden;
   }
-  .card .name{ font-size:16px; font-weight:700; margin-bottom:2px; }
-  .card .uname{ color:var(--accent); font-size:13px; margin-bottom:8px; }
-  .row{ display:flex; justify-content:space-between; font-size:13.5px; padding:3px 0; color:var(--dim); }
+
+  /* Receipt thumbnail */
+  .card .receipt-wrap{
+    width:100%; max-height:180px; overflow:hidden;
+    border-bottom:1px solid var(--border); position:relative;
+    background:#111;
+  }
+  .card .receipt-wrap img{
+    width:100%; object-fit:cover; display:block;
+    cursor:pointer; transition: opacity .2s;
+  }
+  .card .receipt-wrap img:hover{ opacity:.85; }
+  .card .receipt-label{
+    position:absolute; bottom:0; left:0; right:0;
+    padding:4px 10px; font-size:11px; color:var(--dim);
+    background:rgba(0,0,0,.55);
+  }
+
+  /* Receipt fallback button (if image fails) */
+  .receipt-btn{
+    display:none; width:100%; padding:10px 14px;
+    background:rgba(91,141,239,.12); border:none; border-bottom:1px solid var(--border);
+    color:var(--accent); font-size:13.5px; cursor:pointer; text-align:left;
+  }
+
+  /* Card body */
+  .card-body{ padding:14px 16px; }
+  .card .name{ font-size:16px; font-weight:700; margin-bottom:1px; }
+  .card .uname{ color:var(--accent); font-size:13px; margin-bottom:10px; }
+  .row{
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:13.5px; padding:4px 0; color:var(--dim);
+    border-bottom:1px solid rgba(255,255,255,.04);
+  }
+  .row:last-child{ border-bottom:none; }
   .row b{ color:var(--text); font-weight:600; }
-  #centerMsg{ text-align:center; color:var(--dim); padding:60px 20px; font-size:14px; }
+
+  /* Status badge */
+  .badge{
+    font-size:11px; font-weight:700; padding:2px 8px;
+    border-radius:20px; letter-spacing:.3px;
+  }
+  .badge.approved{ background:rgba(34,197,94,.18); color:var(--green); }
+
+  #centerMsg{
+    text-align:center; color:var(--dim); padding:60px 20px; font-size:14px;
+  }
   #centerMsg.error{ color:var(--danger); }
+
+  /* Fullscreen image overlay */
+  #overlay{
+    display:none; position:fixed; inset:0; z-index:100;
+    background:rgba(0,0,0,.92); align-items:center; justify-content:center;
+    flex-direction:column;
+  }
+  #overlay.open{ display:flex; }
+  #overlay img{ max-width:96vw; max-height:88vh; border-radius:8px; object-fit:contain; }
+  #overlay .close-btn{
+    margin-top:16px; padding:10px 28px; border-radius:24px;
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:14px; cursor:pointer;
+  }
 </style>
 </head>
 <body>
@@ -47,10 +112,18 @@
 <div id="cardList"></div>
 <div id="centerMsg">በመጫን ላይ...</div>
 
+<!-- Fullscreen receipt overlay -->
+<div id="overlay">
+  <img id="overlayImg" src="" alt="Receipt">
+  <button class="close-btn" id="overlayClose">✕ ዝጋ</button>
+</div>
+
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { initializeApp }    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc }
+                            from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth, signInWithCustomToken }
+                            from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
@@ -60,9 +133,10 @@ const firebaseConfig = {
   messagingSenderId: "745997733561",
   appId: "1:745997733561:web:6a37c360fdc5fa2d559568"
 };
-const app = initializeApp(firebaseConfig);
-const dbf = getFirestore(app);
-const authf = getAuth(app);
+
+const app  = initializeApp(firebaseConfig);
+const dbf  = getFirestore(app);
+const authf= getAuth(app);
 
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
@@ -72,11 +146,27 @@ const centerMsg = document.getElementById('centerMsg');
 const cardList  = document.getElementById('cardList');
 const searchBar = document.getElementById('searchBar');
 const statusLine= document.getElementById('statusLine');
+const overlay   = document.getElementById('overlay');
+const overlayImg= document.getElementById('overlayImg');
 
-// 🔁 ይህን ከ Render bot URL ጋር ለውጥ
-const VERIFY_URL = "https://equb-bot-vt5m.onrender.com/verify-admin";
+document.getElementById('overlayClose').addEventListener('click', () => {
+  overlay.classList.remove('open');
+});
+
+const VERIFY_URL   = "https://equb-bot-vt5m.onrender.com/verify-admin";
+// ← ቦቱ username ይቀይሩ
+const BOT_USERNAME = "YourBotUsername";
 
 let allCards = [];
+
+// ── Telegram file URL resolver ──
+// file_id ቀጥታ src ሊሆን አይችልም — bot server ያስፈልጋል።
+// ስለዚህ receipt thumbnail ለ admin app ካሰፈለጋቸው
+// separate /get-receipt endpoint ማስጨመር ይኖርቦታል (ወይም receipt link approach)
+// እዚህ: link approach ብቻ — thumbnail አይታይም፣ button ይታያል
+function receiptLink(payment_id) {
+  return `https://t.me/${BOT_USERNAME}?start=receipt_${payment_id}`;
+}
 
 async function main() {
   if (!initData) {
@@ -91,7 +181,9 @@ async function main() {
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      showError(e.error === "not_admin" ? "🚫 access denied" : `⚠️ ማረጋገጥ አልተቻለም (${res.status})`);
+      showError(e.error === "not_admin"
+        ? "🚫 access denied"
+        : `⚠️ ማረጋገጥ አልተቻለም (${res.status})`);
       return;
     }
     const { token } = await res.json();
@@ -112,12 +204,14 @@ function showError(msg) {
 async function loadPayments() {
   const snap = await getDocs(collection(dbf, 'payments'));
   const cards = [];
+
   for (const docSnap of snap.docs) {
     const d = docSnap.data();
     if (d.status !== 'approved') continue;
-    cards.push(d);
+    cards.push({ ...d, _pid: docSnap.id });
   }
 
+  // Referral counts
   const cache = {};
   for (const c of cards) {
     if (cache[c.user_id] === undefined) {
@@ -142,33 +236,48 @@ async function loadPayments() {
 function render(cards) {
   statusLine.textContent = `${cards.length} ካርድ`;
   cardList.innerHTML = '';
+
   for (const d of cards) {
-    const dt = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
+    const dt  = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
+    const link= receiptLink(d._pid);
+    const displayName = d.full_name || d.username || '—';
+
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
-      <div class="name">👤 ${esc(d.full_name || d.username || '—')}</div>
-      <div class="uname">${esc(d.username || '')}</div>
-      <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
-      <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
-      <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
-      <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
+      <div class="card-body">
+        <div class="name">👤 ${esc(displayName)}</div>
+        <div class="uname">${esc(d.username || '')}</div>
+        <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
+        <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
+        <div class="row"><span>💳 ዘዴ</span><b>${esc(d.payment_method || '—')}</b></div>
+        <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
+        <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
+        <div class="row" style="padding-top:8px;">
+          <span></span>
+          <a href="${esc(link)}"
+             style="color:var(--accent);font-size:13px;text-decoration:none;"
+             target="_blank">🧾 ደረሰኝ ይመልከቱ →</a>
+        </div>
+      </div>
     `;
     cardList.appendChild(div);
   }
 }
 
 function esc(s) {
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
 searchBar.addEventListener('input', () => {
   const q = searchBar.value.trim().toLowerCase();
   if (!q) { render(allCards); return; }
   render(allCards.filter(d =>
-    (d.username || '').toLowerCase().includes(q) ||
-    (d.phone || '').toLowerCase().includes(q) ||
-    (d.numbers || '').toLowerCase().includes(q)
+    (d.full_name   || '').toLowerCase().includes(q) ||
+    (d.username    || '').toLowerCase().includes(q) ||
+    (d.phone       || '').toLowerCase().includes(q) ||
+    (d.numbers     || '').toLowerCase().includes(q)
   ));
 });
 
