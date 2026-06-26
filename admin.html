@@ -147,7 +147,8 @@ function render(cards) {
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
-      <div class="name">👤 ${esc(d.username || '—')}</div>
+      <div class="name">👤 ${esc(d.full_name || d.username || '—')}</div>
+      <div class="uname">${esc(d.username || '')}</div>
       <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
       <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
       <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
