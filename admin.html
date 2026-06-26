@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Admin - GETU DURESA</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+  :root{
+    --bg:#0f1117; --card:#1a1d27; --border:#2a2e3a;
+    --text:#e8e9ed; --dim:#8b8f9c; --accent:#5b8def; --danger:#ef4444;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    min-height:100vh; padding-bottom:24px;
+  }
+  #searchWrap{
+    position:sticky; top:0; background:var(--bg); padding:14px 14px 10px;
+    z-index:10; border-bottom:1px solid var(--border);
+  }
+  #searchBar{
+    width:100%; padding:11px 14px; border-radius:12px; border:1px solid var(--border);
+    background:var(--card); color:var(--text); font-size:15px; outline:none;
+  }
+  #statusLine{ padding:10px 14px 0; color:var(--dim); font-size:13px; }
+  #cardList{ padding:10px 14px; display:flex; flex-direction:column; gap:10px; }
+  .card{
+    background:var(--card); border:1px solid var(--border); border-radius:14px;
+    padding:14px 16px;
+  }
+  .card .name{ font-size:16px; font-weight:700; margin-bottom:2px; }
+  .card .uname{ color:var(--accent); font-size:13px; margin-bottom:8px; }
+  .row{ display:flex; justify-content:space-between; font-size:13.5px; padding:3px 0; color:var(--dim); }
+  .row b{ color:var(--text); font-weight:600; }
+  #centerMsg{ text-align:center; color:var(--dim); padding:60px 20px; font-size:14px; }
+  #centerMsg.error{ color:var(--danger); }
+</style>
+</head>
+<body>
+
+<div id="searchWrap">
+  <input id="searchBar" placeholder="🔍 ስም, ስልክ, ቁጥር ፍለግ...">
+</div>
+<div id="statusLine"></div>
+<div id="cardList"></div>
+<div id="centerMsg">በመጫን ላይ...</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+import { getAuth, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
+  authDomain: "equb-c5f5f.firebaseapp.com",
+  projectId: "equb-c5f5f",
+  storageBucket: "equb-c5f5f.firebasestorage.app",
+  messagingSenderId: "745997733561",
+  appId: "1:745997733561:web:6a37c360fdc5fa2d559568"
+};
+const app = initializeApp(firebaseConfig);
+const dbf = getFirestore(app);
+const authf = getAuth(app);
+
+const tg = window.Telegram?.WebApp;
+if (tg) tg.expand();
+const initData = tg?.initData || "";
+
+const centerMsg = document.getElementById('centerMsg');
+const cardList  = document.getElementById('cardList');
+const searchBar = document.getElementById('searchBar');
+const statusLine= document.getElementById('statusLine');
+
+// 🔁 ይህን ከ Render bot URL ጋር ለውጥ
+const VERIFY_URL = "https://equb-bot-vt5m.onrender.com/verify-admin";
+
+let allCards = [];
+
+async function main() {
+  if (!initData) {
+    showError("⚠️ Telegram ውስጥ ብቻ ይከፈት።");
+    return;
+  }
+  try {
+    const res = await fetch(VERIFY_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ initData })
+    });
+    if (!res.ok) {
+      const e = await res.json().catch(() => ({}));
+      showError(e.error === "not_admin" ? "🚫 access denied" : "⚠️ ማረጋገጥ አልተቻለም");
+      return;
+    }
+    const { token } = await res.json();
+    await signInWithCustomToken(authf, token);
+    await loadPayments();
+  } catch (err) {
+    console.error(err);
+    showError("⚠️ network error");
+  }
+}
+
+function showError(msg) {
+  centerMsg.textContent = msg;
+  centerMsg.classList.add('error');
+  centerMsg.style.display = 'block';
+}
+
+async function loadPayments() {
+  const snap = await getDocs(collection(dbf, 'payments'));
+  const cards = [];
+  for (const docSnap of snap.docs) {
+    const d = docSnap.data();
+    if (d.status !== 'approved') continue;
+    cards.push(d);
+  }
+
+  // referral counts (best-effort)
+  const cache = {};
+  for (const c of cards) {
+    if (cache[c.user_id] === undefined) {
+      try {
+        const rdoc = await getDoc(doc(dbf, 'referral_counts', String(c.user_id)));
+        cache[c.user_id] = rdoc.exists() ? (rdoc.data().count || 0) : 0;
+      } catch {
+        cache[c.user_id] = '—';
+      }
+    }
+    c._refCount = cache[c.user_id];
+  }
+
+  cards.sort((a, b) => (b.reviewed_at || '').localeCompare(a.reviewed_at || ''));
+  allCards = cards;
+  render(cards);
+
+  centerMsg.style.display = cards.length === 0 ? 'block' : 'none';
+  if (cards.length === 0) centerMsg.textContent = "ምንም approved ክፍያ የለም።";
+}
+
+function render(cards) {
+  statusLine.textContent = `${cards.length} ካርድ`;
+  cardList.innerHTML = '';
+  for (const d of cards) {
+    const dt = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
+    const div = document.createElement('div');
+    div.className = 'card';
+    div.innerHTML = `
+      <div class="name">👤 ${esc(d.username || '—')}</div>
+      <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
+      <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
+      <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
+      <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
+    `;
+    cardList.appendChild(div);
+  }
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+searchBar.addEventListener('input', () => {
+  const q = searchBar.value.trim().toLowerCase();
+  if (!q) { render(allCards); return; }
+  render(allCards.filter(d =>
+    (d.username || '').toLowerCase().includes(q) ||
+    (d.phone || '').toLowerCase().includes(q) ||
+    (d.numbers || '').toLowerCase().includes(q)
+  ));
+});
+
+main();
+</script>
+</body>
+</html>
