@@ -841,10 +841,10 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
-    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟"]
-    admin_words   = ["🎴 ADMIN 🎴"]
+    tickets_words = ["✴️ የኔ ትኬቶች ✴️", "✴️ My Tickets ✴️", "✴️ Tikeetii Koo ✴️"]
+    admin_words   = ["🔰 ADMIN 🔰"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
-    pick_words    = ["➕ ቁጥር ምረጥ ➕", "➕ Pick Numbers ➕", "➕ Lakkoofsa Filadhu ➕"]
+    pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
 
     if any(w in text for w in home_words):
         ctx.user_data["waiting_name"]    = False
@@ -1283,7 +1283,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except:
             await update.effective_message.reply_text(
                 text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text("─", reply_markup=menu_kb)
+        await update.effective_message.reply_text("", reply_markup=menu_kb)
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
