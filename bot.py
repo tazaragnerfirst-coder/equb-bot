@@ -841,8 +841,8 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
-    tickets_words = ["✴️ የኔ ትኬቶች ✴️", "✴️ My Tickets ✴️", "✴️ Tikeetii Koo ✴️"]
-    admin_words   = ["🔰 ADMIN 🔰"]
+    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟"]
+    admin_words   = ["🎴 ADMIN 🎴"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
     pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
 
