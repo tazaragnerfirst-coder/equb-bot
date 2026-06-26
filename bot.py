@@ -16,10 +16,16 @@ logger = logging.getLogger(__name__)
 
 MAX_TICKETS_PER_USER = 10
 
-flask_app = Flask('')
+# 🔁 ይህን ቦቱ ካለበት Render URL ጋር አንድ መሆኑን አረጋግጥ
+PUBLIC_URL = "https://equb-bot-vt5m.onrender.com"
+
+# static_folder='.' => admin.html ራሱ root ላይ ስለሆነ /admin.html ላይ በቀጥታ ይታያል
+flask_app = Flask('', static_folder='.', static_url_path='')
+
 @flask_app.route('/')
 def home():
     return "Bot is alive! 🤖"
+
 def keep_alive():
     t = Thread(target=lambda: flask_app.run(host='0.0.0.0', port=8080))
     t.daemon = True
@@ -27,6 +33,7 @@ def keep_alive():
 
 from admin_auth import register_admin_verify_route
 register_admin_verify_route(flask_app)
+
 # ══════════════════════════════════════════
 # TRANSLATIONS
 # ══════════════════════════════════════════
@@ -37,6 +44,7 @@ T = {
         "my_tickets_btn": "🌟 የኔ ትኬቶች 🌟",
         "info_btn":       "ℹ️ አጠቃቀም ℹ️",
         "admin_btn":      "🎴 ADMIN 🎴",
+        "admin_cards_btn":"📋 CARDS",
         "home_btn":       "🏠 ዋና ገጽ",
         "cancel_btn":     "❌ ሰርዝ",
         "back_btn":       "◀️ ተመለስ",
@@ -256,6 +264,7 @@ T = {
         "my_tickets_btn": "🌟 My Tickets 🌟",
         "info_btn":       "ℹ️ How to Use ℹ️",
         "admin_btn":      "🎴 ADMIN 🎴",
+        "admin_cards_btn":"📋 CARDS",
         "home_btn":       "🏠 Home",
         "cancel_btn":     "❌ Cancel",
         "back_btn":       "◀️ Back",
@@ -448,6 +457,7 @@ T = {
         "my_tickets_btn": "🌟 Tikeetii Koo 🌟",
         "info_btn":       "ℹ️ Akkamitti fayyadamuu ℹ️",
         "admin_btn":      "🎴 ADMIN 🎴",
+        "admin_cards_btn":"📋 CARDS",
         "home_btn":       "🏠 Fuula Jalqabaa",
         "cancel_btn":     "❌ Haquu",
         "back_btn":       "◀️ Deebi'i",
@@ -761,6 +771,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ]
     if is_admin(user.id):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
+        rows.append([KeyboardButton(t(ctx, "admin_cards_btn"), web_app=WebAppInfo(url=f"{PUBLIC_URL}/admin.html"))])
     reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
     if update.callback_query:
