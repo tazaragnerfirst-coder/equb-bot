@@ -187,12 +187,13 @@ def _next_payment_id_sync():
     ids = [int(doc.id) for doc in docs]
     return max(ids) + 1 if ids else 1
 
-def _add_payment_sync(user_id, username, phone, numbers, receipt_file_id, payment_method):
+def _add_payment_sync(user_id, username, phone, numbers, receipt_file_id, payment_method, full_name=""):
     p_id = _next_payment_id_sync()
     numbers_str = ",".join(map(str, numbers))
     db.collection("payments").document(str(p_id)).set({
         "user_id": str(user_id),
         "username": str(username),
+        "full_name": str(full_name),
         "phone": str(phone),
         "numbers": numbers_str,
         "receipt_file_id": str(receipt_file_id),
@@ -204,8 +205,8 @@ def _add_payment_sync(user_id, username, phone, numbers, receipt_file_id, paymen
     })
     return p_id
 
-async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method):
-    return await _run(_add_payment_sync, user_id, username, phone, numbers, receipt_file_id, payment_method)
+async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method, full_name=""):
+    return await _run(_add_payment_sync, user_id, username, phone, numbers, receipt_file_id, payment_method, full_name)
 
 def _get_payment_sync(payment_id):
     doc = db.collection("payments").document(str(payment_id)).get()
