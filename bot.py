@@ -771,7 +771,6 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ]
     if is_admin(user.id):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
-        rows.append([KeyboardButton(t(ctx, "admin_cards_btn"), web_app=WebAppInfo(url=f"{PUBLIC_URL}/admin.html"))])
     reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
     if update.callback_query:
@@ -782,6 +781,14 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
     else:
         await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+
+    if is_admin(user.id):
+        await update.effective_message.reply_text(
+            "📋 ካርዶችን ለማየት 👇",
+            reply_markup=InlineKeyboardMarkup([[
+                InlineKeyboardButton("📋 CARDS", web_app=WebAppInfo(url=f"{PUBLIC_URL}/admin.html"))
+            ]])
+        )
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
