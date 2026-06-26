@@ -25,6 +25,8 @@ def keep_alive():
     t.daemon = True
     t.start()
 
+from admin_auth import register_admin_verify_route
+register_admin_verify_route(flask_app)
 # ══════════════════════════════════════════
 # TRANSLATIONS
 # ══════════════════════════════════════════
