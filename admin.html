@@ -65,7 +65,7 @@ const dbf = getFirestore(app);
 const authf = getAuth(app);
 
 const tg = window.Telegram?.WebApp;
-if (tg) tg.expand();
+if (tg) { tg.ready(); tg.expand(); }
 const initData = tg?.initData || "";
 
 const centerMsg = document.getElementById('centerMsg');
@@ -80,7 +80,7 @@ let allCards = [];
 
 async function main() {
   if (!initData) {
-    showError("⚠️ Telegram ውስጥ ብቻ ይከፈት።");
+    showError("⚠️ initData ባዶ ነው። Telegram app update አድርግ ወይም ዳግም ክፈት።");
     return;
   }
   try {
@@ -91,7 +91,7 @@ async function main() {
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      showError(e.error === "not_admin" ? "🚫 access denied" : "⚠️ ማረጋገጥ አልተቻለም");
+      showError(e.error === "not_admin" ? "🚫 access denied" : `⚠️ ማረጋገጥ አልተቻለም (${res.status})`);
       return;
     }
     const { token } = await res.json();
@@ -99,7 +99,7 @@ async function main() {
     await loadPayments();
   } catch (err) {
     console.error(err);
-    showError("⚠️ network error");
+    showError("⚠️ network error: " + err.message);
   }
 }
 
@@ -118,7 +118,6 @@ async function loadPayments() {
     cards.push(d);
   }
 
-  // referral counts (best-effort)
   const cache = {};
   for (const c of cards) {
     if (cache[c.user_id] === undefined) {
