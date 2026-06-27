@@ -159,24 +159,20 @@
         }
 
         /* ═══════════════════════════════════════════
-           TICKET APP ORIGINAL STYLES
-           (FIX 1: max-width 390px -> removed/raised so layout
-            uses the full viewport width on every phone size.
-            FIX 2: backdrop-filter blur reduced + will-change added
-            to cut scroll jank. FIX 3: pending color contrast fixed.)
+           TICKET APP ORIGINAL STYLES (unchanged)
         ═══════════════════════════════════════════ */
         :root {
             --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
             --glass-bg: rgba(255, 255, 255, 0.55);
             --glass-border: rgba(255, 255, 255, 0.45);
-            --glass-blur: blur(12px);
+            --glass-blur: blur(25px);
             --available-color: rgba(255, 255, 255, 0.65);
             --sold-color: rgba(254, 226, 226, 0.7);
-            --pending-color: rgba(250, 204, 21, 0.6);
+            --pending-color: rgba(254, 243, 199, 0.85);
             --selected-blue: #3b82f6;
             --text-dark: #2d3748;
             --text-sold: #f43f5e;
-            --text-pending: #92400e;
+            --text-pending: #fee224;
             --blob-1: rgba(147, 197, 253, 0.4);
             --blob-2: rgba(247, 178, 191, 0.35);
         }
@@ -186,11 +182,11 @@
             --glass-border: rgba(255, 255, 255, 0.08);
             --available-color: rgba(51, 65, 85, 0.6);
             --sold-color: rgba(127, 29, 29, 0.4);
-            --pending-color: rgba(250, 204, 21, 0.3);
+            --pending-color: rgba(120, 80, 10, 0.5);
             --selected-blue: #2563eb;
             --text-dark: #f8fafc;
             --text-sold: #ef4444;
-            --text-pending: #fde047;
+            --text-pending: #fbbf24;
             --blob-1: rgba(37, 99, 235, 0.15);
             --blob-2: rgba(225, 29, 72, 0.1);
         }
@@ -205,12 +201,11 @@
         }
         body::before, body::after {
             content: ""; position: absolute; border-radius: 50%;
-            filter: blur(60px); z-index: -1; transition: background 0.3s ease;
-            will-change: transform;
+            filter: blur(80px); z-index: -1; transition: background 0.3s ease;
         }
         body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
         body::after  { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
-        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; padding: 16px 16px 6px 16px; z-index: 110; pointer-events: none; will-change: transform; }
+        .search-fixed-wrapper { position: fixed; top: 0; width: 100%; max-width: 390px; padding: 16px 16px 6px 16px; z-index: 110; pointer-events: none; }
         .top-bar { display: flex; width: 100%; gap: 8px; pointer-events: auto; }
         .search-container { flex: 1; position: relative; }
         .search-bar {
@@ -232,7 +227,7 @@
         }
         .quick-pick-btn { padding: 0 14px; font-size: 13px; font-weight: 600; }
         .theme-toggle-btn { width: 44px; height: 44px; font-size: 18px; }
-        .cart-fixed-wrapper { position: fixed; top: 64px; width: 100%; padding: 4px 16px 10px 16px; z-index: 100; pointer-events: none; will-change: transform; }
+        .cart-fixed-wrapper { position: fixed; top: 64px; width: 100%; max-width: 390px; padding: 4px 16px 10px 16px; z-index: 100; pointer-events: none; }
         .cart-panel {
             display: none; width: 100%; background: var(--glass-bg);
             border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur);
@@ -264,7 +259,7 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap; animation: rainbowGlow 8s ease infinite;
         }
         @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
-        .scrollable-content { width: 100%; padding: 72px 16px 24px 16px; transition: padding-top 0.2s ease; }
+        .scrollable-content { width: 100%; max-width: 390px; padding: 72px 16px 24px 16px; transition: padding-top 0.2s ease; }
         .scrollable-content.shifted { padding-top: 134px; }
         .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
         .number-box {
@@ -474,8 +469,8 @@ const quickPickBtn = document.getElementById('quickPickBtn');
 const extraBtn = document.getElementById('extraBtn');
 
 document.getElementById('maxLimitText').innerText = MAX_SELECT;
-document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
 document.getElementById('modalTitle').innerText = L.modalTitle;
+document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
 document.getElementById('modalOkBtn').innerText = L.modalOk;
 extraBtn.innerText = L.cutBtn;
 quickPickBtn.innerText = L.quickPick;
