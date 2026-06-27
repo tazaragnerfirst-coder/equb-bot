@@ -1,7 +1,8 @@
 import logging
 import asyncio
+import requests as req_lib
 from threading import Thread
-from flask import Flask
+from flask import Flask, Response
 from telegram import Update, WebAppInfo, InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from telegram.ext import (
     Application, CommandHandler, CallbackQueryHandler,
@@ -9,7 +10,8 @@ from telegram.ext import (
 )
 from telegram.error import BadRequest
 import database as db
-from config import *
+from database import db as fdb   # Firestore client (sync) — Flask endpoint ይጠቀምበታል
+from config import BOT_TOKEN, ADMIN_IDS, GROUP_ID, CBE_ACCOUNT, CBE_NAME, TELEBIRR_ACCOUNT, TELEBIRR_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,6 +25,57 @@ flask_app = Flask('', static_folder='.', static_url_path='')
 @flask_app.route('/')
 def home():
     return "Bot is alive! 🤖"
+
+# ══════════════════════════════════════════
+# RECEIPT IMAGE PROXY
+# ══════════════════════════════════════════
+@flask_app.route('/get-receipt/<int:pid>')
+def get_receipt_image(pid):
+    """
+    Firestore ከ payment_id → receipt_file_id ጎትቶ
+    Telegram file API በኩል image ወርዶ client ላይ ያስተላልፋል።
+    Admin.html thumbnail ለማሳየት ይጠቀምበታል።
+    """
+    try:
+        doc = fdb.collection('payments').document(str(pid)).get()
+        if not doc.exists:
+            return "Not found", 404
+
+        file_id = doc.to_dict().get('receipt_file_id')
+        if not file_id:
+            return "No receipt", 404
+
+        # Telegram → file path
+        r = req_lib.get(
+            f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
+            params={"file_id": file_id},
+            timeout=10
+        )
+        r.raise_for_status()
+        result = r.json().get("result", {})
+        file_path = result.get("file_path")
+        if not file_path:
+            return "File path not found", 404
+
+        # Image download
+        img = req_lib.get(
+            f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}",
+            timeout=15
+        )
+        img.raise_for_status()
+
+        return Response(
+            img.content,
+            content_type=img.headers.get('content-type', 'image/jpeg')
+        )
+
+    except req_lib.exceptions.Timeout:
+        logger.error(f"get_receipt_image timeout: pid={pid}")
+        return "Timeout", 504
+    except Exception as e:
+        logger.error(f"get_receipt_image error pid={pid}: {e}")
+        return "Error", 500
+
 
 def keep_alive():
     t = Thread(target=lambda: flask_app.run(host='0.0.0.0', port=8080))
@@ -705,16 +758,15 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 payment_id = int(args[0].replace("receipt_", ""))
                 payment = await db.get_payment(payment_id)
                 if payment:
-                    p_id      = payment[0]
-                    p_user_id = payment[1]
-                    p_username= payment[2]
-                    p_phone   = payment[3]
-                    p_numbers = payment[4]
-                    p_receipt = payment[5]
-                    p_method  = payment[6]
-                    p_status  = payment[7]
-                    # full_name is stored at index 8 in get_payment tuple
-                    full_name = payment[8] if len(payment) > 8 and payment[8] else p_username
+                    p_id       = payment[0]
+                    p_user_id  = payment[1]
+                    p_username = payment[2]
+                    p_phone    = payment[3]
+                    p_numbers  = payment[4]
+                    p_receipt  = payment[5]
+                    p_method   = payment[6]
+                    p_status   = payment[7]
+                    full_name  = payment[8] if payment[8] else p_username  # ✅ index 8 = full_name
 
                     price_val   = int(await db.get_setting("ticket_price"))
                     nums_list   = list(map(int, p_numbers.split(",")))
@@ -820,8 +872,9 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except:
             pass
         await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-    
-  
+    else:
+        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -841,10 +894,11 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
-    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟"]
-    admin_words   = ["🎴 ADMIN 🎴"]
+    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟",
+                     "✴️ የኔ ትኬቶች ✴️"]
+    admin_words   = ["🔰 ADMIN 🔰", "🎴 ADMIN 🎴"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
-    pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
+    pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "➕ Pick Numbers ➕", "➕ Lakkoofsa Filadhu ➕"]
 
     if any(w in text for w in home_words):
         ctx.user_data["waiting_name"]    = False
@@ -1148,8 +1202,15 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if not payment:
         return
 
-    p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status = payment[:8]
-    full_name = payment[8] if len(payment) > 8 and payment[8] else p_username
+    p_id      = payment[0]
+    p_user_id = payment[1]
+    p_username= payment[2]
+    p_phone   = payment[3]
+    p_numbers = payment[4]
+    p_receipt = payment[5]
+    p_method  = payment[6]
+    p_status  = payment[7]
+    full_name = payment[8] if payment[8] else p_username  # ✅ index 8 = full_name
 
     if p_status != "pending":
         try:
@@ -1257,7 +1318,6 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         f"for admin only!"
     )
 
-    # CARDS button ከ Pending/Stats/Search ጋር አንድ ላይ
     inline_kb = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(f"⏳ Pending ({pending_count})", callback_data="admin_pending"),
@@ -1549,9 +1609,8 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             return
 
         p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status, p_reviewed_at = payment
-        # full_name: ከ payment tuple ለማምጣት get_payment ሙሉ ስሪት ተጠቅም
         full_payment = await db.get_payment(p_id)
-        full_name    = full_payment[8] if full_payment and len(full_payment) > 8 and full_payment[8] else p_username
+        full_name    = full_payment[8] if full_payment and full_payment[8] else p_username  # ✅
 
         price_val    = int(await db.get_setting("ticket_price"))
         nums_list    = list(map(int, p_numbers.split(",")))
