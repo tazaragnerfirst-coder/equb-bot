@@ -40,28 +40,43 @@
     overflow:hidden;
   }
 
-  /* Receipt thumbnail */
-  .card .receipt-wrap{
-    width:100%; max-height:180px; overflow:hidden;
-    border-bottom:1px solid var(--border); position:relative;
+  /* ── Receipt thumbnail ── */
+  .receipt-wrap{
+    width:100%;
+    max-height:200px;
+    overflow:hidden;
+    position:relative;
     background:#111;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
   }
-  .card .receipt-wrap img{
-    width:100%; object-fit:cover; display:block;
-    cursor:pointer; transition: opacity .2s;
+  .receipt-wrap img{
+    width:100%;
+    height:200px;
+    object-fit:cover;
+    display:block;
+    transition:opacity .2s, transform .2s;
   }
-  .card .receipt-wrap img:hover{ opacity:.85; }
-  .card .receipt-label{
+  .receipt-wrap:active img{
+    opacity:.8;
+    transform:scale(.98);
+  }
+  .receipt-label{
     position:absolute; bottom:0; left:0; right:0;
-    padding:4px 10px; font-size:11px; color:var(--dim);
-    background:rgba(0,0,0,.55);
+    padding:6px 12px; font-size:11.5px; color:#fff;
+    background:linear-gradient(transparent, rgba(0,0,0,.7));
+    pointer-events:none;
   }
-
-  /* Receipt fallback button (if image fails) */
-  .receipt-btn{
-    display:none; width:100%; padding:10px 14px;
-    background:rgba(91,141,239,.12); border:none; border-bottom:1px solid var(--border);
-    color:var(--accent); font-size:13.5px; cursor:pointer; text-align:left;
+  /* skeleton loader while image fetches */
+  .receipt-wrap.loading{
+    background: linear-gradient(90deg,#1a1d27 25%,#22263a 50%,#1a1d27 75%);
+    background-size:200% 100%;
+    animation: shimmer 1.4s infinite;
+    height:160px;
+  }
+  @keyframes shimmer{
+    0%{background-position:200% 0}
+    100%{background-position:-200% 0}
   }
 
   /* Card body */
@@ -88,25 +103,44 @@
   }
   #centerMsg.error{ color:var(--danger); }
 
-  /* Fullscreen image overlay */
+  /* ── Fullscreen overlay ── */
   #overlay{
-    display:none; position:fixed; inset:0; z-index:100;
-    background:rgba(0,0,0,.92); align-items:center; justify-content:center;
+    display:none; position:fixed; inset:0; z-index:200;
+    background:rgba(0,0,0,.95);
     flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:16px;
   }
   #overlay.open{ display:flex; }
-  #overlay img{ max-width:96vw; max-height:88vh; border-radius:8px; object-fit:contain; }
-  #overlay .close-btn{
-    margin-top:16px; padding:10px 28px; border-radius:24px;
-    background:var(--card); border:1px solid var(--border);
-    color:var(--text); font-size:14px; cursor:pointer;
+
+  #overlayImg{
+    max-width:100%;
+    max-height:82vh;
+    border-radius:10px;
+    object-fit:contain;
+    box-shadow:0 8px 40px rgba(0,0,0,.6);
   }
+  #overlayLoader{
+    color:var(--dim); font-size:14px; margin-bottom:12px;
+    display:none;
+  }
+  #overlay.loading #overlayLoader{ display:block; }
+  #overlay.loading #overlayImg{ opacity:.3; }
+
+  #overlayClose{
+    margin-top:20px; padding:11px 36px; border-radius:28px;
+    background:var(--card); border:1px solid var(--border);
+    color:var(--text); font-size:15px; cursor:pointer;
+    transition: background .15s;
+  }
+  #overlayClose:active{ background:var(--border); }
 </style>
 </head>
 <body>
 
 <div id="searchWrap">
-  <input id="searchBar" placeholder="🔍 ስም, ስልክ, ቁጥር ፍለግ...">
+  <input id="searchBar" placeholder="🔍 ስም, ስልክ, ቁጥር ፍለጋ...">
 </div>
 <div id="statusLine"></div>
 <div id="cardList"></div>
@@ -114,16 +148,17 @@
 
 <!-- Fullscreen receipt overlay -->
 <div id="overlay">
+  <div id="overlayLoader">⏳ ደረሰኝ እየጫነ ነው...</div>
   <img id="overlayImg" src="" alt="Receipt">
-  <button class="close-btn" id="overlayClose">✕ ዝጋ</button>
+  <button id="overlayClose">✕ ዝጋ</button>
 </div>
 
 <script type="module">
-import { initializeApp }    from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, getDoc }
-                            from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 import { getAuth, signInWithCustomToken }
-                            from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
@@ -134,43 +169,64 @@ const firebaseConfig = {
   appId: "1:745997733561:web:6a37c360fdc5fa2d559568"
 };
 
-const app  = initializeApp(firebaseConfig);
-const dbf  = getFirestore(app);
-const authf= getAuth(app);
+const app   = initializeApp(firebaseConfig);
+const dbf   = getFirestore(app);
+const authf = getAuth(app);
 
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
 const initData = tg?.initData || "";
 
-const centerMsg = document.getElementById('centerMsg');
-const cardList  = document.getElementById('cardList');
-const searchBar = document.getElementById('searchBar');
-const statusLine= document.getElementById('statusLine');
-const overlay   = document.getElementById('overlay');
-const overlayImg= document.getElementById('overlayImg');
+const BASE_URL   = "https://equb-bot-vt5m.onrender.com";
+const VERIFY_URL = `${BASE_URL}/verify-admin`;
 
+// ── DOM refs ──
+const centerMsg  = document.getElementById('centerMsg');
+const cardList   = document.getElementById('cardList');
+const searchBar  = document.getElementById('searchBar');
+const statusLine = document.getElementById('statusLine');
+const overlay    = document.getElementById('overlay');
+const overlayImg = document.getElementById('overlayImg');
+
+// Overlay: open
+function openOverlay(imgSrc) {
+  overlay.classList.add('open', 'loading');
+  overlayImg.src = '';
+  const tmp = new Image();
+  tmp.onload = () => {
+    overlayImg.src = imgSrc;
+    overlay.classList.remove('loading');
+  };
+  tmp.onerror = () => {
+    overlay.classList.remove('loading');
+    overlayImg.alt = '⚠️ ደረሰኝ ማምጣት አልተቻለም';
+  };
+  tmp.src = imgSrc;
+}
+
+// Overlay: close
 document.getElementById('overlayClose').addEventListener('click', () => {
-  overlay.classList.remove('open');
+  overlay.classList.remove('open', 'loading');
+  overlayImg.src = '';
+});
+overlay.addEventListener('click', (e) => {
+  if (e.target === overlay) {
+    overlay.classList.remove('open', 'loading');
+    overlayImg.src = '';
+  }
 });
 
-const VERIFY_URL   = "https://equb-bot-vt5m.onrender.com/verify-admin";
-// ← ቦቱ username ይቀይሩ
-const BOT_USERNAME = "OpenTiket_GE_bot";
+// Receipt proxy URL — Bot server ያስተናግዳል
+function receiptSrc(payment_id) {
+  return `${BASE_URL}/get-receipt/${payment_id}`;
+}
 
 let allCards = [];
 
-// ── Telegram file URL resolver ──
-// file_id ቀጥታ src ሊሆን አይችልም — bot server ያስፈልጋል።
-// ስለዚህ receipt thumbnail ለ admin app ካሰፈለጋቸው
-// separate /get-receipt endpoint ማስጨመር ይኖርቦታል (ወይም receipt link approach)
-// እዚህ: link approach ብቻ — thumbnail አይታይም፣ button ይታያል
-function receiptLink(payment_id) {
-  return `https://t.me/${BOT_USERNAME}?start=receipt_${payment_id}`;
-}
-
+// ── Auth + load ──
 async function main() {
   if (!initData) {
-    showError("⚠️ initData ባዶ ነው። Telegram app update አድርግ ወይም ዳግም ክፈት።");
+    showError("⚠️ initData ባዶ ነው። Telegram app ዳግም ክፈት።");
     return;
   }
   try {
@@ -181,9 +237,7 @@ async function main() {
     });
     if (!res.ok) {
       const e = await res.json().catch(() => ({}));
-      showError(e.error === "not_admin"
-        ? "🚫 access denied"
-        : `⚠️ ማረጋገጥ አልተቻለም (${res.status})`);
+      showError(e.error === "not_admin" ? "🚫 access denied" : `⚠️ ማረጋገጥ አልተቻለም (${res.status})`);
       return;
     }
     const { token } = await res.json();
@@ -238,13 +292,26 @@ function render(cards) {
   cardList.innerHTML = '';
 
   for (const d of cards) {
-    const dt  = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
-    const link= receiptLink(d._pid);
+    const dt          = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
     const displayName = d.full_name || d.username || '—';
+    const imgSrc      = receiptSrc(d._pid);
 
     const div = document.createElement('div');
     div.className = 'card';
     div.innerHTML = `
+      <!-- Receipt thumbnail -->
+      <div class="receipt-wrap loading" id="rw-${esc(d._pid)}" onclick="openOverlay('${esc(imgSrc)}')">
+        <img
+          src="${esc(imgSrc)}"
+          alt="Receipt"
+          loading="lazy"
+          onload="document.getElementById('rw-${esc(d._pid)}').classList.remove('loading')"
+          onerror="document.getElementById('rw-${esc(d._pid)}').style.display='none'"
+        >
+        <div class="receipt-label">🧾 ደረሰኝ — ለማስፋት ይንኩ</div>
+      </div>
+
+      <!-- Card info -->
       <div class="card-body">
         <div class="name">👤 ${esc(displayName)}</div>
         <div class="uname">${esc(d.username || '')}</div>
@@ -253,12 +320,6 @@ function render(cards) {
         <div class="row"><span>💳 ዘዴ</span><b>${esc(d.payment_method || '—')}</b></div>
         <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
         <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
-        <div class="row" style="padding-top:8px;">
-          <span></span>
-          <a href="${esc(link)}"
-             style="color:var(--accent);font-size:13px;text-decoration:none;"
-             target="_blank">🧾 ደረሰኝ ይመልከቱ →</a>
-        </div>
       </div>
     `;
     cardList.appendChild(div);
@@ -269,6 +330,9 @@ function esc(s) {
   return String(s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+
+// Make openOverlay global so inline onclick works
+window.openOverlay = openOverlay;
 
 searchBar.addEventListener('input', () => {
   const q = searchBar.value.trim().toLowerCase();
