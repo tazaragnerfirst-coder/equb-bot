@@ -174,7 +174,12 @@ async def count_tickets_today():
     return await _run(_count_tickets_today_sync)
 
 def _get_user_tickets_sync(user_id, status):
-    docs = db.collection("tickets").where("user_id", "==", str(user_id)).where("status", "==", status).stream()
+    docs = (
+        db.collection("tickets")
+        .where("user_id", "==", str(user_id))
+        .where("status", "==", status)
+        .stream()
+    )
     return [(int(doc.id),) for doc in docs]
 
 async def get_user_tickets(user_id, status):
@@ -206,7 +211,11 @@ def _add_payment_sync(user_id, username, phone, numbers, receipt_file_id, paymen
     return p_id
 
 async def add_payment(user_id, username, phone, numbers, receipt_file_id, payment_method, full_name=""):
-    return await _run(_add_payment_sync, user_id, username, phone, numbers, receipt_file_id, payment_method, full_name)
+    return await _run(
+        _add_payment_sync,
+        user_id, username, phone, numbers,
+        receipt_file_id, payment_method, full_name
+    )
 
 def _get_payment_sync(payment_id):
     doc = db.collection("payments").document(str(payment_id)).get()
@@ -214,9 +223,18 @@ def _get_payment_sync(payment_id):
         return None
     d = doc.to_dict()
     return (
-        payment_id, d.get("user_id"), d.get("username"), d.get("phone"),
-        d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"),
-        d.get("status"), d.get("created_at"), d.get("reviewed_by"), d.get("reviewed_at"),
+        payment_id,            # 0
+        d.get("user_id"),      # 1
+        d.get("username"),     # 2
+        d.get("phone"),        # 3
+        d.get("numbers"),      # 4
+        d.get("receipt_file_id"),  # 5
+        d.get("payment_method"),   # 6
+        d.get("status"),       # 7
+        d.get("full_name"),    # 8  ← ✅ full_name (ፊቱ created_at ነበር — ስህተት ተስተካክሏል)
+        d.get("created_at"),   # 9
+        d.get("reviewed_by"),  # 10
+        d.get("reviewed_at"),  # 11
     )
 
 async def get_payment(payment_id):
@@ -228,8 +246,14 @@ def _get_pending_payments_sync():
     for doc in docs:
         d = doc.to_dict()
         result.append((
-            int(doc.id), d.get("user_id"), d.get("username"), d.get("phone"),
-            d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"), d.get("status"),
+            int(doc.id),
+            d.get("user_id"),
+            d.get("username"),
+            d.get("phone"),
+            d.get("numbers"),
+            d.get("receipt_file_id"),
+            d.get("payment_method"),
+            d.get("status"),
         ))
     return sorted(result, key=lambda x: x[0])
 
@@ -242,8 +266,14 @@ def _get_all_approved_payments_sync():
     for doc in docs:
         d = doc.to_dict()
         result.append((
-            int(doc.id), d.get("username"), d.get("phone"), d.get("numbers"),
-            d.get("receipt_file_id"), d.get("payment_method"), d.get("reviewed_at"),
+            int(doc.id),               # 0  id
+            d.get("username"),         # 1
+            d.get("full_name"),        # 2  ← ✅ full_name ጨምረናል
+            d.get("phone"),            # 3
+            d.get("numbers"),          # 4
+            d.get("receipt_file_id"),  # 5
+            d.get("payment_method"),   # 6
+            d.get("reviewed_at"),      # 7
         ))
     return sorted(result, key=lambda x: x[0], reverse=True)
 
@@ -267,9 +297,15 @@ def _find_payment_by_number_sync(number):
         nums = d.get("numbers") or ""
         if str(number) in nums.split(","):
             return (
-                int(doc.id), d.get("user_id"), d.get("username"), d.get("phone"),
-                d.get("numbers"), d.get("receipt_file_id"), d.get("payment_method"),
-                d.get("status"), d.get("reviewed_at"),
+                int(doc.id),
+                d.get("user_id"),
+                d.get("username"),
+                d.get("phone"),
+                d.get("numbers"),
+                d.get("receipt_file_id"),
+                d.get("payment_method"),
+                d.get("status"),
+                d.get("reviewed_at"),
             )
     return None
 
@@ -378,12 +414,25 @@ async def get_all_referral_counts():
 
 # ─── RESET ───
 def _reset_lottery_sync():
-    # Note: referrals and referral_counts are intentionally NOT cleared here.
-    # Referral data persists permanently across lottery rounds (not tied to a round).
+    # Referrals እና referral_counts ሆን ብለን አንጠርጥርም — ዙር ለዙር ይቀጥላሉ
+    batch = db.batch()
+    count = 0
     for doc in db.collection("tickets").stream():
-        doc.reference.delete()
+        batch.delete(doc.reference)
+        count += 1
+        if count >= 400:          # Firestore batch limit = 500, ደህንነት ሲባል 400
+            batch.commit()
+            batch = db.batch()
+            count = 0
     for doc in db.collection("payments").stream():
-        doc.reference.delete()
+        batch.delete(doc.reference)
+        count += 1
+        if count >= 400:
+            batch.commit()
+            batch = db.batch()
+            count = 0
+    if count > 0:
+        batch.commit()
     _clear_group_messages_sync()
 
 async def reset_lottery():
