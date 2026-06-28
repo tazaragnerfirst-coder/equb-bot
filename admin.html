@@ -91,6 +91,43 @@
   .row:last-child{ border-bottom:none; }
   .row b{ color:var(--text); font-weight:600; }
 
+  /* ── Numbers row (scrollable horizontal) ── */
+  .row.numbers-row{
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+    padding:8px 0;
+  }
+  .numbers-row .numbers-label{
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .numbers-row .numbers-count{
+    color:var(--accent); font-weight:700; font-size:12px;
+  }
+  .numbers-scroll{
+    display:flex;
+    gap:6px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding:2px 2px 6px;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+  }
+  .numbers-scroll::-webkit-scrollbar{ height:4px; }
+  .numbers-scroll::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+  .numbers-scroll::-webkit-scrollbar-track{ background:transparent; }
+  .num-chip{
+    flex:0 0 auto;
+    background:rgba(91,141,239,.14);
+    color:var(--accent);
+    border:1px solid rgba(91,141,239,.3);
+    border-radius:8px;
+    padding:5px 10px;
+    font-size:13px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+
   /* Status badge */
   .badge{
     font-size:11px; font-weight:700; padding:2px 8px;
@@ -287,6 +324,15 @@ async function loadPayments() {
   if (cards.length === 0) centerMsg.textContent = "ምንም approved ክፍያ የለም።";
 }
 
+// "1, 12, 7, 45" ወይም "1-5, 9" የመሰለ ቁጥሮችን ለየብቻ chip ለማድረግ ይከፍላል
+function splitNumbers(numbersStr) {
+  if (!numbersStr) return [];
+  return String(numbersStr)
+    .split(',')
+    .map(s => s.trim())
+    .filter(s => s.length > 0);
+}
+
 function render(cards) {
   statusLine.textContent = `${cards.length} ካርድ`;
   cardList.innerHTML = '';
@@ -295,6 +341,11 @@ function render(cards) {
     const dt          = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
     const displayName = d.full_name || d.username || '—';
     const imgSrc      = receiptSrc(d._pid);
+    const numList     = splitNumbers(d.numbers);
+
+    const numbersHtml = numList.length > 0
+      ? `<div class="numbers-scroll">${numList.map(n => `<span class="num-chip">${esc(n)}</span>`).join('')}</div>`
+      : `<div class="numbers-scroll"><span class="num-chip">—</span></div>`;
 
     const div = document.createElement('div');
     div.className = 'card';
@@ -316,7 +367,15 @@ function render(cards) {
         <div class="name">👤 ${esc(displayName)}</div>
         <div class="uname">${esc(d.username || '')}</div>
         <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
-        <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
+
+        <div class="row numbers-row">
+          <div class="numbers-label">
+            <span>🎟 ቁጥሮች</span>
+            <span class="numbers-count">${numList.length} ቁጥር</span>
+          </div>
+          ${numbersHtml}
+        </div>
+
         <div class="row"><span>💳 ዘዴ</span><b>${esc(d.payment_method || '—')}</b></div>
         <div class="row"><span>👥 የጋበዘው</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
         <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
