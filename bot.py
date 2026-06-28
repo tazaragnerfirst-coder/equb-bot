@@ -10,14 +10,13 @@ from telegram.ext import (
 )
 from telegram.error import BadRequest
 import database as db
-from database import db as fdb   # Firestore client (sync) — Flask endpoint ይጠቀምበታል
+from database import db as fdb
 from config import BOT_TOKEN, ADMIN_IDS, GROUP_ID, CBE_ACCOUNT, CBE_NAME, TELEBIRR_ACCOUNT, TELEBIRR_NAME
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 MAX_TICKETS_PER_USER = 10
-
 PUBLIC_URL = "https://equb-bot-vt5m.onrender.com"
 
 flask_app = Flask('', static_folder='.', static_url_path='')
@@ -31,21 +30,13 @@ def home():
 # ══════════════════════════════════════════
 @flask_app.route('/get-receipt/<int:pid>')
 def get_receipt_image(pid):
-    """
-    Firestore ከ payment_id → receipt_file_id ጎትቶ
-    Telegram file API በኩል image ወርዶ client ላይ ያስተላልፋል።
-    Admin.html thumbnail ለማሳየት ይጠቀምበታል።
-    """
     try:
         doc = fdb.collection('payments').document(str(pid)).get()
         if not doc.exists:
             return "Not found", 404
-
         file_id = doc.to_dict().get('receipt_file_id')
         if not file_id:
             return "No receipt", 404
-
-        # Telegram → file path
         r = req_lib.get(
             f"https://api.telegram.org/bot{BOT_TOKEN}/getFile",
             params={"file_id": file_id},
@@ -56,19 +47,15 @@ def get_receipt_image(pid):
         file_path = result.get("file_path")
         if not file_path:
             return "File path not found", 404
-
-        # Image download
         img = req_lib.get(
             f"https://api.telegram.org/file/bot{BOT_TOKEN}/{file_path}",
             timeout=15
         )
         img.raise_for_status()
-
         return Response(
             img.content,
             content_type=img.headers.get('content-type', 'image/jpeg')
         )
-
     except req_lib.exceptions.Timeout:
         logger.error(f"get_receipt_image timeout: pid={pid}")
         return "Timeout", 504
@@ -102,9 +89,9 @@ T = {
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ አንደኛ እጣ 👉\n"
-            "2️⃣ ሁለተኛ እጣ 👉\n"
-            "3️⃣ ሦስተኛ እጣ 👉\n"
+            "1️⃣ አንደኛ እጣ 👉 {prize1}\n"
+            "2️⃣ ሁለተኛ እጣ 👉 {prize2}\n"
+            "3️⃣ ሦስተኛ እጣ 👉 {prize3}\n"
             "━━━━━━━━━━━━━━━\n"
             "የትኬት ብዛት = {total}\n"
             "የአንዱ ትኬት ዋጋ = {price}\n"
@@ -144,7 +131,6 @@ T = {
             "የከፈሉበትን ደረሰኝ (screenshot)\n"
             "ይላኩልን 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "telebirr_msg": (
@@ -155,12 +141,10 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "ድምር ዋጋ = {total} ብር\n"
             "━━━━━━━━━━━━━━━\n"
-            "ክፍያ ክፍያ ከፈፀሙ በኋላ\n"
-            
+            "ክፍያ ከፈፀሙ በኋላ\n"
             "የከፈሉበትን ደረሰኝ (screenshot)\n"
             "ይላኩልን 👇🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "ask_name":      "👤 *ሙሉ ስምዎን ይፃፉ:*\nምሳሌ: አበበ ባልቻ",
@@ -296,9 +280,9 @@ T = {
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ First Prize 👉\n"
-            "2️⃣ Second Prize 👉\n"
-            "3️⃣ Third Prize 👉\n"
+            "1️⃣ First Prize 👉 {prize1}\n"
+            "2️⃣ Second Prize 👉 {prize2}\n"
+            "3️⃣ Third Prize 👉 {prize3}\n"
             "━━━━━━━━━━━━━━━\n"
             "Total Tickets = {total}\n"
             "Ticket Price = {price}\n"
@@ -336,7 +320,6 @@ T = {
             "and send us your receipt\n"
             "(screenshot) 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "telebirr_msg": (
@@ -351,7 +334,6 @@ T = {
             "and send us your receipt\n"
             "(screenshot) 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "ask_name":      "👤 *Enter your full name:*\nExample: Abebe Kebede",
@@ -484,9 +466,9 @@ T = {
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ Badhaasa 1ffaa 👉\n"
-            "2️⃣ Badhaasa 2ffaa 👉\n"
-            "3️⃣ Badhaasa 3ffaa 👉\n"
+            "1️⃣ Badhaasa 1ffaa 👉 {prize1}\n"
+            "2️⃣ Badhaasa 2ffaa 👉 {prize2}\n"
+            "3️⃣ Badhaasa 3ffaa 👉 {prize3}\n"
             "━━━━━━━━━━━━━━━\n"
             "Lakkoofsa tikeetii = {total}\n"
             "Gatii tikeetii tokkoo = {price}\n"
@@ -523,7 +505,6 @@ T = {
             "kaffalii, booda beeksisa\n"
             "(screenshot) ergi 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "telebirr_msg": (
@@ -538,7 +519,6 @@ T = {
             "kaffalii, booda beeksisa\n"
             "(screenshot) ergi 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            
         ),
 
         "ask_name":      "👤 *Maqaa guutuu kee barreessi:*\nFkn: Abebe Kebede",
@@ -745,7 +725,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                     p_receipt  = payment[5]
                     p_method   = payment[6]
                     p_status   = payment[7]
-                    full_name  = payment[8] if payment[8] else p_username  # ✅ index 8 = full_name
+                    full_name  = payment[8] if payment[8] else p_username
 
                     price_val   = int(await db.get_setting("ticket_price"))
                     nums_list   = list(map(int, p_numbers.split(",")))
@@ -792,15 +772,33 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         if referrer_id != str(user.id):
             await db.add_referral(referrer_id, str(user.id))
 
+    # ── First time → language picker; returning user → home ──
+    if not ctx.user_data.get("lang"):
+        keyboard = [
+            [InlineKeyboardButton("🇪🇹 አማርኛ",      callback_data="lang_am")],
+            [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
+            [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
+        ]
+        await update.message.reply_text(
+            "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+        return
+
+    await show_home(update, ctx)
+
+
+async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     keyboard = [
-        [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
-        [InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")],
+        [InlineKeyboardButton("🇪🇹 አማርኛ",      callback_data="lang_am")],
+        [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
         [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
     ]
     await update.message.reply_text(
         "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
+
 
 async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -815,26 +813,18 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ══════════════════════════════════════════
 async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
-    if not ctx.user_data.get("lang"):
-        keyboard = [
-            [InlineKeyboardButton("🇪🇹 አማርኛ", callback_data="lang_am")],
-            [InlineKeyboardButton("🇬🇧 English", callback_data="lang_en")],
-            [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
-        ]
-        msg = "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:"
-        if update.callback_query:
-            await update.callback_query.edit_message_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
-        else:
-            await update.effective_message.reply_text(msg, reply_markup=InlineKeyboardMarkup(keyboard))
-        return
 
-    title = await db.get_setting("lottery_title")
-    price = await db.get_setting("ticket_price")
-    total = await db.get_setting("total_tickets")
+    title  = await db.get_setting("lottery_title")
+    price  = await db.get_setting("ticket_price")
+    total  = await db.get_setting("total_tickets")
+    prize1 = await db.get_setting("prize_1")
+    prize2 = await db.get_setting("prize_2")
+    prize3 = await db.get_setting("prize_3")
 
-    text = t(ctx, "home_text", title=title, total=total, price=price)
+    text = t(ctx, "home_text", title=title, total=total, price=price,
+             prize1=prize1, prize2=prize2, prize3=prize3)
 
-    lang = ctx.user_data.get("lang", "am")
+    lang    = ctx.user_data.get("lang", "am")
     lang_url = f"https://tazaragnerfirst-coder.github.io/equb-bot/?lang={lang}"
     rows = [
         [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=lang_url))],
@@ -1053,7 +1043,7 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     lang   = ctx.user_data.get("lang", "am")
     method = "CBE" if query.data == "pay_cbe" else "Telebirr"
-    ctx.user_data["payment_method"] = method
+    ctx.user_data["payment_method"]  = method
     ctx.user_data["waiting_receipt"] = True
     ctx.user_data["waiting_name"]    = False
     ctx.user_data["waiting_phone"]   = False
@@ -1189,7 +1179,7 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     p_receipt = payment[5]
     p_method  = payment[6]
     p_status  = payment[7]
-    full_name = payment[8] if payment[8] else p_username  # ✅ index 8 = full_name
+    full_name = payment[8] if payment[8] else p_username
 
     if p_status != "pending":
         try:
@@ -1322,11 +1312,18 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except:
             await update.effective_message.reply_text(
                 text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text("", reply_markup=menu_kb)
+        await update.effective_message.reply_text(
+            "📤 SEND TO GROUP  |  📢 BROADCAST  |  ⚙️ SETTING",
+            reply_markup=menu_kb
+        )
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text(".", reply_markup=menu_kb)
+        await update.effective_message.reply_text(
+            "📤 SEND TO GROUP  |  📢 BROADCAST  |  ⚙️ SETTING",
+            reply_markup=menu_kb
+        )
+
 
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1589,7 +1586,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
         p_id, p_user_id, p_username, p_phone, p_numbers, p_receipt, p_method, p_status, p_reviewed_at = payment
         full_payment = await db.get_payment(p_id)
-        full_name    = full_payment[8] if full_payment and full_payment[8] else p_username  # ✅
+        full_name    = full_payment[8] if full_payment and full_payment[8] else p_username
 
         price_val    = int(await db.get_setting("ticket_price"))
         nums_list    = list(map(int, p_numbers.split(",")))
@@ -1714,7 +1711,9 @@ def main():
     keep_alive()
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
-    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("start",    start))
+    app.add_handler(CommandHandler("language", language_cmd))
+
     async def admin_cmd(update, ctx):
         if is_admin(update.effective_user.id):
             await show_admin_panel(update, ctx)
