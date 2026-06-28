@@ -124,9 +124,9 @@ T = {
             "የትኬት ብዛት = {count}\n"
             "ዋጋ = {total}\n"
             "━━━━━━━━━━━━━━━\n"
-            "ክፍያ ለመፈጸም ከስር ያለውን 👇\n"
-            "💳 የክፍያ አሰራር ምረጥ\n"
-            "የሚለውን ቁልፍ ይጫኑ!"
+            "ክፍያ ለመፈጸም ከስር ካሉት 👇\n"
+            "💳 የክፍያ አማራጮች አንዱን\n"
+            "በመምረጥ ክፍያ ይፈፅሙ!"
         ),
         "pay_cbe_btn":     "🏦 CBE",
         "pay_telebirr_btn":"📱 TELE BIRR",
@@ -141,7 +141,7 @@ T = {
             "ድምር ዋጋ = {total} ብር\n"
             "━━━━━━━━━━━━━━━\n"
             "ክፍያ ከፈፀሙ በኋላ\n"
-            "የከፈሉበትን ደረሰኝ screenshot\n"
+            "የከፈሉበትን ደረሰኝ (screenshot)\n"
             "ይላኩልን 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
             
@@ -155,18 +155,12 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "ድምር ዋጋ = {total} ብር\n"
             "━━━━━━━━━━━━━━━\n"
-            "ክፍያ ለመፈጸም ከዚህ አካዉንት ተጠቀሙ\n"
-            "እና ክፍያ ፈጽሙ፣ ከዚያ ክፍያ ደረሰኝዎን\n"
-            "(screenshot) ወይም ደረሰኝ ምስል\n"
-            "ይላኩልን 👆\n"
+            "ክፍያ ክፍያ ከፈፀሙ በኋላ\n"
+            
+            "የከፈሉበትን ደረሰኝ (screenshot)\n"
+            "ይላኩልን 👇🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            "⚠️ ማሳሰቢያ ⚠️\n"
-            "— የሚላኩት ደረሰኝም ሆነ ስክሪን ሾት\n"
-            "  (screenshot) ትክክለኛ እና ተቀባይነት\n"
-            "  ያለው የሆነ መሆኑን አለበት።\n"
-            "— የሚላኩት ደረሰኝ ትክክለኛ እና\n"
-            "  ትርጉም ፣ በደንብ የሚታይ እና\n"
-            "  ጥራት ያለው መሆኑን አለበት።"
+            
         ),
 
         "ask_name":      "👤 *ሙሉ ስምዎን ይፃፉ:*\nምሳሌ: አበበ ባልቻ",
@@ -197,7 +191,7 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "⏳ አድሚን ሲያረጋግጥ notification\n"
             "ይደርስዎታል። እናመሰግናለን!\n"
-            "Developed by @Taza4Business"
+            "Developed by @TazaBiz"
         ),
 
         "approved": (
@@ -210,8 +204,8 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "✅ ቁጥሮቹ የእርስዎ ሆነዋል።\n"
             "እጣ እስኪቆረጥ ድረስ ይጠብቁ!\n"
-            "🌟 እናመሰግናለን! 🌟\n"
-            "Developed by @Taza4Business"
+            "✳️ እናመሰግናለን! ✳️\n"
+            "Developed by @TazaBiz"
         ),
         "rejected": (
             "❌ *ክፍያዎ አልተረጋገጠም።*\n"
@@ -233,10 +227,10 @@ T = {
             "የትኬት ብዛት = {count}\n"
             "ዋጋ = {total}\n"
             "━━━━━━━━━━━━━━━\n"
-            "የአጣ መቁረጫ ቀን እስከሚደርስ\n"
+            "የእጣ መቁረጫ ቀን እስከሚደርስ\n"
             "ተጨማሪ ትኬቶችን መቁረጥ ይችላሉ።\n"
             "━━━━━━━━━━━━━━━\n"
-            "🌟 እናመሰግናለን! 🌟"
+            "✳️ እናመሰግናለን! ✳️"
         ),
         "my_tickets_pending": (
             "ዉድ {username}\n"
@@ -256,7 +250,7 @@ T = {
             "ምንም ትኬት የለዎትም።"
         ),
         "referral_btn": "👥 Referral",
-        "back_home_btn": "◀️ ተመለስ",
+        "back_home_btn": "🔙 ተመለስ",
 
         "referral_info": (
             "👥 *Referral ስርዓት*\n"
@@ -268,7 +262,7 @@ T = {
             "💰 ሊያገኙ የሚችሉ: *{reward}* ብር\n"
             "━━━━━━━━━━━━━━━\n"
             "📌 ለእያንዳንዱ የሚጋብዟቸው ሰው\n"
-            "እጣ ሲፈርስ *2 ብር* ይከፈልዎታል!"
+            "በአንድ ሰው *2 ብር* ይከፈልዎታል!"
         ),
 
         "info_text": (
@@ -282,8 +276,8 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "📌 *ማሳሰቢያ:*\n"
             "— ትክክለኛ ደረሰኝ ብቻ ተቀባይነት ይኖረዋል\n"
-            "— ደረሰኝ ካቀሩ ወይም ትርጉም የሌለው\n"
-            "  ፎቶ ካቀሩ ያለ notification ውድቅ ይሆናል"
+            "— ደረሰኝ ከቀየሩ ወይም ትርጉም የሌለው\n"
+            "  ፎቶ ከላኩ ያለ notification ውድቅ ይሆናል"
         ),
 
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
@@ -302,9 +296,9 @@ T = {
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ First Prize ◀️\n"
-            "2️⃣ Second Prize ◀️\n"
-            "3️⃣ Third Prize ◀️\n"
+            "1️⃣ First Prize 👉\n"
+            "2️⃣ Second Prize 👉\n"
+            "3️⃣ Third Prize 👉\n"
             "━━━━━━━━━━━━━━━\n"
             "Total Tickets = {total}\n"
             "Ticket Price = {price}\n"
@@ -333,35 +327,31 @@ T = {
         "cbe_msg": (
             "🏦 *CBE*\n"
             "━━━━━━━━━━━━━━━\n"
-            "Account Number ◀️ `{account}`\n"
-            "Name ◀️ {name}\n"
+            "Account Number 👉 `{account}`\n"
+            "Name 👉 {name}\n"
             "━━━━━━━━━━━━━━━\n"
             "Total Amount = {total} ETB\n"
             "━━━━━━━━━━━━━━━\n"
             "Please pay using this account\n"
             "and send us your receipt\n"
-            "(screenshot) 👆\n"
+            "(screenshot) 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            "⚠️ Note ⚠️\n"
-            "— Only valid receipts are accepted.\n"
-            "— Receipt must be clear and readable."
+            
         ),
 
         "telebirr_msg": (
             "📱 *TELE BIRR*\n"
             "━━━━━━━━━━━━━━━\n"
-            "Account Number ◀️ `{account}`\n"
-            "Name ◀️ {name}\n"
+            "Account Number 👉 `{account}`\n"
+            "Name 👉 {name}\n"
             "━━━━━━━━━━━━━━━\n"
             "Total Amount = {total} ETB\n"
             "━━━━━━━━━━━━━━━\n"
             "Please pay using this account\n"
             "and send us your receipt\n"
-            "(screenshot) 👆\n"
+            "(screenshot) 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            "⚠️ Note ⚠️\n"
-            "— Only valid receipts are accepted.\n"
-            "— Receipt must be clear and readable."
+            
         ),
 
         "ask_name":      "👤 *Enter your full name:*\nExample: Abebe Kebede",
@@ -392,7 +382,7 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "⏳ You will be notified once\n"
             "admin confirms. Thank you!\n"
-            "Developed by @Taza4Business"
+            "Developed by @TazaBiz"
         ),
 
         "approved": (
@@ -405,8 +395,8 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "Your numbers are reserved.\n"
             "Wait for the draw!\n"
-            "🌟 Thank you! 🌟\n"
-            "Developed by @Taza4Business"
+            "✳️ Thank you! ✳️\n"
+            "Developed by @TazaBiz"
         ),
         "rejected": (
             "❌ *Payment Not Confirmed.*\n"
@@ -431,7 +421,7 @@ T = {
             "You can buy more tickets\n"
             "until the draw date.\n"
             "━━━━━━━━━━━━━━━\n"
-            "🌟 Thank you! 🌟"
+            "✳️ Thank you! ✳️"
         ),
         "my_tickets_pending": (
             "Dear {username}\n"
@@ -451,7 +441,7 @@ T = {
             "You have no tickets yet."
         ),
         "referral_btn":  "👥 Referral",
-        "back_home_btn": "◀️ Back",
+        "back_home_btn": "🔙 Back",
 
         "referral_info": (
             "👥 *Referral System*\n"
@@ -494,9 +484,9 @@ T = {
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ Badhaasa 1ffaa ◀️\n"
-            "2️⃣ Badhaasa 2ffaa ◀️\n"
-            "3️⃣ Badhaasa 3ffaa ◀️\n"
+            "1️⃣ Badhaasa 1ffaa 👉\n"
+            "2️⃣ Badhaasa 2ffaa 👉\n"
+            "3️⃣ Badhaasa 3ffaa 👉\n"
             "━━━━━━━━━━━━━━━\n"
             "Lakkoofsa tikeetii = {total}\n"
             "Gatii tikeetii tokkoo = {price}\n"
@@ -519,40 +509,36 @@ T = {
         ),
         "pay_cbe_btn":      "🏦 CBE",
         "pay_telebirr_btn": "📱 TELE BIRR",
-        "pay_back_btn":     "◀️ Deebi'i",
+        "pay_back_btn":     "🔙 Deebi'i",
 
         "cbe_msg": (
             "🏦 *CBE*\n"
             "━━━━━━━━━━━━━━━\n"
-            "Lakkoofsa akkaawuntii ◀️ `{account}`\n"
-            "Maqaa ◀️ {name}\n"
+            "Lakkoofsa akkaawuntii 👉 `{account}`\n"
+            "Maqaa 👉 {name}\n"
             "━━━━━━━━━━━━━━━\n"
             "Gatii waliigalaa = {total} ETB\n"
             "━━━━━━━━━━━━━━━\n"
             "Akkaawuntii kana fayyadamuun\n"
             "kaffalii, booda beeksisa\n"
-            "(screenshot) ergi 👆\n"
+            "(screenshot) ergi 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            "⚠️ Yaadadhu ⚠️\n"
-            "— Beeksisa sirrii qofa fudhatama.\n"
-            "— Beeksisni ifa ta'uu qaba."
+            
         ),
 
         "telebirr_msg": (
             "📱 *TELE BIRR*\n"
             "━━━━━━━━━━━━━━━\n"
-            "Lakkoofsa akkaawuntii ◀️ `{account}`\n"
-            "Maqaa ◀️ {name}\n"
+            "Lakkoofsa akkaawuntii 👉 `{account}`\n"
+            "Maqaa 👉 {name}\n"
             "━━━━━━━━━━━━━━━\n"
             "Gatii waliigalaa = {total} ETB\n"
             "━━━━━━━━━━━━━━━\n"
             "Akkaawuntii kana fayyadamuun\n"
             "kaffalii, booda beeksisa\n"
-            "(screenshot) ergi 👆\n"
+            "(screenshot) ergi 👇 🧾\n"
             "━━━━━━━━━━━━━━━\n"
-            "⚠️ Yaadadhu ⚠️\n"
-            "— Beeksisa sirrii qofa fudhatama.\n"
-            "— Beeksisni ifa ta'uu qaba."
+            
         ),
 
         "ask_name":      "👤 *Maqaa guutuu kee barreessi:*\nFkn: Abebe Kebede",
@@ -583,7 +569,7 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "⏳ Admin mirkaneesu booda\n"
             "beeksifama. Galatoomi!\n"
-            "Developed by @Taza4Business"
+            "Developed by @TazaBiz"
         ),
 
         "approved": (
@@ -596,8 +582,8 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "Lakkoofsi kee qabame.\n"
             "Fiigichaa eegi!\n"
-            "🌟 Galatoomi! 🌟\n"
-            "Developed by @Taza4Business"
+            "✳️ Galatoomi! ✳️\n"
+            "Developed by @TazaBiz"
         ),
         "rejected": (
             "❌ *Kaffaltiins hin mirkanaa'in.*\n"
@@ -608,7 +594,7 @@ T = {
             "ykn ammas yaali."
         ),
 
-        "my_tickets_hdr": "🌟 *Tikeetii Koo* 🌟",
+        "my_tickets_hdr": "✴️ *Tikeetii Koo* ✴️",
         "my_tickets_body": (
             "Kabajamaa {username}\n"
             "━━━━━━━━━━━━━━━\n"
@@ -622,7 +608,7 @@ T = {
             "Guyyaa fiigichaa dura\n"
             "tikeetii dabalataa bitachuu dandeessa.\n"
             "━━━━━━━━━━━━━━━\n"
-            "🌟 Galatoomi! 🌟"
+            "✳️ Galatoomi! ✳️"
         ),
         "my_tickets_pending": (
             "Kabajamaa {username}\n"
@@ -637,12 +623,12 @@ T = {
             "⏳ Admin mirkaneessuu eegaa jira."
         ),
         "no_tickets": (
-            "🌟 *Tikeetii Koo* 🌟\n"
+            "✴️ *Tikeetii Koo* ✴️\n"
             "━━━━━━━━━━━━━━━\n"
             "Tikeetii hin qabdu."
         ),
         "referral_btn":  "👥 Referral",
-        "back_home_btn": "◀️ Deebi'i",
+        "back_home_btn": "🔙 Deebi'i",
 
         "referral_info": (
             "👥 *Referral*\n"
@@ -654,7 +640,7 @@ T = {
             "💰 Badhaasa: *{reward}* ETB\n"
             "━━━━━━━━━━━━━━━\n"
             "📌 Nama hunda affeerteef\n"
-            "fiigichi erga xumurameen *2 ETB* argatta!"
+            "Nama tokkoof *2 ETB* argatta!"
         ),
 
         "info_text": (
