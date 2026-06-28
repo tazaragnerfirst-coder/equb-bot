@@ -150,8 +150,8 @@ T = {
         "telebirr_msg": (
             "📱 *TELE BIRR*\n"
             "━━━━━━━━━━━━━━━\n"
-            "አካዉንት ቁጥር ◀️ `{account}`\n"
-            "ስም ◀️ {name}\n"
+            "አካዉንት ቁጥር 👉 `{account}`\n"
+            "ስም 👉 {name}\n"
             "━━━━━━━━━━━━━━━\n"
             "ድምር ዋጋ = {total} ብር\n"
             "━━━━━━━━━━━━━━━\n"
@@ -1285,7 +1285,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_revenue = taken * price
 
     text = (
-        f"🎴 *ADMIN PANEL* 🎴\n"
+        f"🔰 *ADMIN PANEL* 🔰\n"
         f"━━━━━━━━━━━━━━━\n"
         f"የትኬት ብዛት = {total}\n"
         f"የተሸጠ = {taken}\n"
@@ -1326,7 +1326,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text("─", reply_markup=menu_kb)
+        await update.effective_message.reply_text("", reply_markup=menu_kb)
 
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1442,7 +1442,7 @@ async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     ctx.user_data["admin_action"] = "find_ticket"
     await query.edit_message_text(
-        "🔍 *SEARCH*\n━━━━━━━━━━━━━━━\nየቲኬት ቁጥር ፃፍ:\nምሳሌ: 45",
+        "🔍 *SEARCH*\n━━━━━━━━━━━━━━━\nየቲኬት ቁጥር ፃፍ:\nምሳሌ: 5",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton("◀️ Cancel", callback_data="admin_panel")
@@ -1617,7 +1617,7 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 InlineKeyboardButton("✅ Approve", callback_data=f"approve_{p_id}"),
                 InlineKeyboardButton("❌ Reject",  callback_data=f"reject_{p_id}")
             ])
-        kb.append([InlineKeyboardButton("◀️ Back", callback_data="admin_panel")])
+        kb.append([InlineKeyboardButton("🔙 Back", callback_data="admin_panel")])
         try:
             await ctx.bot.send_photo(chat_id=update.effective_user.id,
                                      photo=p_receipt, caption=caption,
