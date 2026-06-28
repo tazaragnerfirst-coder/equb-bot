@@ -1313,14 +1313,14 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await update.effective_message.reply_text(
                 text, parse_mode="Markdown", reply_markup=inline_kb)
         await update.effective_message.reply_text(
-            "📤 SEND TO GROUP  |  📢 BROADCAST  |  ⚙️ SETTING",
+            "━━━━━━━━━━━━━━━",
             reply_markup=menu_kb
         )
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
         await update.effective_message.reply_text(
-            "📤 SEND TO GROUP  |  📢 BROADCAST  |  ⚙️ SETTING",
+            "━━━━━━━━━━━━━━━",
             reply_markup=menu_kb
         )
 
