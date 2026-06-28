@@ -43,7 +43,7 @@
   /* ── Receipt thumbnail ── */
   .receipt-wrap{
     width:100%;
-    max-height:200px;
+    max-height:90px;
     overflow:hidden;
     position:relative;
     background:#111;
@@ -52,7 +52,7 @@
   }
   .receipt-wrap img{
     width:100%;
-    height:200px;
+    height:90px;
     object-fit:cover;
     display:block;
     transition:opacity .2s, transform .2s;
@@ -63,8 +63,8 @@
   }
   .receipt-label{
     position:absolute; bottom:0; left:0; right:0;
-    padding:6px 12px; font-size:11.5px; color:#fff;
-    background:linear-gradient(transparent, rgba(0,0,0,.7));
+    padding:4px 10px; font-size:10.5px; color:#fff;
+    background:linear-gradient(transparent, rgba(0,0,0,.75));
     pointer-events:none;
   }
   /* skeleton loader while image fetches */
@@ -72,7 +72,7 @@
     background: linear-gradient(90deg,#1a1d27 25%,#22263a 50%,#1a1d27 75%);
     background-size:200% 100%;
     animation: shimmer 1.4s infinite;
-    height:160px;
+    height:90px;
   }
   @keyframes shimmer{
     0%{background-position:200% 0}
