@@ -1313,14 +1313,14 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await update.effective_message.reply_text(
                 text, parse_mode="Markdown", reply_markup=inline_kb)
         await update.effective_message.reply_text(
-            "━━━━━━━━━━━━━━━",
+            "━━━━━━━━━━━",
             reply_markup=menu_kb
         )
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
         await update.effective_message.reply_text(
-            "━━━━━━━━━━━━━━━",
+            "━━━━━━━━━━━",
             reply_markup=menu_kb
         )
 
@@ -1486,7 +1486,7 @@ async def broadcast_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(
         f"✅ Sent to {sent} users + group!",
         reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("◀️ Back", callback_data="admin_panel")
+            InlineKeyboardButton("🔙 Back", callback_data="admin_panel")
         ]])
     )
 
@@ -1501,7 +1501,7 @@ async def admin_reset_yes_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "✅ *New lottery started!*",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("◀️ Back to Panel", callback_data="admin_panel")
+            InlineKeyboardButton("🔙 Back to Panel", callback_data="admin_panel")
         ]])
     )
 
