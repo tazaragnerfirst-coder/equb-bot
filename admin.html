@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Admin - GETU DURESA</title>
+<title>Admin - OPEN TICKET</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root{
@@ -318,7 +318,7 @@ function render(cards) {
         <div class="row"><span>📞 ስልክ</span><b>${esc(d.phone || '—')}</b></div>
         <div class="row"><span>🎟 ቁጥሮች</span><b>${esc(d.numbers || '—')}</b></div>
         <div class="row"><span>💳 ዘዴ</span><b>${esc(d.payment_method || '—')}</b></div>
-        <div class="row"><span>👥 ጋበዘ</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
+        <div class="row"><span>👥 የጋበዘው</span><b>${esc(String(d._refCount ?? 0))} ሰዎች</b></div>
         <div class="row"><span>📅 ቀን</span><b>${esc(dt)}</b></div>
       </div>
     `;
