@@ -1326,7 +1326,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     else:
         await update.effective_message.reply_text(
             text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text("", reply_markup=menu_kb)
+        await update.effective_message.reply_text(".", reply_markup=menu_kb)
 
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
