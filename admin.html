@@ -22,6 +22,32 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
   }
+  /* ── Light theme override (applied via [data-theme="light"] on <html>) ── */
+  [data-theme="light"]{
+    --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
+    --glass-bg: rgba(255, 255, 255, 0.6);
+    --glass-bg-strong: rgba(255, 255, 255, 0.8);
+    --glass-border: rgba(255, 255, 255, 0.5);
+    --text: #1e293b;
+    --dim: #64748b;
+    --accent: #2563eb;
+    --danger: #ef4444;
+    --green: #16a34a;
+    --blob-1: rgba(147, 197, 253, 0.4);
+    --blob-2: rgba(247, 178, 191, 0.35);
+  }
+  [data-theme="light"] .row-count{ color:#2563eb; }
+  [data-theme="light"] .num-chip{
+    background: rgba(37,99,235,0.1);
+    color:#2563eb;
+    border-color: rgba(37,99,235,0.25);
+  }
+  [data-theme="light"] .modal-receipt{
+    background: rgba(255,255,255,0.5);
+  }
+  [data-theme="light"] #overlay{
+    background: rgba(255,255,255,0.92);
+  }
   *, *::before, *::after{ box-sizing:border-box; }
   html, body{
     margin:0;
@@ -257,17 +283,17 @@
 <!-- Detail modal -->
 <div id="modal">
   <div id="modalHeader">
-    <button id="modalClose">🔙</button>
+    <button id="modalClose">✕</button>
     <span id="modalTitle">ዝርዝር</span>
   </div>
-  <div id="modalBody">close</div>
+  <div id="modalBody"></div>
 </div>
 
 <!-- Fullscreen receipt overlay -->
 <div id="overlay">
   <div id="overlayLoader">ደረሰኝ እየጫነ ነው...</div>
   <img id="overlayImg" src="" alt="Receipt">
-  <button id="overlayClose">close</button>
+  <button id="overlayClose">ዝጋ</button>
 </div>
 
 <script type="module">
@@ -292,6 +318,31 @@ const authf = getAuth(app);
 
 const tg = window.Telegram?.WebApp;
 if (tg) { tg.ready(); tg.expand(); }
+
+// ── Match light/dark with Telegram's current theme (falls back to device OS theme) ──
+function applyTheme() {
+  let isDark = true; // default
+  if (tg && tg.colorScheme) {
+    isDark = tg.colorScheme === 'dark';
+  } else if (window.matchMedia) {
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+
+  // Keep Telegram's own chrome (header/background) matching too
+  if (tg) {
+    try {
+      const bg = isDark ? '#0f172a' : '#eef2f7';
+      tg.setHeaderColor(bg);
+      tg.setBackgroundColor(bg);
+    } catch {}
+  }
+}
+applyTheme();
+if (tg) tg.onEvent('themeChanged', applyTheme);
+if (window.matchMedia) {
+  window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+}
 const initData = tg?.initData || "";
 
 const BASE_URL   = "https://equb-bot-vt5m.onrender.com";
