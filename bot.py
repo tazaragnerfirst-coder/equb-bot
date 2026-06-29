@@ -837,12 +837,11 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if update.callback_query:
         try:
-            await update.callback_query.edit_message_text(text, parse_mode="Markdown")
+            await update.callback_query.delete_message()
         except:
             pass
-        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
-    else:
-        await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+
+    await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
