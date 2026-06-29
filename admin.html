@@ -73,8 +73,10 @@
   /* ── Search bar ── */
   #searchWrap{
     padding:8px 16px 12px;
-    position:sticky; top:0; z-index:10;
+    position:sticky; top:0; z-index:50;
+    pointer-events:none;
   }
+  .search-container{ pointer-events:auto; }
   #searchBar{
     width:100%; padding:12px 16px 12px 40px; position:relative;
     border-radius:20px; border:1px solid var(--glass-border);
@@ -256,6 +258,7 @@
   #overlay.open{ display:flex; }
   #overlayImg{
     max-width:100%; max-height:78vh; border-radius:14px; object-fit:contain;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.45), 0 0 0 1px var(--glass-border);
   }
   #overlayLoader{ color:var(--dim); font-size:14px; margin-bottom:12px; display:none; }
   #overlay.loading #overlayLoader{ display:block; }
