@@ -59,7 +59,7 @@
   }
   body{
     background: var(--bg-gradient);
-    padding-top: calc(var(--safe-top) + 8px);
+    padding-top: calc(var(--safe-top) + 64px);
     padding-bottom: calc(var(--safe-bottom) + 24px);
     position:relative;
   }
@@ -72,9 +72,12 @@
 
   /* ── Search bar ── */
   #searchWrap{
-    padding:8px 16px 12px;
-    position:sticky; top:0; z-index:50;
+    position:fixed; top:0; left:0; right:0;
+    padding: calc(var(--safe-top) + 8px) 16px 12px;
+    z-index:50;
     pointer-events:none;
+    will-change: transform;
+    transform: translateZ(0);
   }
   .search-container{ pointer-events:auto; }
   #searchBar{
