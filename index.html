@@ -1,542 +1,555 @@
 <!DOCTYPE html>
 <html lang="am">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>Admin - OPEN TICKET</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-<style>
-  :root{
-    --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-    --glass-bg: rgba(30, 41, 59, 0.7);
-    --glass-bg-strong: rgba(30, 41, 59, 0.85);
-    --glass-border: rgba(255, 255, 255, 0.08);
-    --glass-blur: blur(12px);
-    --text: #f8fafc;
-    --dim: #94a3b8;
-    --accent: #2563eb;
-    --danger: #ef4444;
-    --green: #34d399;
-    --blob-1: rgba(37, 99, 235, 0.15);
-    --blob-2: rgba(225, 29, 72, 0.1);
-    --safe-top: env(safe-area-inset-top, 0px);
-    --safe-bottom: env(safe-area-inset-bottom, 0px);
-  }
-  *, *::before, *::after{ box-sizing:border-box; }
-  html, body{
-    margin:0;
-    min-height:100vh;
-    color:var(--text);
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-    -webkit-tap-highlight-color: transparent;
-    overflow-x:hidden;
-  }
-  body{
-    background: var(--bg-gradient);
-    padding-top: calc(var(--safe-top) + 8px);
-    padding-bottom: calc(var(--safe-bottom) + 24px);
-    position:relative;
-  }
-  body::before, body::after{
-    content:""; position:fixed; border-radius:50%;
-    filter: blur(80px); z-index:-1; pointer-events:none;
-  }
-  body::before{ width:260px; height:260px; background:var(--blob-1); top:4%; left:-12%; }
-  body::after{ width:260px; height:260px; background:var(--blob-2); bottom:8%; right:-12%; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TAZA4BUSINESS</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* ═══════════════════════════════════════════
+           SPLASH SCREEN — OPEN TICKET BRAND
+        ═══════════════════════════════════════════ */
+        #splashScreen {
+            position: fixed;
+            inset: 0;
+            background: #29b6e8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity 0.6s ease-out;
+        }
+        #splashScreen.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
 
-  /* ── Search bar ── */
-  #searchWrap{
-    padding:8px 16px 12px;
-    position:sticky; top:0; z-index:10;
-  }
-  #searchBar{
-    width:100%; padding:12px 16px 12px 40px; position:relative;
-    border-radius:20px; border:1px solid var(--glass-border);
-    background:var(--glass-bg); backdrop-filter:var(--glass-blur);
-    -webkit-backdrop-filter:var(--glass-blur);
-    color:var(--text); font-size:15px; outline:none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-  }
-  .search-container{ position:relative; }
-  .search-container::before{
-    content:"🔍"; position:absolute; left:14px; top:50%;
-    transform:translateY(-50%); font-size:14px; opacity:.55; pointer-events:none;
-  }
-  #searchBar::placeholder{ color:var(--dim); }
-  #searchBar:focus{ border-color: var(--accent); }
+        .splash-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            animation: splashPop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes splashPop {
+            from { opacity: 0; transform: scale(0.82); }
+            to   { opacity: 1; transform: scale(1); }
+        }
 
-  #statusLine{ padding:6px 20px 6px; color:var(--dim); font-size:12.5px; }
+        /* ── "OPEN" wordmark ── */
+        .splash-open {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial Rounded MT Bold, sans-serif;
+            font-size: 88px;
+            font-weight: 900;
+            letter-spacing: -2px;
+            color: #ffffff;
+            line-height: 1;
+            /* rounded feel via text-shadow */
+            filter: drop-shadow(0 4px 16px rgba(0,0,0,0.12));
+        }
 
-  /* ── Floating glass cards ── */
-  #cardList{
-    padding:4px 14px; display:flex; flex-direction:column; gap:12px;
-    position:relative; z-index:1;
-  }
+        /* ── "TICKET" subtitle ── */
+        .splash-ticket {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 7px;
+            color: #ffffff;
+            text-transform: uppercase;
+            margin-top: -4px;
+            opacity: 0.92;
+        }
 
-  .row-card{
-    display:flex; align-items:center; gap:12px;
-    padding:11px;
-    border-radius:18px;
-    background:var(--glass-bg);
-    border:1px solid var(--glass-border);
-    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.18);
-    cursor:pointer;
-    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-  }
-  .row-card:active{
-    transform: scale(.97);
-    background:var(--glass-bg-strong);
-    box-shadow: 0 0 0 1.5px rgba(37,99,235,.6), 0 8px 24px rgba(37,99,235,.25);
-  }
+        /* ── Main App hidden until splash exits ── */
+        #mainApp {
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
+            pointer-events: none;
+            width: 100%;
+            min-height: 100vh;
+        }
+        #mainApp.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
 
-  .thumb{
-    width:54px; height:54px; flex:0 0 auto;
-    border-radius:14px; overflow:hidden;
-    background:rgba(255,255,255,0.06);
-    border:1px solid var(--glass-border);
-    position:relative;
-  }
-  .thumb img{
-    width:100%; height:100%; object-fit:cover; display:block;
-    position:absolute; inset:0;
-    transition:opacity .2s;
-  }
-  .thumb.loading{
-    background: linear-gradient(90deg,rgba(255,255,255,0.04) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.04) 75%);
-    background-size:200% 100%;
-    animation: shimmer 1.4s infinite;
-  }
-  .thumb.loading img{ opacity:0; }
-  @keyframes shimmer{
-    0%{background-position:200% 0}
-    100%{background-position:-200% 0}
-  }
+        /* ═══════════════════════════════════════════
+           TICKET APP STYLES
+        ═══════════════════════════════════════════ */
+        :root {
+            --bg-gradient: linear-gradient(135deg, #e0e8f5 0%, #eef2f7 100%);
+            --glass-bg: rgba(255, 255, 255, 0.55);
+            --glass-border: rgba(255, 255, 255, 0.45);
+            --glass-blur: blur(12px);
+            --available-color: rgba(255, 255, 255, 0.65);
+            --sold-color: rgba(254, 226, 226, 0.7);
+            --pending-color: rgba(254, 243, 199, 0.85);
+            --selected-blue: #3b82f6;
+            --text-dark: #2d3748;
+            --text-sold: #f43f5e;
+            --text-pending: #111111;
+            --blob-1: rgba(147, 197, 253, 0.4);
+            --blob-2: rgba(247, 178, 191, 0.35);
+        }
+        [data-theme="dark"] {
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --glass-bg: rgba(30, 41, 59, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --available-color: rgba(51, 65, 85, 0.6);
+            --sold-color: rgba(127, 29, 29, 0.4);
+            --pending-color: rgba(120, 80, 10, 0.5);
+            --selected-blue: #2563eb;
+            --text-dark: #f8fafc;
+            --text-sold: #ef4444;
+            --text-pending: #fbbf24;
+            --blob-1: rgba(37, 99, 235, 0.15);
+            --blob-2: rgba(225, 29, 72, 0.1);
+        }
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh; margin: 0; padding: 0;
+            display: flex; flex-direction: column; align-items: center;
+            overflow-x: hidden; color: var(--text-dark);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+        body::before, body::after {
+            content: ""; position: absolute; border-radius: 50%;
+            filter: blur(80px); z-index: -1; transition: background 0.3s ease;
+        }
+        body::before { width: 250px; height: 250px; background: var(--blob-1); top: 5%; left: -10%; }
+        body::after  { width: 250px; height: 250px; background: var(--blob-2); bottom: 10%; right: -10%; }
 
-  .row-info{ flex:1; min-width:0; }
-  .row-info .r-name{
-    font-size:15px; font-weight:700; white-space:nowrap;
-    overflow:hidden; text-overflow:ellipsis;
-  }
-  .row-info .r-phone{
-    font-size:13px; color:var(--dim); margin-top:2px;
-  }
+        /* FIX 1: full-width — no 390px cap */
+        /* FIX 2: GPU layer for smooth scroll repaint */
+        .search-fixed-wrapper {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            max-width: 100%;
+            padding: 16px 16px 6px 16px;
+            z-index: 110;
+            pointer-events: none;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        .top-bar { display: flex; width: 100%; gap: 8px; pointer-events: auto; }
+        .search-container { flex: 1; position: relative; }
+        .search-bar {
+            width: 100%; padding: 12px 16px 12px 42px;
+            border: 1px solid var(--glass-border); background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border-radius: 20px; font-size: 15px; color: var(--text-dark); outline: none;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.02); transition: all 0.3s ease;
+        }
+        .search-bar::placeholder { transition: opacity 0.4s ease, transform 0.4s ease; opacity: 0.6; color: var(--text-dark); }
+        .search-bar.fade-out::placeholder { opacity: 0; transform: translateY(-5px); }
+        .search-container::before { content: "🔍"; position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 14px; opacity: 0.5; }
+        .quick-pick-btn, .theme-toggle-btn {
+            border: 1px solid var(--glass-border); background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            border-radius: 20px; color: var(--text-dark); cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02); transition: all 0.2s ease;
+        }
+        .quick-pick-btn { padding: 0 14px; font-size: 13px; font-weight: 600; }
+        .theme-toggle-btn { width: 44px; height: 44px; font-size: 18px; }
 
-  .row-right{ flex:0 0 auto; text-align:right; }
-  .row-date{ font-size:11.5px; color:var(--dim); white-space:nowrap; }
-  .row-count{
-    font-size:11px; color:#60a5fa; white-space:nowrap; margin-top:4px;
-    font-weight:700;
-  }
+        .cart-fixed-wrapper {
+            position: fixed;
+            top: 64px;
+            width: 100%;
+            max-width: 100%;
+            padding: 4px 16px 10px 16px;
+            z-index: 100;
+            pointer-events: none;
+            will-change: transform;
+            transform: translateZ(0);
+        }
+        .cart-panel {
+            display: none; width: 100%; background: var(--glass-bg);
+            border: 1px solid var(--glass-border); backdrop-filter: var(--glass-blur);
+            -webkit-backdrop-filter: var(--glass-blur); border-radius: 20px; padding: 10px 14px;
+            align-items: center; justify-content: space-between; gap: 10px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05); pointer-events: auto;
+        }
+        .chips-wrapper {
+            flex: 1; overflow: hidden; position: relative; white-space: nowrap;
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+            mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+        }
+        .selected-chips { display: inline-flex; gap: 6px; padding: 2px 15px; position: relative; }
+        .animate-marquee { animation: bounceMarquee 7s ease-in-out infinite alternate; }
+        @keyframes bounceMarquee { 0% { transform: translateX(0px); } 100% { transform: translateX(var(--scroll-dist, 0px)); } }
+        .chip {
+            width: 32px; height: 32px;
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: #ffffff !important; border: none; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: bold; box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            flex-shrink: 0; animation: rainbowGlow 8s ease infinite; text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        .price-tag { font-size: 13px; color: var(--text-dark); font-weight: 700; white-space: nowrap; }
+        .extra-btn {
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: white; border: none; padding: 8px 16px;
+            border-radius: 16px; font-size: 13px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); white-space: nowrap; animation: rainbowGlow 8s ease infinite;
+        }
+        @keyframes rainbowGlow { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
-  #centerMsg{
-    text-align:center; color:var(--dim); padding:60px 20px; font-size:14px;
-    position:relative; z-index:1;
-  }
-  #centerMsg.error{ color:var(--danger); }
+        .scrollable-content {
+            width: 100%;
+            max-width: 100%;
+            padding: 72px 16px 24px 16px;
+            transition: padding-top 0.2s ease;
+        }
+        .scrollable-content.shifted { padding-top: 134px; }
+        .number-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; }
+        .number-box {
+            aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;
+            user-select: none; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+        }
+        .available { background: var(--available-color); color: var(--text-dark); border: 1px solid var(--glass-border); }
+        .sold { background: var(--sold-color); color: var(--text-sold); cursor: not-allowed; border: 1px solid rgba(254, 226, 226, 0.2); }
+        .pending { background: var(--pending-color); color: var(--text-pending); cursor: not-allowed; border: 1px solid rgba(217, 119, 6, 0.3); }
+        .number-box.selected { background: var(--selected-blue) !important; color: white !important; border: 3px solid #ffffff !important; box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); transform: scale(1.05); }
 
-  /* ── Detail modal ── */
-  #modal{
-    display:none; position:fixed; inset:0; z-index:200;
-    background: var(--bg-gradient);
-    flex-direction:column;
-  }
-  #modal.open{ display:flex; }
-  #modal::before, #modal::after{
-    content:""; position:fixed; border-radius:50%;
-    filter: blur(80px); z-index:-1; pointer-events:none;
-  }
-  #modal::before{ width:260px; height:260px; background:var(--blob-1); top:4%; left:-12%; }
-  #modal::after{ width:260px; height:260px; background:var(--blob-2); bottom:8%; right:-12%; }
-
-  #modalHeader{
-    display:flex; align-items:center; gap:12px;
-    padding:calc(var(--safe-top) + 12px) 16px 12px;
-    position:relative; z-index:1;
-  }
-  #modalClose{
-    background:var(--glass-bg); border:1px solid var(--glass-border); color:var(--text);
-    width:34px; height:34px; border-radius:17px; font-size:15px;
-    cursor:pointer; flex:0 0 auto;
-    display:flex; align-items:center; justify-content:center;
-    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-  }
-  #modalClose:active{ background:var(--glass-bg-strong); }
-  #modalTitle{ font-size:16px; font-weight:700; }
-
-  #modalBody{
-    flex:1; overflow-y:auto; padding:16px;
-    padding-bottom: calc(var(--safe-bottom) + 24px);
-    position:relative; z-index:1;
-  }
-
-  .modal-receipt{
-    width:100%; max-height:260px; overflow:hidden;
-    border-radius:18px;
-    background:rgba(0,0,0,.5); cursor:pointer; margin-bottom:16px;
-    border:1px solid var(--glass-border);
-    display:flex; align-items:center; justify-content:center;
-  }
-  .modal-receipt img{
-    width:100%; height:100%; object-fit:contain; display:block;
-  }
-
-  .info-card{
-    background:var(--glass-bg); border:1px solid var(--glass-border);
-    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    border-radius:18px; overflow:hidden; margin-bottom:12px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.12);
-  }
-  .detail-row{
-    display:flex; justify-content:space-between; align-items:flex-start;
-    font-size:14px; padding:12px 15px; color:var(--dim);
-    border-bottom:1px solid var(--glass-border);
-    gap:12px;
-  }
-  .detail-row:last-child{ border-bottom:none; }
-  .detail-row .d-label{ flex:0 0 auto; }
-  .detail-row .d-val{ color:var(--text); font-weight:600; text-align:right; }
-
-  .nums-wrap{ padding:13px 15px; }
-  .nums-wrap .d-label{ font-size:13px; color:var(--dim); margin-bottom:9px; display:block; }
-  .nums-scroll{
-    display:flex; gap:6px; overflow-x:auto;
-    -webkit-overflow-scrolling:touch;
-    padding-bottom:2px;
-  }
-  .num-chip{
-    flex:0 0 auto;
-    background:rgba(37,99,235,0.18);
-    color:#60a5fa;
-    border:1px solid rgba(37,99,235,0.3);
-    border-radius:10px;
-    padding:6px 12px;
-    font-size:13.5px;
-    font-weight:700;
-    white-space:nowrap;
-  }
-
-  /* ── Fullscreen receipt overlay ── */
-  #overlay{
-    display:none; position:fixed; inset:0; z-index:300;
-    background:rgba(0,0,0,.92);
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    padding:16px;
-    padding-top: calc(var(--safe-top) + 16px);
-    padding-bottom: calc(var(--safe-bottom) + 16px);
-  }
-  #overlay.open{ display:flex; }
-  #overlayImg{
-    max-width:100%; max-height:78vh; border-radius:14px; object-fit:contain;
-  }
-  #overlayLoader{ color:var(--dim); font-size:14px; margin-bottom:12px; display:none; }
-  #overlay.loading #overlayLoader{ display:block; }
-  #overlay.loading #overlayImg{ opacity:.3; }
-  #overlayClose{
-    margin-top:22px; padding:11px 36px; border-radius:24px;
-    background:var(--glass-bg); border:1px solid var(--glass-border);
-    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    color:var(--text); font-size:14px; cursor:pointer; font-weight:600;
-  }
-  #overlayClose:active{ background:var(--glass-bg-strong); }
-</style>
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            align-items: center; justify-content: center; z-index: 1000; padding: 20px;
+        }
+        .modal-box {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            padding: 24px; border-radius: 24px; width: 100%; max-width: 320px; text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15); animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes popUp { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-box h3 { margin: 0 0 10px 0; color: var(--text-sold); font-size: 20px; }
+        .modal-box p  { margin: 0 0 20px 0; color: var(--text-dark); font-size: 15px; line-height: 1.4; opacity: 0.9; }
+        .modal-btn {
+            background: linear-gradient(45deg, #ff4e50, #f9d423, #00c6ff, #0072ff, #ff4e50);
+            background-size: 400% 400%; color: white !important; border: none; padding: 11px 24px;
+            border-radius: 16px; font-size: 15px; font-weight: bold; cursor: pointer; width: 100%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15); animation: rainbowGlow 8s ease infinite;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2); transition: transform 0.1s ease;
+        }
+        .modal-btn:active { transform: scale(0.97); }
+    </style>
 </head>
 <body>
 
-<div id="searchWrap">
-  <div class="search-container">
-    <input id="searchBar" type="text" inputmode="search" autocomplete="off" placeholder="ስም, ስልክ ወይም ቁጥር ፈልግ">
-  </div>
-</div>
-<div id="statusLine"></div>
-<div id="cardList"></div>
-<div id="centerMsg">በመጫን ላይ...</div>
+    <!-- ════════════════════════════════
+         SPLASH SCREEN — OPEN TICKET
+    ════════════════════════════════ -->
+    <div id="splashScreen">
+        <div class="splash-content">
+            <div class="splash-open">OPEN</div>
+            <div class="splash-ticket">TICKET</div>
+        </div>
+    </div>
 
-<!-- Detail modal -->
-<div id="modal">
-  <div id="modalHeader">
-    <button id="modalClose">✕</button>
-    <span id="modalTitle">ዝርዝር</span>
-  </div>
-  <div id="modalBody"></div>
-</div>
+    <!-- ════════════════════════════════
+         MAIN TICKET APP
+    ════════════════════════════════ -->
+    <div id="mainApp">
 
-<!-- Fullscreen receipt overlay -->
-<div id="overlay">
-  <div id="overlayLoader">ደረሰኝ እየጫነ ነው...</div>
-  <img id="overlayImg" src="" alt="Receipt">
-  <button id="overlayClose">ዝጋ</button>
-</div>
+        <div class="search-fixed-wrapper">
+            <div class="top-bar">
+                <div class="search-container">
+                    <input type="text" id="searchBar" class="search-bar" placeholder="5">
+                </div>
+                <button class="quick-pick-btn" id="quickPickBtn">Quick Pick</button>
+                <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()">🌙</button>
+            </div>
+        </div>
 
-<script type="module">
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, getDoc }
-                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
-import { getAuth, signInWithCustomToken }
-                           from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+        <div class="cart-fixed-wrapper">
+            <div class="cart-panel" id="cartPanel">
+                <div class="chips-wrapper" id="chipsWrapper">
+                    <div class="selected-chips" id="chipsContainer"></div>
+                </div>
+                <div class="price-tag" id="priceTag">0/15 = 0 ETB</div>
+                <button class="extra-btn" id="extraBtn">እጣ ቁረጥ</button>
+            </div>
+        </div>
+
+        <div class="scrollable-content" id="scrollContent">
+            <div class="number-grid" id="numberGrid"></div>
+        </div>
+
+        <div class="modal-overlay" id="errorModal">
+            <div class="modal-box">
+                <h3 id="modalTitle">⚠️ ገደብ አልፏል!</h3>
+                <p id="modalMsg">በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት <strong id="maxLimitText">15</strong> ብቻ ነው።</p>
+                <button class="modal-btn" id="modalOkBtn" onclick="closeModal()">እሺ ገብቶኛል</button>
+            </div>
+        </div>
+
+    </div><!-- /mainApp -->
+
+    <!-- Splash dismiss -->
+    <script>
+        (function() {
+            var splash  = document.getElementById('splashScreen');
+            var mainApp = document.getElementById('mainApp');
+            setTimeout(function() {
+                splash.classList.add('fade-out');
+                setTimeout(function() {
+                    splash.style.display = 'none';
+                    mainApp.classList.add('visible');
+                }, 600);
+            }, 2400);
+        })();
+    </script>
+
+    <!-- Firebase + App Logic -->
+    <script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, collection } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
-  authDomain: "equb-c5f5f.firebaseapp.com",
-  projectId: "equb-c5f5f",
-  storageBucket: "equb-c5f5f.firebasestorage.app",
-  messagingSenderId: "745997733561",
-  appId: "1:745997733561:web:6a37c360fdc5fa2d559568"
+    apiKey: "AIzaSyALC5m34A85Xpscnu4N6gW88tYQ1YyaOB0",
+    authDomain: "equb-c5f5f.firebaseapp.com",
+    databaseURL: "https://equb-c5f5f-default-rtdb.firebaseio.com",
+    projectId: "equb-c5f5f",
+    storageBucket: "equb-c5f5f.firebasestorage.app",
+    messagingSenderId: "745997733561",
+    appId: "1:745997733561:web:6a37c360fdc5fa2d559568",
+    measurementId: "G-0NR450CFN9"
 };
-
-const app   = initializeApp(firebaseConfig);
-const dbf   = getFirestore(app);
-const authf = getAuth(app);
+const firebaseApp = initializeApp(firebaseConfig);
+const firestore = getFirestore(firebaseApp);
 
 const tg = window.Telegram?.WebApp;
-if (tg) { tg.ready(); tg.expand(); }
-const initData = tg?.initData || "";
+if (tg) tg.expand();
+const tgUser = tg?.initDataUnsafe?.user;
+const userId = tgUser?.id || 0;
+const userName = tgUser?.first_name || "Guest";
 
-const BASE_URL   = "https://equb-bot-vt5m.onrender.com";
-const VERIFY_URL = `${BASE_URL}/verify-admin`;
+const urlParams = new URLSearchParams(window.location.search);
+const botLang = urlParams.get('lang') || 'am';
 
-// ── DOM refs ──
-const centerMsg  = document.getElementById('centerMsg');
-const cardList   = document.getElementById('cardList');
-const searchBar  = document.getElementById('searchBar');
-const statusLine = document.getElementById('statusLine');
-const overlay    = document.getElementById('overlay');
-const overlayImg = document.getElementById('overlayImg');
-const modal      = document.getElementById('modal');
-const modalBody  = document.getElementById('modalBody');
-const modalTitle = document.getElementById('modalTitle');
+const LANG_TEXT = {
+    am: {
+        cutBtn: "እጣ ቁረጥ",
+        quickPick: "ፈጣን ምርጫ",
+        modalTitle: "⚠️ ገደብ አልፏል!",
+        modalMsg: "በአንድ ጊዜ መምረጥ የሚችሉት ከፍተኛው የእጣ ብዛት",
+        modalSuffix: "ብቻ ነው። እባክዎ መጀመሪያ ያሉትን እጣዎች ይቁረጡ።",
+        modalOk: "እሺ ገብቶኛል",
+        openInTg: "Telegram ውስጥ ይክፈቱ።",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
+    },
+    en: {
+        cutBtn: "Buy Tickets",
+        quickPick: "Quick Pick",
+        modalTitle: "⚠️ Limit Reached!",
+        modalMsg: "You can select a maximum of",
+        modalSuffix: "tickets at a time. Please proceed first.",
+        modalOk: "OK, Got it",
+        openInTg: "Please open in Telegram.",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
+    },
+    or: {
+        cutBtn: "Tikeetii Bitadhu",
+        quickPick: "Filannoo Ariifataa",
+        modalTitle: "⚠️ Daangaa Darbeera!",
+        modalMsg: "Yeroo tokko filachuu dandeessu",
+        modalSuffix: "qofa. Duraan tikeetiiwwan jiran kutaa.",
+        modalOk: "Galatoomaa",
+        openInTg: "Telegram keessatti banuuf.",
+        searchPlaceholders: ["5", "12", "88", "143", "450", "777"],
+    }
+};
+const L = LANG_TEXT[botLang] || LANG_TEXT['am'];
 
-// Receipt overlay (full screen image)
-function openOverlay(imgSrc) {
-  overlay.classList.add('open', 'loading');
-  overlayImg.src = '';
-  const tmp = new Image();
-  tmp.onload = () => {
-    overlayImg.src = imgSrc;
-    overlay.classList.remove('loading');
-  };
-  tmp.onerror = () => {
-    overlay.classList.remove('loading');
-    overlayImg.alt = 'ደረሰኝ ማምጣት አልተቻለም';
-  };
-  tmp.src = imgSrc;
+const MAX_SELECT = 15;
+let ticketPrice = 20;
+let totalTickets = 100;
+let ticketsData = {};
+let mySelections = [];
+
+const numberGrid    = document.getElementById('numberGrid');
+const searchBar     = document.getElementById('searchBar');
+const cartPanel     = document.getElementById('cartPanel');
+const chipsContainer= document.getElementById('chipsContainer');
+const chipsWrapper  = document.getElementById('chipsWrapper');
+const priceTag      = document.getElementById('priceTag');
+const scrollContent = document.getElementById('scrollContent');
+const themeToggleBtn= document.getElementById('themeToggleBtn');
+const errorModal    = document.getElementById('errorModal');
+const quickPickBtn  = document.getElementById('quickPickBtn');
+const extraBtn      = document.getElementById('extraBtn');
+
+document.getElementById('maxLimitText').innerText = MAX_SELECT;
+document.getElementById('modalTitle').innerText = L.modalTitle;
+document.getElementById('modalMsg').innerHTML = `${L.modalMsg} <strong id="maxLimitText">${MAX_SELECT}</strong> ${L.modalSuffix}`;
+document.getElementById('modalOkBtn').innerText = L.modalOk;
+extraBtn.innerText = L.cutBtn;
+quickPickBtn.innerText = L.quickPick;
+document.documentElement.lang = botLang;
+
+function initTheme() {
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.innerText = "☀️";
+    } else {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.innerText = "🌙";
+    }
 }
-document.getElementById('overlayClose').addEventListener('click', () => {
-  overlay.classList.remove('open', 'loading');
-  overlayImg.src = '';
-});
-overlay.addEventListener('click', (e) => {
-  if (e.target === overlay) {
-    overlay.classList.remove('open', 'loading');
-    overlayImg.src = '';
-  }
-});
+initTheme();
+window.toggleTheme = function() {
+    const current = document.documentElement.getAttribute('data-theme');
+    if (current === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'light');
+        themeToggleBtn.innerText = "🌙";
+    } else {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        themeToggleBtn.innerText = "☀️";
+    }
+};
 
-// Detail modal
-function openModal(d) {
-  const imgSrc      = receiptSrc(d._pid);
-  const displayName = d.full_name || d.username || '—';
-  const dt          = (d.reviewed_at || d.created_at || '').replace('T', ' ').slice(0, 16);
-  const numList     = splitNumbers(d.numbers);
+const placeholders = L.searchPlaceholders;
+let placeholderIndex = 0;
+setInterval(() => {
+    if (searchBar.value.trim() !== "") return;
+    searchBar.classList.add('fade-out');
+    setTimeout(() => {
+        placeholderIndex = (placeholderIndex + 1) % placeholders.length;
+        searchBar.setAttribute('placeholder', placeholders[placeholderIndex]);
+        searchBar.classList.remove('fade-out');
+    }, 400);
+}, 2500);
 
-  const numbersHtml = numList.length > 0
-    ? numList.map(n => `<span class="num-chip">${esc(n)}</span>`).join('')
-    : `<span class="num-chip">—</span>`;
+onSnapshot(doc(firestore, 'settings', 'config'), (snap) => {
+    if (!snap.exists()) { renderTickets(); return; }
+    const d = snap.data();
+    if (d.ticket_price) ticketPrice = parseInt(d.ticket_price);
+    if (d.total_tickets) totalTickets = parseInt(d.total_tickets);
+    renderTickets(searchBar.value.trim());
+    updateCart();
+}, (err) => { console.error('Settings error:', err); renderTickets(); });
 
-  modalTitle.textContent = displayName;
-  modalBody.innerHTML = `
-    <div class="modal-receipt" onclick="openOverlay('${esc(imgSrc)}')">
-      <img src="${esc(imgSrc)}" alt="Receipt" loading="lazy">
-    </div>
-    <div class="info-card">
-      <div class="detail-row"><span class="d-label">ስም</span><span class="d-val">${esc(displayName)}</span></div>
-      <div class="detail-row"><span class="d-label">Username</span><span class="d-val">${esc(d.username || '—')}</span></div>
-      <div class="detail-row"><span class="d-label">ስልክ</span><span class="d-val">${esc(d.phone || '—')}</span></div>
-    </div>
-    <div class="info-card">
-      <div class="nums-wrap">
-        <span class="d-label">ቁጥሮች (${numList.length})</span>
-        <div class="nums-scroll">${numbersHtml}</div>
-      </div>
-    </div>
-    <div class="info-card">
-      <div class="detail-row"><span class="d-label">ዘዴ</span><span class="d-val">${esc(d.payment_method || '—')}</span></div>
-      <div class="detail-row"><span class="d-label">የጋበዘው</span><span class="d-val">${esc(String(d._refCount ?? 0))} ሰዎች</span></div>
-      <div class="detail-row"><span class="d-label">ቀን</span><span class="d-val">${esc(dt)}</span></div>
-    </div>
-  `;
-  modal.classList.add('open');
+onSnapshot(collection(firestore, 'tickets'), (snap) => {
+    ticketsData = {};
+    snap.forEach(d => { ticketsData[parseInt(d.id)] = d.data().status; });
+    renderTickets(searchBar.value.trim());
+}, (err) => { console.error('Tickets error:', err); });
+
+renderTickets();
+
+function renderTickets(filterText = '') {
+    numberGrid.innerHTML = '';
+    for (let i = 1; i <= totalTickets; i++) {
+        if (filterText !== '' && !i.toString().includes(filterText)) continue;
+        const box = document.createElement('div');
+        box.innerText = i;
+        box.className = 'number-box';
+        const status = ticketsData[i];
+        if (status === 'taken') {
+            box.classList.add('sold');
+        } else if (status === 'pending' || status === 'reserved') {
+            box.classList.add('pending');
+        } else {
+            box.classList.add('available');
+        }
+        if (mySelections.includes(i)) box.classList.add('selected');
+        box.addEventListener('click', () => {
+            if (status === 'taken' || status === 'pending' || status === 'reserved') return;
+            toggleSelection(i);
+        });
+        numberGrid.appendChild(box);
+    }
 }
-document.getElementById('modalClose').addEventListener('click', () => {
-  modal.classList.remove('open');
-});
 
-// Receipt proxy URL — Bot server ያስተናግዳል
-function receiptSrc(payment_id) {
-  return `${BASE_URL}/get-receipt/${payment_id}`;
+function toggleSelection(num) {
+    if (mySelections.includes(num)) {
+        mySelections = mySelections.filter(n => n !== num);
+    } else {
+        if (mySelections.length >= MAX_SELECT) { showModal(); return; }
+        mySelections.push(num);
+    }
+    updateCart();
+    renderTickets(searchBar.value.trim());
 }
 
-let allCards = [];
+function showModal() { errorModal.style.display = 'flex'; }
+window.closeModal = function() { errorModal.style.display = 'none'; };
 
-// ── Auth + load ──
-async function main() {
-  if (!initData) {
-    showError("initData ባዶ ነው። Telegram app ዳግም ክፈት።");
-    return;
-  }
-  try {
-    const res = await fetch(VERIFY_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ initData })
+function updateCart() {
+    if (mySelections.length === 0) {
+        cartPanel.style.display = 'none';
+        scrollContent.classList.remove('shifted');
+        return;
+    }
+    cartPanel.style.display = 'flex';
+    scrollContent.classList.add('shifted');
+    chipsContainer.innerHTML = '';
+    mySelections.sort((a,b) => a-b).forEach(num => {
+        const chip = document.createElement('div');
+        chip.classList.add('chip');
+        chip.innerText = num;
+        chipsContainer.appendChild(chip);
     });
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      showError(e.error === "not_admin" ? "access denied" : `ማረጋገጥ አልተቻለም (${res.status})`);
-      return;
+    priceTag.innerText = `${mySelections.length}/${MAX_SELECT} = ${mySelections.length * ticketPrice} ETB`;
+    setTimeout(() => {
+        if (chipsContainer.scrollWidth > chipsWrapper.clientWidth) {
+            const diff = chipsContainer.scrollWidth - chipsWrapper.clientWidth;
+            document.documentElement.style.setProperty('--scroll-dist', `-${diff + 30}px`);
+            chipsContainer.classList.add('animate-marquee');
+        } else {
+            chipsContainer.classList.remove('animate-marquee');
+        }
+    }, 50);
+}
+
+searchBar.addEventListener('input', (e) => {
+    renderTickets(e.target.value.trim());
+});
+
+quickPickBtn.addEventListener('click', () => {
+    const freeNums = [];
+    for (let i = 1; i <= totalTickets; i++) {
+        if (!ticketsData[i] && !mySelections.includes(i)) freeNums.push(i);
     }
-    const { token } = await res.json();
-    await signInWithCustomToken(authf, token);
-    await loadPayments();
-  } catch (err) {
-    console.error(err);
-    showError("network error: " + err.message);
-  }
-}
-
-function showError(msg) {
-  centerMsg.textContent = msg;
-  centerMsg.classList.add('error');
-  centerMsg.style.display = 'block';
-}
-
-async function loadPayments() {
-  const snap = await getDocs(collection(dbf, 'payments'));
-  const cards = [];
-
-  for (const docSnap of snap.docs) {
-    const d = docSnap.data();
-    if (d.status !== 'approved') continue;
-    cards.push({ ...d, _pid: docSnap.id });
-  }
-
-  // Referral counts
-  const cache = {};
-  for (const c of cards) {
-    if (cache[c.user_id] === undefined) {
-      try {
-        const rdoc = await getDoc(doc(dbf, 'referral_counts', String(c.user_id)));
-        cache[c.user_id] = rdoc.exists() ? (rdoc.data().count || 0) : 0;
-      } catch {
-        cache[c.user_id] = '—';
-      }
+    if (freeNums.length === 0) return;
+    const remaining = MAX_SELECT - mySelections.length;
+    if (remaining <= 0) { showModal(); return; }
+    const pickCount = Math.min(5, remaining, freeNums.length);
+    for (let k = 0; k < pickCount; k++) {
+        const idx = Math.floor(Math.random() * freeNums.length);
+        mySelections.push(freeNums[idx]);
+        freeNums.splice(idx, 1);
     }
-    c._refCount = cache[c.user_id];
-  }
+    updateCart();
+    renderTickets(searchBar.value.trim());
+});
 
-  // Pre-compute a normalized search blob per card so filtering is fast + reliable
-  for (const c of cards) {
-    c._search = [
-      c.full_name, c.username, c.phone, c.numbers
-    ].filter(Boolean).join(' ').toLowerCase();
-    c._numList = splitNumbers(c.numbers);
-  }
-
-  cards.sort((a, b) => (b.reviewed_at || '').localeCompare(a.reviewed_at || ''));
-  allCards = cards;
-  render(cards);
-
-  centerMsg.style.display = cards.length === 0 ? 'block' : 'none';
-  if (cards.length === 0) centerMsg.textContent = "ምንም approved ክፍያ የለም።";
-}
-
-// "1, 12, 7, 45" የመሰለ ቁጥሮችን ለየብቻ chip ለማድረግ ይከፍላል
-function splitNumbers(numbersStr) {
-  if (!numbersStr) return [];
-  return String(numbersStr)
-    .split(',')
-    .map(s => s.trim())
-    .filter(s => s.length > 0);
-}
-
-function formatDate(iso) {
-  if (!iso) return '—';
-  const datePart = iso.split('T')[0] || '';
-  const [y, m, d] = datePart.split('-');
-  if (!y || !m || !d) return iso.slice(0, 10);
-  return `${d}/${m}/${y}`;
-}
-
-function render(cards) {
-  statusLine.textContent = `${cards.length} ክፍያ`;
-  cardList.innerHTML = '';
-
-  cards.forEach((d, idx) => {
-    const displayName = d.full_name || d.username || '—';
-    const imgSrc      = receiptSrc(d._pid);
-    const dateLabel   = formatDate(d.reviewed_at || d.created_at);
-    const numCount    = (d._numList || splitNumbers(d.numbers)).length;
-    const rowId       = `rc-${idx}-${d._pid}`;
-
-    const div = document.createElement('div');
-    div.className = 'row-card';
-    div.innerHTML = `
-      <div class="thumb loading" id="th-${esc(rowId)}">
-        <img
-          src="${esc(imgSrc)}"
-          alt=""
-          loading="lazy"
-          onload="document.getElementById('th-${esc(rowId)}').classList.remove('loading')"
-          onerror="this.style.display='none'; document.getElementById('th-${esc(rowId)}').classList.remove('loading')"
-        >
-      </div>
-      <div class="row-info">
-        <div class="r-name">${esc(displayName)}</div>
-        <div class="r-phone">${esc(d.phone || '—')}</div>
-      </div>
-      <div class="row-right">
-        <div class="row-date">${esc(dateLabel)}</div>
-        <div class="row-count">${numCount} ቁጥር</div>
-      </div>
-    `;
-    div.addEventListener('click', () => openModal(d));
-    cardList.appendChild(div);
-  });
-}
-
-function esc(s) {
-  return String(s).replace(/[&<>"']/g, c =>
-    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-// Make openOverlay global so inline onclick works
-window.openOverlay = openOverlay;
-
-// ── Robust search: normalized blob match + numeric-only matching for digit queries ──
-function applySearch() {
-  const raw = searchBar.value.trim().toLowerCase();
-  if (!raw) { render(allCards); return; }
-
-  const isNumericQuery = /^\d+$/.test(raw);
-
-  const filtered = allCards.filter(d => {
-    if (d._search && d._search.includes(raw)) return true;
-    if (isNumericQuery && d._numList) {
-      return d._numList.some(n => n === raw);
+extraBtn.addEventListener('click', () => {
+    if (mySelections.length === 0) return;
+    const total = mySelections.length * ticketPrice;
+    const payload = JSON.stringify({
+        action: 'buy_tickets',
+        numbers: mySelections.slice().sort((a,b)=>a-b),
+        total: total,
+        user_id: userId,
+        username: tgUser?.username || userName
+    });
+    if (tg && tg.sendData) {
+        tg.sendData(payload);
+        tg.close();
+    } else {
+        alert(L.openInTg);
     }
-    return false;
-  });
-  render(filtered);
-}
-
-// Use multiple events so it works reliably inside Telegram's in-app browser
-searchBar.addEventListener('input', applySearch);
-searchBar.addEventListener('keyup', applySearch);
-searchBar.addEventListener('change', applySearch);
-
-main();
-</script>
+});
+    </script>
 </body>
 </html>
