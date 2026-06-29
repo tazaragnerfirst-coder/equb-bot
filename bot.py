@@ -19,6 +19,16 @@ logger = logging.getLogger(__name__)
 MAX_TICKETS_PER_USER = 10
 PUBLIC_URL = "https://equb-bot-vt5m.onrender.com"
 
+# ══════════════════════════════════════════
+# CONFIG — ግሩፕ membership
+# ══════════════════════════════════════════
+# config.py ውስጥ REQUIRED_GROUP_LINK = "https://t.me/your_group" ብለህ ስጥ
+# ወይም ከዚህ ቦታ ቀጥታ ፃፍ፡
+try:
+    from config import REQUIRED_GROUP_LINK
+except ImportError:
+    REQUIRED_GROUP_LINK = f"https://t.me/c/{str(GROUP_ID).replace('-100', '')}"
+
 flask_app = Flask('', static_folder='.', static_url_path='')
 
 @flask_app.route('/')
@@ -85,6 +95,16 @@ T = {
         "home_btn":       "🏠 ዋና ገጽ",
         "cancel_btn":     "❌ ሰርዝ",
         "back_btn":       "◀️ ተመለስ",
+
+        "join_required": (
+            "⚠️ *ቦቱን ለመጠቀም መጀመሪያ*\n"
+            "*ቡድናችንን መቀላቀል ይኖርብዎታል!*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 ቀላቅለው ✅ ተቀላቅያለሁ ይጫኑ።"
+        ),
+        "join_btn":       "📢 ቡድኑን ቀላቀሉ",
+        "joined_btn":     "✅ ተቀላቅያለሁ",
+        "not_joined":     "⚠️ ገና ቡድኑን አልተቀላቀሉም። ቀላቅለው እንደገና ይሞክሩ።",
 
         "home_text": (
             "🎉 *{title}*\n"
@@ -277,6 +297,16 @@ T = {
         "cancel_btn":     "❌ Cancel",
         "back_btn":       "◀️ Back",
 
+        "join_required": (
+            "⚠️ *You must join our group*\n"
+            "*to use this bot!*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 Join then tap ✅ I Joined."
+        ),
+        "join_btn":       "📢 Join Group",
+        "joined_btn":     "✅ I Joined",
+        "not_joined":     "⚠️ You haven't joined yet. Please join and try again.",
+
         "home_text": (
             "🎉 *{title}*\n"
             "━━━━━━━━━━━━━━━\n"
@@ -462,6 +492,16 @@ T = {
         "home_btn":       "🏠 Fuula Jalqabaa",
         "cancel_btn":     "❌ Haquu",
         "back_btn":       "◀️ Deebi'i",
+
+        "join_required": (
+            "⚠️ *Garee keenya makamuun*\n"
+            "*bot kana fayyadamuuf barbaachisaadha!*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 Makamtee booda ✅ Makamuun koo cuqaasi."
+        ),
+        "join_btn":       "📢 Garee Makamu",
+        "joined_btn":     "✅ Makamuun koo",
+        "not_joined":     "⚠️ Ammallee garee hin makaamin. Makamtee ammas yaali.",
 
         "home_text": (
             "🎉 *{title}*\n"
@@ -669,6 +709,37 @@ def remove_menu():
     return ReplyKeyboardRemove()
 
 # ══════════════════════════════════════════
+# MEMBERSHIP CHECK
+# ══════════════════════════════════════════
+async def is_member_of_group(bot, user_id: int) -> bool:
+    """ተጠቃሚ ግሩፕ ውስጥ አለ ወይ አረጋግጥ"""
+    try:
+        from telegram.constants import ChatMemberStatus
+        member = await bot.get_chat_member(chat_id=GROUP_ID, user_id=user_id)
+        return member.status in (
+            ChatMemberStatus.MEMBER,
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER,
+        )
+    except Exception as e:
+        logger.warning(f"Membership check error for {user_id}: {e}")
+        # Telegram error ሲኖር (ቦቱ ግሩፕ ውስጥ admin አይደለም ወዘተ) → block አናድርግ
+        return True
+
+async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
+    lang = ctx.user_data.get("lang", "am")
+    keyboard = InlineKeyboardMarkup([
+        [InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)],
+        [InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")],
+    ])
+    await update.effective_message.reply_text(
+        T[lang]["join_required"],
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
+
+# ══════════════════════════════════════════
 # GROUP LIST
 # ══════════════════════════════════════════
 async def send_full_list_to_group(bot, total):
@@ -772,7 +843,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         if referrer_id != str(user.id):
             await db.add_referral(referrer_id, str(user.id))
 
-    # ── First time → language picker; returning user → home ──
+    # ── Language: first time → language picker ──
     if not ctx.user_data.get("lang"):
         keyboard = [
             [InlineKeyboardButton("🇪🇹 አማርኛ",      callback_data="lang_am")],
@@ -784,6 +855,12 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
         return
+
+    # ── Membership check (admin ሳይሆን) ──
+    if not is_admin(user.id):
+        if not await is_member_of_group(ctx.bot, user.id):
+            await send_join_prompt(update, ctx)
+            return
 
     await show_home(update, ctx)
 
@@ -806,7 +883,34 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     lang = query.data.split("_")[1]
     ctx.user_data["lang"] = lang
     await query.delete_message()
+
+    # ── ቋንቋ ከተመረጠ በኋላም membership check ──
+    user = update.effective_user
+    if not is_admin(user.id):
+        if not await is_member_of_group(ctx.bot, user.id):
+            await send_join_prompt(update, ctx)
+            return
+
     await show_home(update, ctx)
+
+
+# ══════════════════════════════════════════
+# CHECK MEMBERSHIP CALLBACK
+# ══════════════════════════════════════════
+async def check_membership_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    user  = update.effective_user
+
+    if await is_member_of_group(ctx.bot, user.id):
+        await query.answer()
+        try:
+            await query.delete_message()
+        except:
+            pass
+        await show_home(update, ctx)
+    else:
+        lang = ctx.user_data.get("lang", "am")
+        await query.answer(T[lang]["not_joined"], show_alert=True)
 
 # ══════════════════════════════════════════
 # HOME
@@ -1719,20 +1823,21 @@ def main():
     app.add_handler(CommandHandler("admin", admin_cmd))
 
     # Inline callbacks
-    app.add_handler(CallbackQueryHandler(lang_cb,             pattern="^lang_"))
-    app.add_handler(CallbackQueryHandler(home_cb,             pattern="^main_menu$"))
-    app.add_handler(CallbackQueryHandler(payment_method_cb,   pattern="^pay_(cbe|telebirr)$"))
-    app.add_handler(CallbackQueryHandler(confirm_send_cb,     pattern="^confirm_send$"))
-    app.add_handler(CallbackQueryHandler(my_tickets_cb,       pattern="^my_tickets$"))
-    app.add_handler(CallbackQueryHandler(referral_cb,         pattern="^show_referral$"))
-    app.add_handler(CallbackQueryHandler(approve_reject_cb,   pattern="^(approve|reject)_"))
+    app.add_handler(CallbackQueryHandler(lang_cb,              pattern="^lang_"))
+    app.add_handler(CallbackQueryHandler(home_cb,              pattern="^main_menu$"))
+    app.add_handler(CallbackQueryHandler(payment_method_cb,    pattern="^pay_(cbe|telebirr)$"))
+    app.add_handler(CallbackQueryHandler(confirm_send_cb,      pattern="^confirm_send$"))
+    app.add_handler(CallbackQueryHandler(my_tickets_cb,        pattern="^my_tickets$"))
+    app.add_handler(CallbackQueryHandler(referral_cb,          pattern="^show_referral$"))
+    app.add_handler(CallbackQueryHandler(approve_reject_cb,    pattern="^(approve|reject)_"))
+    app.add_handler(CallbackQueryHandler(check_membership_cb,  pattern="^check_membership$"))  # ← አዲስ
 
-    app.add_handler(CallbackQueryHandler(admin_panel_cb,      pattern="^admin_panel$"))
-    app.add_handler(CallbackQueryHandler(admin_pending_cb,    pattern="^admin_pending$"))
-    app.add_handler(CallbackQueryHandler(admin_stats_cb,      pattern="^admin_stats$"))
-    app.add_handler(CallbackQueryHandler(admin_find_cb,       pattern="^admin_find$"))
-    app.add_handler(CallbackQueryHandler(admin_reset_yes_cb,  pattern="^admin_reset_yes$"))
-    app.add_handler(CallbackQueryHandler(broadcast_confirm_cb,pattern="^broadcast_confirm$"))
+    app.add_handler(CallbackQueryHandler(admin_panel_cb,       pattern="^admin_panel$"))
+    app.add_handler(CallbackQueryHandler(admin_pending_cb,     pattern="^admin_pending$"))
+    app.add_handler(CallbackQueryHandler(admin_stats_cb,       pattern="^admin_stats$"))
+    app.add_handler(CallbackQueryHandler(admin_find_cb,        pattern="^admin_find$"))
+    app.add_handler(CallbackQueryHandler(admin_reset_yes_cb,   pattern="^admin_reset_yes$"))
+    app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
 
     # Message handlers
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
