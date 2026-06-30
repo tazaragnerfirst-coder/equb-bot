@@ -751,7 +751,7 @@ async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 _group_update_lock = asyncio.Lock()
 _group_update_pending = False  # ሌላ update በ debounce window ውስጥ ቢመጣ
 
-def _build_chunks(ticket_map, total, chunk_size=40):
+def _build_chunks(ticket_map, total, chunk_size=150):
     chunks = []
     for chunk_start in range(1, total + 1, chunk_size):
         chunk_end = min(chunk_start + chunk_size - 1, total)
@@ -1084,7 +1084,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             return
         if "CHANGE NUMBER 🔢" in text:
             ctx.user_data["admin_action"] = "set_tickets"
-            await update.message.reply_text("🔢 አዲስ የቁጥሮች ብዛት ፃፍ (10-800):")
+            await update.message.reply_text("🔢 አዲስ የቁጥሮች ብዛት ፃፍ (10-2000):")
             return
         if "CHANGE PRICE 💰" in text:
             ctx.user_data["admin_action"] = "set_price"
@@ -1809,11 +1809,11 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if action == "set_tickets":
         try:
             val = int(text_input)
-            if 10 <= val <= 800:
+            if 10 <= val <= 2000:
                 await db.set_setting("total_tickets", val)
                 await update.message.reply_text(f"✅ Tickets → {val}")
             else:
-                await update.message.reply_text("⚠️ 10-800 ፃፍ።")
+                await update.message.reply_text("⚠️ 10-2000 ፃፍ።")
         except:
             await update.message.reply_text("⚠️ ቁጥር ብቻ።")
 
