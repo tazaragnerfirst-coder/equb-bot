@@ -1931,8 +1931,7 @@ def main():
     app.add_handler(CallbackQueryHandler(admin_find_cb,        pattern="^admin_find$"))
     app.add_handler(CallbackQueryHandler(admin_reset_yes_cb,   pattern="^admin_reset_yes$"))
     app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
-
-app.add_handler(CallbackQueryHandler(admin_broadcast_edit_cb, pattern="^admin_broadcast$"))
+     app.add_handler(CallbackQueryHandler(admin_broadcast_edit_cb, pattern="^admin_broadcast$"))
 
    # Message handlers
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
