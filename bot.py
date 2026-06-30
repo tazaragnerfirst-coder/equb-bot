@@ -748,20 +748,13 @@ async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ══════════════════════════════════════════
 # GROUP LIST
 # ══════════════════════════════════════════
-async def send_full_list_to_group(bot, total):
-    old_msgs = await db.get_group_message_ids()
-    for msg_id, chat_id in old_msgs:
-        try:
-            await bot.delete_message(chat_id=chat_id, message_id=msg_id)
-        except Exception as e:
-            logger.warning(f"Delete old group msg error: {e}")
-    await db.clear_group_messages()
+_group_update_lock = asyncio.Lock()
+_group_update_pending = False  # ሌላ update በ debounce window ውስጥ ቢመጣ
 
-    ticket_map = await db.get_all_tickets_full(total)
-    CHUNK = 40
-    new_msg_ids = []
-    for chunk_start in range(1, total + 1, CHUNK):
-        chunk_end = min(chunk_start + CHUNK - 1, total)
+def _build_chunks(ticket_map, total, chunk_size=40):
+    chunks = []
+    for chunk_start in range(1, total + 1, chunk_size):
+        chunk_end = min(chunk_start + chunk_size - 1, total)
         lines = []
         for n in range(chunk_start, chunk_end + 1):
             info = ticket_map.get(n)
@@ -769,7 +762,45 @@ async def send_full_list_to_group(bot, total):
                 lines.append(f"{n} 👉 {mask_phone(info[0])} ✅")
             else:
                 lines.append(f"{n} 👉")
-        text = "\n".join(lines)
+        chunks.append("\n".join(lines))
+    return chunks
+
+
+async def send_full_list_to_group(bot, total):
+    """
+    Chunk count ካልተቀየረ (total ቲኬት ካልተቀየረ) → ነባር መልዕክቶችን EDIT ያደርጋል (ፈጣን፣ rate-limit friendly)።
+    Chunk count ከተቀየረ (admin total ቲኬት ቢቀይር) → delete + resend (ነባሩ structure ስለማይሰራ)።
+    """
+    old_msgs = await db.get_group_message_ids()  # [(msg_id, chat_id), ...] በ chunk ቅደም ተከተል
+    ticket_map = await db.get_all_tickets_full(total)
+    new_chunks = _build_chunks(ticket_map, total)
+
+    # ── EDIT path: ነባር መልዕክት ብዛት ከ chunk ብዛት ጋር ከተመሳሰለ ──
+    if old_msgs and len(old_msgs) == len(new_chunks):
+        edited_ids = []
+        for (msg_id, chat_id), text in zip(old_msgs, new_chunks):
+            try:
+                await bot.edit_message_text(chat_id=chat_id, message_id=msg_id, text=text)
+            except BadRequest as e:
+                # "message is not modified" ማለት ይዘት አልተቀየረም - ችግር የለውም
+                if "not modified" not in str(e).lower():
+                    logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
+            except Exception as e:
+                logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
+            edited_ids.append(msg_id)
+            await asyncio.sleep(0.4)
+        return len(edited_ids)
+
+    # ── RESEND path: structure ተቀይሯል (ለምሳሌ total ቲኬት ተቀይሯል) ──
+    for msg_id, chat_id in old_msgs:
+        try:
+            await bot.delete_message(chat_id=chat_id, message_id=msg_id)
+        except Exception as e:
+            logger.warning(f"Delete old group msg error: {e}")
+    await db.clear_group_messages()
+
+    new_msg_ids = []
+    for text in new_chunks:
         try:
             msg = await bot.send_message(chat_id=GROUP_ID, text=text)
             new_msg_ids.append(msg.message_id)
@@ -779,6 +810,32 @@ async def send_full_list_to_group(bot, total):
 
     await db.save_group_message_ids(GROUP_ID, new_msg_ids)
     return len(new_msg_ids)
+
+
+async def schedule_group_list_update(bot, total, min_interval=12):
+    """
+    Fire-and-forget + debounce wrapper።
+    ብዙ approve በቅርብ ጊዜ ቢመጣ፣ group update በተደጋጋሚ እንዳይሰራ ይከላከላል።
+    Caller ይህን await አያደርግም - asyncio.create_task() ብቻ ይጠራዋል።
+    """
+    global _group_update_pending
+    async with _group_update_lock:
+        if _group_update_pending:
+            return  # ቀድሞ scheduled ነው, ድጋሚ መርሐግብር አያስፈልግም
+        _group_update_pending = True
+
+    async def _runner():
+        global _group_update_pending
+        try:
+            await asyncio.sleep(min_interval)
+            await send_full_list_to_group(bot, total)
+        except Exception as e:
+            logger.error(f"schedule_group_list_update error: {e}")
+        finally:
+            async with _group_update_lock:
+                _group_update_pending = False
+
+    asyncio.create_task(_runner())
 
 # ══════════════════════════════════════════
 # START / LANGUAGE
@@ -1331,10 +1388,11 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Edit caption: {e}")
 
+        # ከጀርባ ይሮጣል - admin approve ቁልፍ ወዲያውኑ ምላሽ ያገኛል
         try:
-            await send_full_list_to_group(ctx.bot, total)
+            asyncio.create_task(schedule_group_list_update(ctx.bot, total))
         except Exception as e:
-            logger.error(f"Group update: {e}")
+            logger.error(f"Group update schedule error: {e}")
 
         taken = await db.count_taken_tickets()
         if taken >= total:
@@ -1561,8 +1619,22 @@ async def admin_send_list_msg(update, ctx):
         return
     total = int(await db.get_setting("total_tickets"))
     await update.message.reply_text("⏳ Sending to group...")
-    count = await send_full_list_to_group(ctx.bot, total)
-    await update.message.reply_text(f"✅ {count} messages sent to group!")
+
+    async def _runner():
+        try:
+            count = await send_full_list_to_group(ctx.bot, total)
+            await ctx.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text=f"✅ {count} messages updated in group!"
+            )
+        except Exception as e:
+            logger.error(f"admin_send_list_msg error: {e}")
+            await ctx.bot.send_message(
+                chat_id=update.effective_chat.id,
+                text="❌ Group update failed."
+            )
+
+    asyncio.create_task(_runner())
 
 # ── Broadcast ──
 async def admin_broadcast_msg(update, ctx):
