@@ -22,8 +22,6 @@ PUBLIC_URL = "https://equb-bot-vt5m.onrender.com"
 # ══════════════════════════════════════════
 # CONFIG — ግሩፕ membership
 # ══════════════════════════════════════════
-# config.py ውስጥ REQUIRED_GROUP_LINK = "https://t.me/your_group" ብለህ ስጥ
-# ወይም ከዚህ ቦታ ቀጥታ ፃፍ፡
 try:
     from config import REQUIRED_GROUP_LINK
 except ImportError:
@@ -723,12 +721,20 @@ async def is_member_of_group(bot, user_id: int) -> bool:
         )
     except Exception as e:
         logger.warning(f"Membership check error for {user_id}: {e}")
-        # Telegram error ሲኖር (ቦቱ ግሩፕ ውስጥ admin አይደለም ወዘተ) → block አናድርግ
         return True
 
 async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
     lang = ctx.user_data.get("lang", "am")
+
+    # ── FIX: ቀደም ሲል የነበረውን ReplyKeyboard (የግርጌ ቁልፎች) አስቀድሞ አስወግድ ──
+    # ግሩፑን እስኪቀላቀል ድረስ "ቁጥር ምረጥ", "የኔ ትኬቶች", "ዋና ገጽ" ወዘተ የሚሉ
+    # የግርጌ ቁልፎች በስክሪኑ ስር እንዳይታዩ
+    await update.effective_message.reply_text(
+        "⏳",
+        reply_markup=ReplyKeyboardRemove()
+    )
+
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)],
         [InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")],
@@ -1830,7 +1836,7 @@ def main():
     app.add_handler(CallbackQueryHandler(my_tickets_cb,        pattern="^my_tickets$"))
     app.add_handler(CallbackQueryHandler(referral_cb,          pattern="^show_referral$"))
     app.add_handler(CallbackQueryHandler(approve_reject_cb,    pattern="^(approve|reject)_"))
-    app.add_handler(CallbackQueryHandler(check_membership_cb,  pattern="^check_membership$"))  # ← አዲስ
+    app.add_handler(CallbackQueryHandler(check_membership_cb,  pattern="^check_membership$"))
 
     app.add_handler(CallbackQueryHandler(admin_panel_cb,       pattern="^admin_panel$"))
     app.add_handler(CallbackQueryHandler(admin_pending_cb,     pattern="^admin_pending$"))
@@ -1848,4 +1854,4 @@ def main():
     app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
-    main() 
+    main()
