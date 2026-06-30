@@ -1664,19 +1664,23 @@ async def broadcast_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     msg   = ctx.user_data.get("broadcast_msg", "")
     users = await db.get_all_users()
-    sent  = 0
+    sent, failed = 0, 0
     for (uid,) in users:
         try:
             await ctx.bot.send_message(chat_id=uid, text=f"📢 {msg}")
             sent += 1
-        except:
-            pass
+        except Exception as e:
+            failed += 1
+            logger.warning(f"Broadcast failed for user {uid}: {e}")
+        await asyncio.sleep(0.05)  # ~20 messages/second, flood limit ስር ለመቆየት
+
     try:
         await ctx.bot.send_message(chat_id=GROUP_ID, text=f"📢 {msg}")
     except Exception as e:
         logger.error(f"Group broadcast: {e}")
+
     await query.edit_message_text(
-        f"✅ Sent to {sent} users + group!",
+        f"✅ Sent to {sent} users + group!\n⚠️ Failed: {failed}",
         reply_markup=InlineKeyboardMarkup([[
             InlineKeyboardButton("🔙 Back", callback_data="admin_panel")
         ]])
