@@ -2,7 +2,7 @@ import os
 import json
 import asyncio
 import logging
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -184,6 +184,58 @@ def _get_user_tickets_sync(user_id, status):
 
 async def get_user_tickets(user_id, status):
     return await _run(_get_user_tickets_sync, user_id, status)
+
+
+# ─── PENDING PAYMENT LOCK (soft-reserve before receipt arrives) ───
+# ባንክ/ቴሌብር ሲመረጥ ቁጥሮቹ "pending_payment" ይባላሉ፣ 5 ደቂቃ ውስጥ ደረሰኝ ካልመጣ
+# watch_pending_payments() background loop ራሱ ነፃ (delete) ያደርጋቸዋል።
+def _lock_tickets_pending_payment_sync(numbers, user_id, username):
+    batch = db.batch()
+    now_iso = datetime.now().isoformat()
+    for num in numbers:
+        ref = db.collection("tickets").document(str(num))
+        batch.set(ref, {
+            "status": "pending_payment",
+            "user_id": str(user_id),
+            "username": str(username),
+            "phone": "",
+            "locked_at": now_iso,
+        })
+    batch.commit()
+
+async def lock_tickets_pending_payment(numbers, user_id, username):
+    await _run(_lock_tickets_pending_payment_sync, numbers, user_id, username)
+
+
+def _release_expired_pending_sync(max_age_seconds=300):
+    cutoff = datetime.now() - timedelta(seconds=max_age_seconds)
+    docs = db.collection("tickets").where("status", "==", "pending_payment").stream()
+    released = []
+    batch = db.batch()
+    count = 0
+    for doc in docs:
+        d = doc.to_dict()
+        locked_at_str = d.get("locked_at")
+        if not locked_at_str:
+            continue
+        try:
+            locked_at = datetime.fromisoformat(locked_at_str)
+        except ValueError:
+            continue
+        if locked_at <= cutoff:
+            released.append((int(doc.id), d.get("user_id")))
+            batch.delete(doc.reference)  # free ማለት document መሰረዝ ነው (free_tickets pattern ጋር ይመሳሰላል)
+            count += 1
+            if count >= 400:
+                batch.commit()
+                batch = db.batch()
+                count = 0
+    if count > 0:
+        batch.commit()
+    return released
+
+async def release_expired_pending(max_age_seconds=300):
+    return await _run(_release_expired_pending_sync, max_age_seconds)
 
 
 # ─── PAYMENTS ───
