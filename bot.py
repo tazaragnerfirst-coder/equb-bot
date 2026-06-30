@@ -1646,6 +1646,17 @@ async def admin_broadcast_msg(update, ctx):
         parse_mode="Markdown"
     )
 
+async def admin_broadcast_edit_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    if not is_admin(update.effective_user.id):
+        return
+    ctx.user_data["admin_action"] = "broadcast"
+    await query.edit_message_text(
+        "📢 *BROADCAST*\n━━━━━━━━━━━━━━━\nWrite the message to send to all users + group:",
+        parse_mode="Markdown"
+    )
+
 async def broadcast_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -1917,7 +1928,9 @@ def main():
     app.add_handler(CallbackQueryHandler(admin_reset_yes_cb,   pattern="^admin_reset_yes$"))
     app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
 
-    # Message handlers
+app.add_handler(CallbackQueryHandler(admin_broadcast_edit_cb, pattern="^admin_broadcast$"))
+
+   # Message handlers
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
