@@ -1269,10 +1269,10 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_price = len(selected) * price
 
     for num in selected:
-        ticket = await db.get_ticket(num)
-        if ticket and ticket[4] == "taken":
-            await query.edit_message_text(t(ctx, "num_taken", num=num))
-            return
+    ticket = await db.get_ticket(num)
+    if ticket and ticket[4] == "taken":
+        await query.edit_message_text(t(ctx, "num_taken", num=num))
+        return
 
     username   = f"@{user.username}" if user.username else full_name
     payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, full_name=full_name)
