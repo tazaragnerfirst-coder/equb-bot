@@ -189,11 +189,30 @@ async def get_user_tickets(user_id, status):
 # ─── PENDING PAYMENT LOCK (soft-reserve before receipt arrives) ───
 # ባንክ/ቴሌብር ሲመረጥ ቁጥሮቹ "pending_payment" ይባላሉ፣ 5 ደቂቃ ውስጥ ደረሰኝ ካልመጣ
 # watch_pending_payments() background loop ራሱ ነፃ (delete) ያደርጋቸዋል።
+#
+# ── FIX: race-condition መከላከያ ──
+# web_app_data_handler ላይ "not taken" ተብሎ ከተረጋገጠ በኋላ፣ ተጠቃሚው payment method
+# እስኪመርጥ ባለው ጊዜ ውስጥ ሌላ ሰው ተመሳሳይ ቁጥር "taken" ቢያደርገው፣ ቀደም ሲል የነበረው
+# batch.set() ያለ ምንም ማረጋገጫ overwrite ያደርግ ነበር (double-sell risk)።
+# አሁን lock ከማድረግ በፊት status እናረጋግጣለን፤ "taken" ከተገኘ ጨርሶ lock አናደርግም
+# እና የተጋጩ ቁጥሮችን (conflicts) ለ caller እንመልሳለን።
 def _lock_tickets_pending_payment_sync(numbers, user_id, username):
-    batch = db.batch()
     now_iso = datetime.now().isoformat()
-    for num in numbers:
-        ref = db.collection("tickets").document(str(num))
+    refs = [db.collection("tickets").document(str(n)) for n in numbers]
+
+    conflicts = []
+    for ref in refs:
+        snap = ref.get()
+        if snap.exists:
+            status = snap.to_dict().get("status")
+            if status == "taken":
+                conflicts.append(int(ref.id))
+
+    if conflicts:
+        return conflicts  # lock አልተደረገም
+
+    batch = db.batch()
+    for ref in refs:
         batch.set(ref, {
             "status": "pending_payment",
             "user_id": str(user_id),
@@ -202,9 +221,15 @@ def _lock_tickets_pending_payment_sync(numbers, user_id, username):
             "locked_at": now_iso,
         })
     batch.commit()
+    return []
 
 async def lock_tickets_pending_payment(numbers, user_id, username):
-    await _run(_lock_tickets_pending_payment_sync, numbers, user_id, username)
+    """
+    ቁጥሮቹን pending_payment ያደርጋል።
+    Returns: [] ስኬታማ ከሆነ, ወይም [conflict_num, ...] አስቀድሞ "taken" የሆኑ ቁጥሮች ካሉ
+             (በዚህ ጊዜ ምንም lock አልተደረገም — caller ተጠቃሚውን ማሳወቅ አለበት)።
+    """
+    return await _run(_lock_tickets_pending_payment_sync, numbers, user_id, username)
 
 
 def _release_expired_pending_sync(max_age_seconds=300):
