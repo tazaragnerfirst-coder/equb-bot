@@ -1045,14 +1045,18 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     if any(w in text for w in cancel_words):
-        ctx.user_data["waiting_name"]    = False
-        ctx.user_data["waiting_phone"]   = False
-        ctx.user_data["waiting_receipt"] = False
-        ctx.user_data["admin_action"]    = None
-        ctx.user_data["admin_menu"]      = False
-        await update.message.reply_text("❌", reply_markup=remove_menu())
-        await show_home(update, ctx)
-        return
+    selected = ctx.user_data.get("selected", [])
+    if selected:
+        await db.free_tickets(selected)
+    ctx.user_data["waiting_name"]    = False
+    ctx.user_data["waiting_phone"]   = False
+    ctx.user_data["waiting_receipt"] = False
+    ctx.user_data["admin_action"]    = None
+    ctx.user_data["admin_menu"]      = False
+    ctx.user_data["selected"]        = []
+    await update.message.reply_text("❌", reply_markup=remove_menu())
+    await show_home(update, ctx)
+    return
 
     if any(w in text for w in tickets_words):
         await show_my_tickets(update, ctx)
