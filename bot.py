@@ -1180,10 +1180,10 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_price = len(numbers) * price
 
     for num in numbers:
-        ticket = await db.get_ticket(num)
-        if ticket and ticket[4] in ("taken", "reserved"):
-            await update.message.reply_text(t(ctx, "num_taken", num=num))
-            return
+    ticket = await db.get_ticket(num)
+    if ticket and ticket[4] in ("taken", "reserved", "pending_payment"):
+        await update.message.reply_text(t(ctx, "num_taken", num=num))
+        return
 
     ctx.user_data["selected"]        = numbers
     ctx.user_data["waiting_name"]    = False
