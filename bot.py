@@ -1215,7 +1215,13 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["waiting_phone"]   = False
     await query.delete_message()
 
-    selected    = ctx.user_data.get("selected", [])
+    selected = ctx.user_data.get("selected", [])
+    user     = update.effective_user
+
+    # ── ቁጥሮችን pending_payment አድርግ (5 ደቂቃ lock) ──
+    username = f"@{user.username}" if user.username else (user.full_name or "—")
+    await db.lock_tickets_pending_payment(selected, user.id, username)
+
     price       = int(await db.get_setting("ticket_price"))
     total_price = len(selected) * price
 
