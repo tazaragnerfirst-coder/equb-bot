@@ -1622,7 +1622,29 @@ async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("◀️ Cancel", callback_data="admin_panel")
         ]])
     )
-
+    
+async def watch_pending_payments(bot, interval_seconds=30, max_age_seconds=300):
+    """በየ30 ሰከንድ ይፈትሻል፣ 5 ደቂቃ ካለፈ ቁጥሩን free ያደርጋል + ለተጠቃሚው ያሳውቃል"""
+    while True:
+        try:
+            released = await db.release_expired_pending(max_age_seconds)
+            for num, user_id in released:
+                if not user_id:
+                    continue
+                try:
+                    await bot.send_message(
+                        chat_id=int(user_id),
+                        text=(
+                            f"⏳ የቁጥር {num} ማስያዣ ጊዜ አልቋል።\n"
+                            f"ደረሰኝ ስላልደረሰን ቁጥሩ ነፃ ወጥቷል። እንደገና ይምረጡ።"
+                        )
+                    )
+                except Exception as e:
+                    logger.warning(f"Notify release failed for {user_id}: {e}")
+        except Exception as e:
+            logger.error(f"watch_pending_payments error: {e}")
+        await asyncio.sleep(interval_seconds)
+        
 # ── Send to Group ──
 async def admin_send_list_msg(update, ctx):
     if not is_admin(update.effective_user.id):
