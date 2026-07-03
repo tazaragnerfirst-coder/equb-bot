@@ -467,14 +467,14 @@ function renderTickets(filterText = '') {
         const status = ticketsData[i];
         if (status === 'taken') {
             box.classList.add('sold');
-        } else if (status === 'pending' || status === 'reserved') {
+        } else if (status === 'pending' || status === 'pending_payment') {
             box.classList.add('pending');
         } else {
             box.classList.add('available');
         }
         if (mySelections.includes(i)) box.classList.add('selected');
         box.addEventListener('click', () => {
-            if (status === 'taken' || status === 'pending' || status === 'reserved') return;
+            if (status === 'taken' || status === 'pending' || status === 'reserved' || status === 'pending_payment') return;
             toggleSelection(i);
         });
         numberGrid.appendChild(box);
