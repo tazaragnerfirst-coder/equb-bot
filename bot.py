@@ -727,9 +727,6 @@ async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
     lang = ctx.user_data.get("lang", "am")
 
-    # ── FIX: ቀደም ሲል የነበረውን ReplyKeyboard (የግርጌ ቁልፎች) አስቀድሞ አስወግድ ──
-    # ግሩፑን እስኪቀላቀል ድረስ "ቁጥር ምረጥ", "የኔ ትኬቶች", "ዋና ገጽ" ወዘተ የሚሉ
-    # የግርጌ ቁልፎች በስክሪኑ ስር እንዳይታዩ
     await update.effective_message.reply_text(
         "⏳",
         reply_markup=ReplyKeyboardRemove()
@@ -749,7 +746,7 @@ async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # GROUP LIST
 # ══════════════════════════════════════════
 _group_update_lock = asyncio.Lock()
-_group_update_pending = False  # ሌላ update በ debounce window ውስጥ ቢመጣ
+_group_update_pending = False
 
 def _build_chunks(ticket_map, total, chunk_size=150):
     chunks = []
@@ -767,22 +764,16 @@ def _build_chunks(ticket_map, total, chunk_size=150):
 
 
 async def send_full_list_to_group(bot, total):
-    """
-    Chunk count ካልተቀየረ (total ቲኬት ካልተቀየረ) → ነባር መልዕክቶችን EDIT ያደርጋል (ፈጣን፣ rate-limit friendly)።
-    Chunk count ከተቀየረ (admin total ቲኬት ቢቀይር) → delete + resend (ነባሩ structure ስለማይሰራ)።
-    """
-    old_msgs = await db.get_group_message_ids()  # [(msg_id, chat_id), ...] በ chunk ቅደም ተከተል
+    old_msgs = await db.get_group_message_ids()
     ticket_map = await db.get_all_tickets_full(total)
     new_chunks = _build_chunks(ticket_map, total)
 
-    # ── EDIT path: ነባር መልዕክት ብዛት ከ chunk ብዛት ጋር ከተመሳሰለ ──
     if old_msgs and len(old_msgs) == len(new_chunks):
         edited_ids = []
         for (msg_id, chat_id), text in zip(old_msgs, new_chunks):
             try:
                 await bot.edit_message_text(chat_id=chat_id, message_id=msg_id, text=text)
             except BadRequest as e:
-                # "message is not modified" ማለት ይዘት አልተቀየረም - ችግር የለውም
                 if "not modified" not in str(e).lower():
                     logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
             except Exception as e:
@@ -791,7 +782,6 @@ async def send_full_list_to_group(bot, total):
             await asyncio.sleep(0.4)
         return len(edited_ids)
 
-    # ── RESEND path: structure ተቀይሯል (ለምሳሌ total ቲኬት ተቀይሯል) ──
     for msg_id, chat_id in old_msgs:
         try:
             await bot.delete_message(chat_id=chat_id, message_id=msg_id)
@@ -813,15 +803,10 @@ async def send_full_list_to_group(bot, total):
 
 
 async def schedule_group_list_update(bot, total, min_interval=12):
-    """
-    Fire-and-forget + debounce wrapper።
-    ብዙ approve በቅርብ ጊዜ ቢመጣ፣ group update በተደጋጋሚ እንዳይሰራ ይከላከላል።
-    Caller ይህን await አያደርግም - asyncio.create_task() ብቻ ይጠራዋል።
-    """
     global _group_update_pending
     async with _group_update_lock:
         if _group_update_pending:
-            return  # ቀድሞ scheduled ነው, ድጋሚ መርሐግብር አያስፈልግም
+            return
         _group_update_pending = True
 
     async def _runner():
@@ -844,7 +829,6 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
     args = ctx.args
 
-    # ── Receipt deep link (admin only) ──
     if args and args[0].startswith("receipt_"):
         if is_admin(user.id):
             try:
@@ -900,13 +884,11 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
                 await update.message.reply_text("⚠️ ደረሰኝ ማምጣት አልተቻለም።")
         return
 
-    # ── Referral ──
     if args and args[0].startswith("ref_"):
         referrer_id = args[0].replace("ref_", "")
         if referrer_id != str(user.id):
             await db.add_referral(referrer_id, str(user.id))
 
-    # ── Language: first time → language picker ──
     if not ctx.user_data.get("lang"):
         keyboard = [
             [InlineKeyboardButton("🇪🇹 አማርኛ",      callback_data="lang_am")],
@@ -919,7 +901,6 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
         return
 
-    # ── Membership check (admin ሳይሆን) ──
     if not is_admin(user.id):
         if not await is_member_of_group(ctx.bot, user.id):
             await send_join_prompt(update, ctx)
@@ -947,7 +928,6 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     ctx.user_data["lang"] = lang
     await query.delete_message()
 
-    # ── ቋንቋ ከተመረጠ በኋላም membership check ──
     user = update.effective_user
     if not is_admin(user.id):
         if not await is_member_of_group(ctx.bot, user.id):
@@ -1045,18 +1025,18 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     if any(w in text for w in cancel_words):
-    selected = ctx.user_data.get("selected", [])
-    if selected:
-        await db.free_tickets(selected)
-    ctx.user_data["waiting_name"]    = False
-    ctx.user_data["waiting_phone"]   = False
-    ctx.user_data["waiting_receipt"] = False
-    ctx.user_data["admin_action"]    = None
-    ctx.user_data["admin_menu"]      = False
-    ctx.user_data["selected"]        = []
-    await update.message.reply_text("❌", reply_markup=remove_menu())
-    await show_home(update, ctx)
-    return
+        selected = ctx.user_data.get("selected", [])
+        if selected:
+            await db.free_tickets(selected)
+        ctx.user_data["waiting_name"]    = False
+        ctx.user_data["waiting_phone"]   = False
+        ctx.user_data["waiting_receipt"] = False
+        ctx.user_data["admin_action"]    = None
+        ctx.user_data["admin_menu"]      = False
+        ctx.user_data["selected"]        = []
+        await update.message.reply_text("❌", reply_markup=remove_menu())
+        await show_home(update, ctx)
+        return
 
     if any(w in text for w in tickets_words):
         await show_my_tickets(update, ctx)
@@ -1075,7 +1055,6 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     if any(w in text for w in pick_words):
         return
 
-    # ── Admin menu button handlers ──
     if is_admin(update.effective_user.id):
         if "📤 SEND TO GROUP 📤" in text:
             await admin_send_list_msg(update, ctx)
@@ -1184,10 +1163,10 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_price = len(numbers) * price
 
     for num in numbers:
-    ticket = await db.get_ticket(num)
-    if ticket and ticket[4] in ("taken", "reserved", "pending_payment"):
-        await update.message.reply_text(t(ctx, "num_taken", num=num))
-        return
+        ticket = await db.get_ticket(num)
+        if ticket and ticket[4] in ("taken", "reserved", "pending_payment"):
+            await update.message.reply_text(t(ctx, "num_taken", num=num))
+            return
 
     ctx.user_data["selected"]        = numbers
     ctx.user_data["waiting_name"]    = False
@@ -1222,7 +1201,6 @@ async def payment_method_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     selected = ctx.user_data.get("selected", [])
     user     = update.effective_user
 
-    # ── ቁጥሮችን pending_payment አድርግ (5 ደቂቃ lock) ──
     username = f"@{user.username}" if user.username else (user.full_name or "—")
     await db.lock_tickets_pending_payment(selected, user.id, username)
 
@@ -1273,10 +1251,10 @@ async def confirm_send_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     total_price = len(selected) * price
 
     for num in selected:
-    ticket = await db.get_ticket(num)
-    if ticket and ticket[4] == "taken":
-        await query.edit_message_text(t(ctx, "num_taken", num=num))
-        return
+        ticket = await db.get_ticket(num)
+        if ticket and ticket[4] == "taken":
+            await query.edit_message_text(t(ctx, "num_taken", num=num))
+            return
 
     username   = f"@{user.username}" if user.username else full_name
     payment_id = await db.add_payment(user.id, username, phone, selected, file_id, method, full_name=full_name)
@@ -1398,7 +1376,6 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             logger.error(f"Edit caption: {e}")
 
-        # ከጀርባ ይሮጣል - admin approve ቁልፍ ወዲያውኑ ምላሽ ያገኛል
         try:
             asyncio.create_task(schedule_group_list_update(ctx.bot, total))
         except Exception as e:
@@ -1622,7 +1599,7 @@ async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             InlineKeyboardButton("◀️ Cancel", callback_data="admin_panel")
         ]])
     )
-    
+
 async def watch_pending_payments(bot, interval_seconds=30, max_age_seconds=300):
     """በየ30 ሰከንድ ይፈትሻል፣ 5 ደቂቃ ካለፈ ቁጥሩን free ያደርጋል + ለተጠቃሚው ያሳውቃል"""
     while True:
@@ -1644,7 +1621,7 @@ async def watch_pending_payments(bot, interval_seconds=30, max_age_seconds=300):
         except Exception as e:
             logger.error(f"watch_pending_payments error: {e}")
         await asyncio.sleep(interval_seconds)
-        
+
 # ── Send to Group ──
 async def admin_send_list_msg(update, ctx):
     if not is_admin(update.effective_user.id):
@@ -1704,7 +1681,7 @@ async def broadcast_confirm_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         except Exception as e:
             failed += 1
             logger.warning(f"Broadcast failed for user {uid}: {e}")
-        await asyncio.sleep(0.05)  # ~20 messages/second, flood limit ስር ለመቆየት
+        await asyncio.sleep(0.05)
 
     try:
         await ctx.bot.send_message(chat_id=GROUP_ID, text=f"📢 {msg}")
@@ -1800,7 +1777,6 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
     ctx.user_data["admin_action"] = None
 
-    # ── Search ticket ──
     if action == "find_ticket":
         try:
             num = int(text_input)
@@ -1934,6 +1910,7 @@ async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ══════════════════════════════════════════
 async def post_init(application):
     await db.init_db()
+    asyncio.create_task(watch_pending_payments(application.bot))
 
 def main():
     keep_alive()
@@ -1965,7 +1942,7 @@ def main():
     app.add_handler(CallbackQueryHandler(broadcast_confirm_cb, pattern="^broadcast_confirm$"))
     app.add_handler(CallbackQueryHandler(admin_broadcast_edit_cb, pattern="^admin_broadcast$"))
 
-   # Message handlers
+    # Message handlers
     app.add_handler(MessageHandler(filters.PHOTO | filters.Document.IMAGE, handle_receipt))
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
