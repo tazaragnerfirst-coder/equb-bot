@@ -31,7 +31,7 @@ def _init_db_sync():
 
 async def init_db(): await _run(_init_db_sync)
 
-# --- USER PROFILES ---
+# --- USER PROFILES (saved from Telegram "Share Contact") ---
 def _save_profile_sync(user_id, first, last, phone):
     db.collection("user_profiles").document(str(user_id)).set({
         "first_name": first, "last_name": last, "phone": phone,
@@ -200,9 +200,40 @@ async def get_referral_count(uid):
     doc = await _run(lambda: db.collection("referral_counts").document(str(uid)).get())
     return doc.to_dict().get("count", 0) if doc.exists else 0
 
+# --- SOLD-TICKET GROUP ANNOUNCEMENTS ---
+# ለእያንዳንዱ የተሸጠ ቁጥር 1 መልክት ብቻ ግሩፕ ላይ ይላካል (duplicate guard)።
+# ስብስቡ 10 ሲደርስ ሁሉንም አጥፍቶ ከ0 ይጀምራል።
+async def has_sold_announcement(number):
+    doc = await _run(lambda: db.collection("sold_announcements").document(str(number)).get())
+    return doc.exists
+
+async def add_sold_announcement(number, message_id, chat_id):
+    await _run(lambda: db.collection("sold_announcements").document(str(number)).set({
+        "message_id": message_id, "chat_id": chat_id, "created_at": datetime.now().isoformat()
+    }))
+
+async def get_sold_announcements():
+    def _sync():
+        docs = db.collection("sold_announcements").stream()
+        res = []
+        for doc in docs:
+            d = doc.to_dict()
+            res.append((doc.id, d.get("message_id"), d.get("chat_id"), d.get("created_at") or ""))
+        return sorted(res, key=lambda x: x[3])
+    return await _run(_sync)
+
+async def clear_sold_announcements():
+    def _sync():
+        docs = db.collection("sold_announcements").stream()
+        batch = db.batch()
+        for doc in docs:
+            batch.delete(doc.reference)
+        batch.commit()
+    await _run(_sync)
+
 async def reset_lottery():
     def _sync():
-        for coll in ["tickets", "payments"]:
+        for coll in ["tickets", "payments", "sold_announcements"]:
             for doc in db.collection(coll).stream(): doc.reference.delete()
         db.collection("meta").document("group_messages").set({"chat_id":"", "message_ids":""})
     await _run(_sync)
