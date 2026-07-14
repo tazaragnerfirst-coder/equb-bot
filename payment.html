@@ -3,424 +3,319 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Payment</title>
+<title>Premium Payment WebApp</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --cyan:#2fc3d2;
-    --cyan-dim:#bfe9ee;
-    --orange:#f6821f;
-    --green:#3ddc5a;
-    --green-dim:#e4fbe8;
-    --ink:#25313a;
-    --sub:#8a97a0;
-    --grey-bg:#eef1f2;
-    --grey-line:#dde3e5;
-    --card:#ffffff;
-    --bg:#f5f7f8;
-    --radius:22px;
-  }
-  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-  body{
-    margin:0; min-height:100vh;
-    background:var(--bg);
-    font-family:'Nunito',sans-serif;
-    color:var(--ink);
-    padding:28px 16px 40px;
-  }
-  .wrap{max-width:460px; margin:0 auto;}
-  .screen{display:none; animation:fadeIn .28s ease;}
-  .screen.active{display:block;}
-  @keyframes fadeIn{from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);}}
-
-  /* ---------- info screen ---------- */
-  .header-pill{
-    background:linear-gradient(180deg,#39c1f7,#1fa7e6);
-    color:#fff; text-align:center; font-family:'Baloo 2',sans-serif;
-    font-weight:700; font-size:21px; letter-spacing:.3px;
-    padding:16px 10px; border-radius:18px;
-    box-shadow:0 4px 0 rgba(0,0,0,.08);
-    margin:40px auto 30px; max-width:340px;
-  }
-  .field{
-    position:relative; margin-bottom:18px;
-  }
-  .field label{
-    position:absolute; top:-10px; left:16px; background:var(--bg);
-    padding:0 8px; font-size:12.5px; font-weight:700; color:#3aa9e0;
-  }
-  .field input{
-    width:100%; border:2px solid #3aa9e0; border-radius:14px;
-    padding:16px 14px; font-size:15px; font-family:'Nunito',sans-serif;
-    color:var(--ink); background:var(--card); outline:none;
-  }
-  .field input::placeholder{color:#b7c1c7;}
-  .row2{display:flex; gap:12px;}
-  .row2 .field{flex:1;}
-  .phone-field{
-    border:2px solid #3aa9e0; border-radius:14px; background:var(--card);
-    display:flex; align-items:center; padding:0 14px; position:relative;
-    margin-bottom:18px;
-  }
-  .phone-field label{
-    position:absolute; top:-10px; left:16px; background:var(--bg);
-    padding:0 8px; font-size:12.5px; font-weight:700; color:#3aa9e0;
-  }
-  .phone-cc{font-size:15px; font-weight:700; color:var(--ink); padding:16px 8px 16px 0;}
-  .phone-sep{width:1px; height:22px; background:var(--grey-line); margin-right:8px;}
-  .phone-field input{
-    flex:1; border:none; outline:none; background:transparent;
-    font-size:15px; padding:16px 0; color:var(--ink); font-family:'Nunito',sans-serif;
+  :root {
+    --bg: #0b0f1a;
+    --card: #161b2c;
+    --accent: #bef264;
+    --accent-dim: rgba(190, 242, 100, 0.1);
+    --text: #ffffff;
+    --text-dim: #94a3b8;
+    --error: #ff6b6b;
+    --radius: 16px;
+    --shimmer: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
   }
 
-  /* ---------- buttons ---------- */
-  .btn{
-    display:block; width:100%; text-align:center; padding:16px;
-    border-radius:16px; font-family:'Baloo 2',sans-serif; font-weight:700;
-    font-size:18px; border:none; cursor:pointer; margin-top:6px;
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text);
+    display: flex; flex-direction: column; align-items: center; padding: 12px 16px;
   }
-  .btn-green{
-    background:var(--card); color:#3ddc5a; border:2.5px solid var(--green);
-  }
-  .btn-green:active{transform:scale(.98);}
-  .btn-green:disabled{opacity:.55;}
+  .app { width: 100%; max-width: 420px; }
 
-  /* ---------- payment screen ---------- */
-  .pay-card{
-    background:var(--card); border:2.5px solid var(--cyan);
-    border-radius:var(--radius); padding:22px 18px 18px; margin-bottom:18px;
-  }
-  .pay-top{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px;}
-  .logo{
-    font-family:'Baloo 2',sans-serif; font-weight:800; font-size:30px;
-    color:var(--orange); letter-spacing:.5px;
-  }
-  .method-label{font-size:11.5px; color:var(--sub); text-align:right; margin-bottom:4px;}
-  select.method{
-    border:2px solid var(--cyan); border-radius:12px; padding:9px 10px;
-    font-size:15px; font-weight:700; color:var(--ink); background:var(--card);
-    font-family:'Nunito',sans-serif; -webkit-appearance:none; appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='9'><path d='M1 1l6 6 6-6' stroke='%238a97a0' stroke-width='2' fill='none'/></svg>");
-    background-repeat:no-repeat; background-position:right 10px center; padding-right:30px;
-  }
-  .info-row{
-    display:flex; align-items:center; gap:10px; margin:14px 0;
-  }
-  .tag{
-    flex-shrink:0; background:var(--grey-bg); border:1.5px solid var(--cyan-dim);
-    color:var(--ink); font-size:12.5px; font-weight:700; padding:7px 12px;
-    border-radius:14px; white-space:nowrap;
-  }
-  .val-box{
-    flex:1; display:flex; align-items:center; justify-content:space-between;
-    background:var(--grey-bg); border-radius:12px; padding:9px 12px;
-    font-size:14.5px; color:var(--ink); overflow:hidden;
-  }
-  .val-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:600;}
-  .copy-btn{
-    flex-shrink:0; background:none; border:none; color:#3aa9e0; font-size:13px;
-    font-weight:700; padding-left:10px; cursor:pointer; border-left:1px solid var(--grey-line);
-  }
-  .copy-btn.copied{color:#1fae3e;}
+  /* --- New Segmented Progress Bar --- */
+  .progress-bar { display: flex; gap: 8px; margin-bottom: 24px; padding: 0 4px; }
+  .bar-seg { flex: 1; height: 4px; background: #2d364d; border-radius: 10px; transition: 0.4s; }
+  .bar-seg.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
 
-  .upload-box{
-    background:#b9bec1; border:2.5px solid var(--cyan); border-radius:var(--radius);
-    padding:44px 20px; text-align:center; margin-bottom:18px; position:relative;
-  }
-  .upload-box.has-file{background:#eef1f2; padding:12px;}
-  .upload-hint{color:#4a4f52; font-size:16px; font-weight:700; margin-bottom:22px;}
-  .upload-box.has-file .upload-hint{display:none;}
-  .upload-btn{
-    display:inline-block; background:transparent; border:2px solid var(--cyan);
-    color:#2199ac; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:16px;
-    padding:11px 40px; border-radius:14px; cursor:pointer;
-  }
-  #receiptPreview{
-    max-width:100%; max-height:220px; border-radius:14px; display:none; margin:0 auto 10px;
-  }
-  .change-file{font-size:12.5px; color:#3aa9e0; font-weight:700; cursor:pointer; display:none;}
+  /* --- Screens --- */
+  .screen { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+  .screen.active { display: block; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
-  .toast{
-    position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
-    background:var(--ink); color:#fff; padding:11px 20px; border-radius:12px;
-    font-size:14px; font-weight:600; opacity:0; pointer-events:none; transition:.25s;
-    z-index:99; max-width:90vw; text-align:center;
-  }
-  .toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  .header { margin-bottom: 24px; }
+  .header h1 { font-size: 24px; font-weight: 800; margin: 0; }
+  .header h1 span { color: var(--accent); }
+  .header p { font-size: 14px; color: var(--text-dim); margin-top: 6px; }
 
-  .err{color:#e0483e; font-size:12.5px; font-weight:700; margin:-10px 0 12px 4px; display:none;}
-  .err.show{display:block;}
-
-  .spinner{
-    width:18px; height:18px; border:2.5px solid rgba(0,0,0,.15);
-    border-top-color:#3ddc5a; border-radius:50%; display:inline-block;
-    vertical-align:middle; margin-right:8px; animation:spin .7s linear infinite;
+  /* --- Inputs & Validation --- */
+  .field { margin-bottom: 18px; position: relative; }
+  .label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
+  input {
+    width: 100%; background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px;
+    padding: 14px; color: white; font-size: 16px; outline: none; transition: 0.2s;
   }
-  @keyframes spin{to{transform:rotate(360deg);}}
+  input.invalid { border-color: var(--error); background: rgba(255, 107, 107, 0.05); }
+  input:focus { border-color: var(--accent); }
+  .err-hint { color: var(--error); font-size: 11px; font-weight: 600; margin-top: 5px; display: none; }
+
+  /* --- Card UI --- */
+  .card { background: var(--card); border-radius: var(--radius); padding: 20px; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 16px; }
+  .timer-pill { background: var(--accent-dim); color: var(--accent); padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
+
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .info-row:last-child { border-bottom: none; }
+  .info-tag { font-size: 13px; color: var(--text-dim); }
+  .info-val { font-size: 15px; font-weight: 600; }
+  .copy { color: var(--accent); cursor: pointer; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-left: 8px; background: var(--accent-dim); padding: 4px 8px; border-radius: 6px; }
+
+  /* --- Skeleton --- */
+  .skeleton { background: var(--card); border-radius: var(--radius); padding: 24px; position: relative; overflow: hidden; }
+  .skeleton::after { content: ""; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: var(--shimmer); animation: loading 1.5s infinite; }
+  @keyframes loading { to { transform: translateX(100%); } }
+  .sk-line { height: 16px; background: #242c42; border-radius: 4px; margin-bottom: 12px; }
+
+  /* --- Buttons --- */
+  .btn {
+    width: 100%; padding: 18px; border-radius: var(--radius); border: none;
+    background: var(--accent); color: #000; font-size: 16px; font-weight: 800;
+    cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn:disabled { opacity: 0.4; }
+
+  /* --- Success UI --- */
+  .success-page { text-align: center; padding: 40px 10px; }
+  .check-icon { width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim); }
+
+  .toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
+    background: #fff; color: #000; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 1000;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
-<div class="wrap">
 
-  <!-- SCREEN 1 : YOUR INFORMATION -->
-  <div class="screen active" id="screenInfo">
-    <div class="header-pill">Your information</div>
-
-    <div class="row2">
-      <div class="field">
-        <label>First name</label>
-        <input type="text" id="firstName" placeholder="">
-      </div>
-      <div class="field">
-        <label>Last name</label>
-        <input type="text" id="lastName" placeholder="">
-      </div>
-    </div>
-    <div class="err" id="errName">Please fill first and last name</div>
-
-    <div class="phone-field">
-      <label>Phone number</label>
-      <span class="phone-cc">+251</span>
-      <span class="phone-sep"></span>
-      <input type="tel" id="phoneNumber" placeholder="00 000 000" maxlength="9" inputmode="numeric">
-    </div>
-    <div class="err" id="errPhone">Enter a valid phone number (9 digits)</div>
-
-    <button class="btn btn-green" id="btnToPayment">SUBMIT</button>
+<div class="app">
+  <!-- Modern Progress Bar -->
+  <div class="progress-bar">
+    <div class="bar-seg active" id="p1"></div>
+    <div class="bar-seg" id="p2"></div>
   </div>
 
-  <!-- SCREEN 2 : PAYMENT -->
+  <!-- SCREEN 1: INFORMATION -->
+  <div class="screen active" id="screenInfo">
+    <div class="header">
+      <h1>Let's <span>Identify</span></h1>
+      <p>Please enter your real name and active phone.</p>
+    </div>
+
+    <div class="card">
+      <div class="field">
+        <label class="label">First Name</label>
+        <input type="text" id="firstName" placeholder="e.g. Samuel">
+        <span class="err-hint" id="errFN">Please enter your first name</span>
+      </div>
+      <div class="field">
+        <label class="label">Last Name</label>
+        <input type="text" id="lastName" placeholder="e.g. Girma">
+        <span class="err-hint" id="errLN">Please enter your last name</span>
+      </div>
+      <div class="field">
+        <label class="label">Phone Number</label>
+        <div style="display: flex; gap: 8px;">
+          <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; color: var(--text-dim); font-weight: 600;">+251</div>
+          <input type="tel" id="phoneNumber" placeholder="911223344" maxlength="9" style="flex: 1;">
+        </div>
+        <span class="err-hint" id="errPH">Enter a valid 9-digit phone number</span>
+      </div>
+    </div>
+    <button class="btn" onclick="validateAndGo()">Continue to Payment</button>
+  </div>
+
+  <!-- SCREEN 2: PAYMENT -->
   <div class="screen" id="screenPayment">
-    <div class="pay-card">
-      <div class="pay-top">
-        <div class="logo">Payment</div>
-        <div>
-          <div class="method-label">Choose payment<br>method</div>
-          <select class="method" id="methodSelect">
-            <option value="CBE">CBE</option>
+    <div class="header">
+      <h1>Transfer <span>Proof</span></h1>
+      <p>Transfer the amount and upload your receipt.</p>
+    </div>
+
+    <div class="timer-pill">⏱ <span id="timer">15:00</span> remaining</div>
+
+    <!-- Skeleton Loader -->
+    <div id="paymentSkeleton" class="skeleton">
+      <div class="sk-line" style="width: 50%"></div>
+      <div class="sk-line" style="width: 100%"></div>
+      <div class="sk-line" style="width: 80%"></div>
+      <div class="sk-line" style="width: 40%"></div>
+    </div>
+
+    <!-- Content -->
+    <div id="paymentContent" style="display: none;">
+      <div class="card">
+        <div class="field" style="margin-bottom: 12px;">
+          <label class="label">Choose Method</label>
+          <select id="methodSelect" style="width: 100%; background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; color: white; outline: none;">
+            <option value="CBE">Commercial Bank (CBE)</option>
             <option value="TELEBIRR">Telebirr</option>
           </select>
         </div>
-      </div>
-
-      <div class="info-row">
-        <span class="tag">Account</span>
-        <div class="val-box">
-          <span class="val-text" id="accountVal">—</span>
-          <button class="copy-btn" data-copy="accountVal">copy</button>
+        <div class="info-row">
+          <span class="info-tag">Account Number</span>
+          <div><span class="info-val" id="accNum">---</span><span class="copy" onclick="copyVal('accNum')">Copy</span></div>
+        </div>
+        <div class="info-row">
+          <span class="info-tag">Account Name</span>
+          <span class="info-val" id="accName">---</span>
+        </div>
+        <div class="info-row" style="border: none; padding-top: 15px;">
+          <span class="info-tag" style="color: var(--accent); font-weight: 800;">Amount to Pay</span>
+          <span class="info-val" id="totalAmt" style="color: var(--accent); font-size: 20px; font-weight: 800;">--- ETB</span>
         </div>
       </div>
 
-      <div class="info-row">
-        <span class="tag">Owner name</span>
-        <div class="val-box">
-          <span class="val-text" id="ownerVal">—</span>
-          <button class="copy-btn" data-copy="ownerVal">copy</button>
+      <div class="card" style="padding: 12px;">
+        <div id="uploadBox" onclick="document.getElementById('fileInput').click()" style="border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;">
+          <span id="upIcon" style="font-size: 32px;">📑</span>
+          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">Click to upload screenshot</p>
+          <img id="receiptPreview" style="width: 100%; max-height: 150px; object-fit: contain; border-radius: 8px; display: none;">
+          <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
+        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Please upload your receipt proof</span>
       </div>
 
-      <div class="info-row">
-        <span class="tag">Amount</span>
-        <div class="val-box">
-          <span class="val-text" id="amountVal">—</span>
-          <button class="copy-btn" data-copy="amountVal">copy</button>
-        </div>
-      </div>
+      <button class="btn" id="submitBtn" onclick="submitFinal()">Confirm & Send Proof</button>
     </div>
-
-    <div class="upload-box" id="uploadBox">
-      <img id="receiptPreview" alt="receipt">
-      <div class="upload-hint">📸 upload screenshot</div>
-      <label class="upload-btn" for="receiptInput">
-        UPLOAD
-        <input type="file" accept="image/*" id="receiptInput" style="display:none">
-      </label>
-      <div class="change-file" id="changeFileBtn">↻ change</div>
-    </div>
-    <div class="err" id="errUpload">Please upload your payment receipt screenshot</div>
-
-    <button class="btn btn-green" id="btnSubmitPayment">SUBMIT</button>
   </div>
 
+  <!-- SCREEN 3: SUCCESS -->
+  <div class="screen" id="screenSuccess">
+    <div class="success-page">
+      <div class="check-icon">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <h1 style="font-size: 32px;">All Set!</h1>
+      <p style="color: var(--text-dim); line-height: 1.6; margin: 15px 0 35px;">We have received your payment proof. You will get a notification once verified.</p>
+      <button class="btn" style="background: #1e293b; color: #fff;" onclick="tg.close()">Return to Bot</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-(function(){
-  const tg = window.Telegram && window.Telegram.WebApp;
-  if (tg){ tg.ready(); tg.expand(); }
+const tg = window.Telegram?.WebApp;
+if (tg) { tg.ready(); tg.expand(); }
 
-  const API_BASE = "https://equb-bot-vt5m.onrender.com";
-  const qs = new URLSearchParams(location.search);
-  const numbers  = qs.get('numbers')  || '';
-  const total    = qs.get('total')    || '0';
-  const userId   = qs.get('user_id')  || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? String(tg.initDataUnsafe.user.id) : '');
-  const username = qs.get('username') || (tg && tg.initDataUnsafe && tg.initDataUnsafe.user ? ('@' + (tg.initDataUnsafe.user.username || '—')) : '—');
+const API_BASE = "https://equb-bot-vt5m.onrender.com";
+const qs = new URLSearchParams(location.search);
+const total = qs.get('total') || '0';
+const userId = tg?.initDataUnsafe?.user?.id || qs.get('user_id');
 
-  // ---------- toast ----------
-  const toastEl = document.getElementById('toast');
-  let toastTimer;
-  function toast(msg){
-    toastEl.textContent = msg;
-    toastEl.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(()=>toastEl.classList.remove('show'), 2200);
+let receiptFile = null;
+
+function showToast(m) {
+  const t = document.getElementById('toast');
+  t.innerText = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function validateAndGo() {
+  const fn = document.getElementById('firstName');
+  const ln = document.getElementById('lastName');
+  const ph = document.getElementById('phoneNumber');
+  let ok = true;
+
+  if(!fn.value.trim()) { fn.classList.add('invalid'); document.getElementById('errFN').style.display='block'; ok=false; }
+  else { fn.classList.remove('invalid'); document.getElementById('errFN').style.display='none'; }
+
+  if(!ln.value.trim()) { ln.classList.add('invalid'); document.getElementById('errLN').style.display='block'; ok=false; }
+  else { ln.classList.remove('invalid'); document.getElementById('errLN').style.display='none'; }
+
+  if(ph.value.length < 9) { ph.classList.add('invalid'); document.getElementById('errPH').style.display='block'; ok=false; }
+  else { ph.classList.remove('invalid'); document.getElementById('errPH').style.display='none'; }
+
+  if(ok) {
+    document.getElementById('screenInfo').classList.remove('active');
+    document.getElementById('screenPayment').classList.add('active');
+    document.getElementById('p2').classList.add('active');
+    if(tg) tg.HapticFeedback.impactOccurred('medium');
+    startTimer();
+    loadConfig();
+  } else {
+    if(tg) tg.HapticFeedback.notificationOccurred('error');
   }
+}
 
-  // ---------- SCREEN 1 : validation + navigation ----------
-  const screenInfo = document.getElementById('screenInfo');
-  const screenPayment = document.getElementById('screenPayment');
-  const errName = document.getElementById('errName');
-  const errPhone = document.getElementById('errPhone');
-
-  document.getElementById('phoneNumber').addEventListener('input', function(){
-    this.value = this.value.replace(/\D/g,'').slice(0,9);
+function loadConfig() {
+  fetch(`${API_BASE}/payment-config`).then(r => r.json()).then(data => {
+    setTimeout(() => {
+      document.getElementById('paymentSkeleton').style.display = 'none';
+      document.getElementById('paymentContent').style.display = 'block';
+      const update = () => {
+        const m = document.getElementById('methodSelect').value;
+        document.getElementById('accNum').innerText = m === 'CBE' ? data.cbe_account : data.telebirr_account;
+        document.getElementById('accName').innerText = m === 'CBE' ? data.cbe_name : data.telebirr_name;
+        document.getElementById('totalAmt').innerText = total + " ETB";
+      };
+      document.getElementById('methodSelect').onchange = update;
+      update();
+    }, 1200);
   });
+}
 
-  let fullName = '', fullPhone = '';
+function startTimer() {
+  let time = 15 * 60;
+  const tEl = document.getElementById('timer');
+  const intv = setInterval(() => {
+    let m = Math.floor(time/60), s = time % 60;
+    tEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+    if(--time < 0) { clearInterval(intv); tg.close(); }
+  }, 1000);
+}
 
-  document.getElementById('btnToPayment').addEventListener('click', ()=>{
-    const first = document.getElementById('firstName').value.trim();
-    const last  = document.getElementById('lastName').value.trim();
-    const phoneDigits = document.getElementById('phoneNumber').value.trim();
+function copyVal(id) {
+  navigator.clipboard.writeText(document.getElementById(id).innerText);
+  showToast("Copied to clipboard!");
+  if(tg) tg.HapticFeedback.impactOccurred('light');
+}
 
-    let ok = true;
-    if (!first || !last){
-      errName.classList.add('show'); ok = false;
-    } else errName.classList.remove('show');
+document.getElementById('fileInput').onchange = (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  receiptFile = file;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    document.getElementById('upIcon').style.display = 'none';
+    document.getElementById('upText').style.display = 'none';
+    const preview = document.getElementById('receiptPreview');
+    preview.src = ev.target.result; preview.style.display = 'block';
+    document.getElementById('errReceipt').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
 
-    if (phoneDigits.length !== 9){
-      errPhone.classList.add('show'); ok = false;
-    } else errPhone.classList.remove('show');
+function submitFinal() {
+  if(!receiptFile) { document.getElementById('errReceipt').style.display='block'; return; }
 
-    if (!ok){
-      if (tg) tg.HapticFeedback.notificationOccurred('error');
-      return;
-    }
+  const b = document.getElementById('submitBtn');
+  b.disabled = true; b.innerText = "Sending Proof...";
 
-    fullName  = `${first} ${last}`;
-    fullPhone = `+251${phoneDigits}`;
+  const fd = new FormData();
+  fd.append('full_name', document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value);
+  fd.append('phone', '+251' + document.getElementById('phoneNumber').value);
+  fd.append('user_id', userId);
+  fd.append('receipt', receiptFile);
+  fd.append('method', document.getElementById('methodSelect').value);
 
-    screenInfo.classList.remove('active');
-    screenPayment.classList.add('active');
-    if (tg) tg.HapticFeedback.impactOccurred('light');
-    loadPaymentConfig();
-  });
-
-  // ---------- SCREEN 2 : payment config ----------
-  let cfg = null;
-  function loadPaymentConfig(){
-    fetch(`${API_BASE}/payment-config`)
-      .then(r=>r.json())
-      .then(data=>{
-        cfg = data;
-        renderMethod();
-      })
-      .catch(()=> toast('Something went wrong, try again'));
-  }
-
-  const accountVal = document.getElementById('accountVal');
-  const ownerVal   = document.getElementById('ownerVal');
-  const amountVal  = document.getElementById('amountVal');
-  const methodSelect = document.getElementById('methodSelect');
-
-  function renderMethod(){
-    if (!cfg) return;
-    const m = methodSelect.value;
-    if (m === 'CBE'){
-      accountVal.textContent = cfg.cbe_account || '—';
-      ownerVal.textContent   = cfg.cbe_name || '—';
-    } else {
-      accountVal.textContent = cfg.telebirr_account || '—';
-      ownerVal.textContent   = cfg.telebirr_name || '—';
-    }
-    amountVal.textContent = `${total} ETB`;
-  }
-  methodSelect.addEventListener('change', renderMethod);
-
-  document.querySelectorAll('.copy-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      const target = document.getElementById(btn.dataset.copy);
-      const text = target.textContent;
-      if (!text || text === '—') return;
-      navigator.clipboard.writeText(text).then(()=>{
-        toast('Copied');
-        btn.classList.add('copied');
-        if (tg) tg.HapticFeedback.impactOccurred('light');
-        setTimeout(()=>btn.classList.remove('copied'), 1200);
-      });
+  fetch(`${API_BASE}/submit-payment`, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'ok') {
+        document.getElementById('screenPayment').classList.remove('active');
+        document.getElementById('screenSuccess').classList.add('active');
+        if(tg) tg.HapticFeedback.notificationOccurred('success');
+      } else { throw new Error(); }
+    }).catch(() => {
+      showToast("Error! Please try again.");
+      b.disabled = false; b.innerText = "Confirm & Send Proof";
     });
-  });
-
-  // ---------- receipt upload ----------
-  const uploadBox = document.getElementById('uploadBox');
-  const receiptInput = document.getElementById('receiptInput');
-  const receiptPreview = document.getElementById('receiptPreview');
-  const changeFileBtn = document.getElementById('changeFileBtn');
-  const errUpload = document.getElementById('errUpload');
-  let receiptFile = null;
-
-  receiptInput.addEventListener('change', ()=>{
-    const file = receiptInput.files[0];
-    if (!file) return;
-    receiptFile = file;
-    const reader = new FileReader();
-    reader.onload = e=>{
-      receiptPreview.src = e.target.result;
-      receiptPreview.style.display = 'block';
-      uploadBox.classList.add('has-file');
-      changeFileBtn.style.display = 'inline-block';
-      errUpload.classList.remove('show');
-    };
-    reader.readAsDataURL(file);
-  });
-  changeFileBtn.addEventListener('click', ()=> receiptInput.click());
-
-  // ---------- submit payment ----------
-  const btnSubmitPayment = document.getElementById('btnSubmitPayment');
-  btnSubmitPayment.addEventListener('click', ()=>{
-    if (!receiptFile){
-      errUpload.classList.add('show');
-      if (tg) tg.HapticFeedback.notificationOccurred('error');
-      return;
-    }
-    errUpload.classList.remove('show');
-
-    btnSubmitPayment.disabled = true;
-    const origHTML = btnSubmitPayment.innerHTML;
-    btnSubmitPayment.innerHTML = `<span class="spinner"></span>Submitting...`;
-
-    const fd = new FormData();
-    fd.append('numbers', numbers);
-    fd.append('user_id', userId);
-    fd.append('username', username);
-    fd.append('full_name', fullName);
-    fd.append('phone', fullPhone);
-    fd.append('method', methodSelect.value);
-    fd.append('receipt', receiptFile);
-
-    fetch(`${API_BASE}/submit-payment`, { method:'POST', body: fd })
-      .then(r=>r.json())
-      .then(data=>{
-        if (data.status === 'ok'){
-          if (tg) tg.HapticFeedback.notificationOccurred('success');
-          toast('Sent successfully! Check the bot.');
-          setTimeout(()=>{ if (tg) tg.close(); }, 1600);
-        } else {
-          throw new Error(data.message || 'error');
-        }
-      })
-      .catch(()=>{
-        if (tg) tg.HapticFeedback.notificationOccurred('error');
-        toast('Something went wrong, try again');
-        btnSubmitPayment.disabled = false;
-        btnSubmitPayment.innerHTML = origHTML;
-      });
-  });
-})();
+}
 </script>
 </body>
 </html>
