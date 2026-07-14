@@ -11,7 +11,7 @@
   :root {
     --bg: #0b0f1a;
     --card: #161b2c;
-    --accent: #bef264; /* Lime Green from the book cover */
+    --accent: #bef264;
     --accent-dim: rgba(190, 242, 100, 0.1);
     --text: #ffffff;
     --text-dim: #94a3b8;
@@ -29,7 +29,7 @@
   
   .app { width: 100%; max-width: 420px; }
 
-  /* --- Instagram Style Progress Bar --- */
+  /* --- Progress Bar --- */
   .progress-bar { display: flex; gap: 8px; margin-bottom: 24px; padding: 0 4px; }
   .bar-seg { flex: 1; height: 4px; background: #2d364d; border-radius: 10px; transition: 0.4s; }
   .bar-seg.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
@@ -60,7 +60,14 @@
   /* --- Card UI --- */
   .card { background: var(--card); border-radius: var(--radius); padding: 20px; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 16px; }
   
-  /* Payment Info Card (Bank Style) */
+  /* Timer Pill */
+  .timer-pill {
+    background: var(--accent-dim); color: var(--accent); padding: 8px 16px; border-radius: 50px;
+    font-size: 13px; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;
+    border: 1px solid rgba(190, 242, 100, 0.2);
+  }
+
+  /* Bank Info Card */
   .bank-display { background: #0f172a; padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); margin-top: 10px; }
   .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
   .info-row:last-child { border-bottom: none; }
@@ -110,50 +117,54 @@
 <body>
 
 <div class="app">
-  <!-- Modern Segmented Progress Bar -->
+  <!-- Progress Bar -->
   <div class="progress-bar">
     <div class="bar-seg active" id="p1"></div>
     <div class="bar-seg" id="p2"></div>
   </div>
 
-  <!-- SCREEN 1: INFORMATION -->
+  <!-- SCREEN 1: INFO -->
   <div class="screen active" id="screenInfo">
     <div class="header">
-      <h1>Let's <span>Identify</span></h1>
-      <p>Enter your real information to avoid verification delays.</p>
+      <h1>የእርስዎ <span>መረጃ</span></h1>
+      <p>እባክዎ ትክክለኛ መረጃዎን ያስገቡ።</p>
     </div>
 
     <div class="card">
       <div class="field">
-        <label class="label">First Name</label>
-        <input type="text" id="firstName" placeholder="e.g. Samuel">
-        <span class="err-hint" id="errFN">Please enter your first name</span>
+        <label class="label">የመጀመሪያ ስም</label>
+        <input type="text" id="firstName" placeholder="ለምሳሌ፦ ሳሙኤል">
+        <span class="err-hint" id="errFN">እባክዎ ስምዎን ያስገቡ</span>
       </div>
       <div class="field">
-        <label class="label">Last Name</label>
-        <input type="text" id="lastName" placeholder="e.g. Bekele">
-        <span class="err-hint" id="errLN">Please enter your last name</span>
+        <label class="label">የአባት ስም</label>
+        <input type="text" id="lastName" placeholder="ለምሳሌ፦ በቀለ">
+        <span class="err-hint" id="errLN">እባክዎ የአባት ስምዎን ያስገቡ</span>
       </div>
       <div class="field">
-        <label class="label">Phone Number</label>
+        <label class="label">ስልክ ቁጥር</label>
         <div style="display: flex; gap: 8px;">
           <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; font-weight: 700; color: var(--text-dim);">+251</div>
           <input type="tel" id="phoneNumber" placeholder="911223344" maxlength="9" style="flex: 1;">
         </div>
-        <span class="err-hint" id="errPH">Enter a valid 9-digit mobile number</span>
+        <span class="err-hint" id="errPH">ትክክለኛ 9 ዲጂት ስልክ ያስገቡ</span>
       </div>
     </div>
-    <button class="btn" onclick="validateAndGo()">Continue to Payment</button>
+    <button class="btn" onclick="validateAndGo()">ቀጥል</button>
   </div>
 
   <!-- SCREEN 2: PAYMENT -->
   <div class="screen" id="screenPayment">
     <div class="header">
-      <h1>Finalize <span>Transfer</span></h1>
-      <p>Pay exactly the amount shown below and upload the proof.</p>
+      <h1>ክፍያ <span>ይፈጽሙ</span></h1>
+      <p>ገንዘቡን ልከው የደረሰኝ ፎቶ እዚህ ይጫኑ።</p>
     </div>
 
-    <!-- Skeleton Loader (Hidden by default) -->
+    <!-- 5 Minute Timer -->
+    <div class="timer-pill">
+      <span>⏱</span> <span id="timerText">05:00</span> ቀሪ ጊዜ
+    </div>
+
     <div id="paymentSkeleton" class="skeleton" style="display: none;">
       <div class="sk-line" style="width: 60%"></div>
       <div class="sk-line" style="width: 100%"></div>
@@ -163,27 +174,27 @@
     <div id="paymentContent">
       <div class="card">
         <div class="field">
-          <label class="label">Choose Method</label>
+          <label class="label">የክፍያ መንገድ</label>
           <select id="methodSelect">
-            <option value="CBE">Commercial Bank (CBE)</option>
+            <option value="CBE">CBE (Commercial Bank)</option>
             <option value="TELEBIRR">Telebirr</option>
           </select>
         </div>
 
         <div class="bank-display">
           <div class="info-row">
-            <span class="info-tag">Account Number</span>
+            <span class="info-tag">የሂሳብ ቁጥር</span>
             <div>
               <span class="info-val" id="accNum">---</span>
               <button class="copy-btn" onclick="copyValue('accNum')">Copy</button>
             </div>
           </div>
           <div class="info-row">
-            <span class="info-tag">Owner Name</span>
+            <span class="info-tag">ስም</span>
             <span class="info-val" id="accName">---</span>
           </div>
           <div class="info-row" style="border: none; padding-top: 15px;">
-            <span class="info-tag" style="color: var(--accent); font-weight: 800;">Total Amount</span>
+            <span class="info-tag" style="color: var(--accent); font-weight: 800;">መከፈል ያለበት</span>
             <span class="info-val" id="totalAmt" style="color: var(--accent); font-size: 20px; font-weight: 800;">--- ETB</span>
           </div>
         </div>
@@ -192,14 +203,14 @@
       <div class="card" style="padding: 12px;">
         <div class="upload-box" onclick="document.getElementById('fileInput').click()">
           <span id="upIcon" style="font-size: 32px;">📸</span>
-          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">Tap to upload receipt</p>
+          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">ደረሰኝ ለመጫን እዚህ ይንኩ</p>
           <img id="receiptPreview">
           <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
-        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Please upload your payment proof</span>
+        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">እባክዎ ደረሰኝ ይጫኑ</span>
       </div>
 
-      <button class="btn" id="submitBtn" onclick="submitFinal()">Submit Proof of Payment</button>
+      <button class="btn" id="submitBtn" onclick="submitFinal()">አረጋግጥ</button>
     </div>
   </div>
 
@@ -209,9 +220,9 @@
       <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim);">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
-      <h1 style="font-size: 32px; font-weight: 900;">Complete!</h1>
-      <p style="color: var(--text-dim); line-height: 1.6; margin-bottom: 40px;">Your payment proof has been submitted. Check the bot for verification status.</p>
-      <button class="btn" style="background: #1e293b; color: #fff;" onclick="tg.close()">Back to Bot</button>
+      <h1 style="font-size: 32px; font-weight: 900;">ተሳክቷል!</h1>
+      <p style="color: var(--text-dim); line-height: 1.6;">መረጃዎ ተልኳል። ሲረጋገጥ በቦቱ በኩል መልእክት ይደርስዎታል።</p>
+      <button class="btn" style="background: #1e293b; color: #fff; margin-top: 30px;" onclick="tg.close()">ተመለስ</button>
     </div>
   </div>
 </div>
@@ -230,6 +241,7 @@ const userId = tg?.initDataUnsafe?.user?.id || qs.get('user_id');
 const username = tg?.initDataUnsafe?.user?.username ? '@' + tg.initDataUnsafe.user.username : qs.get('username') || '@user';
 
 let receiptFile = null;
+let timerInterval = null;
 
 function showToast(m) {
   const t = document.getElementById('toast');
@@ -237,7 +249,29 @@ function showToast(m) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// --- First Step Validation ---
+// --- Countdown Logic ---
+function startTimer(duration) {
+  let timer = duration, minutes, seconds;
+  const display = document.getElementById('timerText');
+  
+  timerInterval = setInterval(() => {
+    minutes = parseInt(timer / 60, 10);
+    seconds = parseInt(timer % 60, 10);
+
+    minutes = minutes < 10 ? "0" + minutes : minutes;
+    seconds = seconds < 10 ? "0" + seconds : seconds;
+
+    display.textContent = minutes + ":" + seconds;
+
+    if (--timer < 0) {
+      clearInterval(timerInterval);
+      showToast("የጊዜ ገደብ አልፏል። እባክዎ ደግመው ይሞክሩ።");
+      setTimeout(() => { if (tg) tg.close(); }, 2000);
+    }
+  }, 1000);
+}
+
+// --- Navigation & Validation ---
 function validateAndGo() {
   const fn = document.getElementById('firstName');
   const ln = document.getElementById('lastName');
@@ -258,13 +292,14 @@ function validateAndGo() {
     document.getElementById('screenPayment').classList.add('active');
     document.getElementById('p2').classList.add('active');
     if(tg) tg.HapticFeedback.impactOccurred('medium');
+    
+    startTimer(300); // Start 5 minute timer (300 seconds)
     loadConfig();
   } else {
     if(tg) tg.HapticFeedback.notificationOccurred('error');
   }
 }
 
-// --- Loading Bank Config ---
 function loadConfig() {
   document.getElementById('paymentSkeleton').style.display = 'block';
   document.getElementById('paymentContent').style.display = 'none';
@@ -282,17 +317,17 @@ function loadConfig() {
       };
       document.getElementById('methodSelect').onchange = update;
       update();
-    }, 1000);
-  }).catch(() => showToast("Failed to load details"));
+    }, 800);
+  });
 }
 
 function copyValue(id) {
   navigator.clipboard.writeText(document.getElementById(id).innerText);
-  showToast("Copied to clipboard!");
+  showToast("ኮፒ ተደርጓል!");
   if(tg) tg.HapticFeedback.impactOccurred('light');
 }
 
-// --- File Handling ---
+// --- Upload ---
 document.getElementById('fileInput').onchange = (e) => {
   const file = e.target.files[0];
   if(!file) return;
@@ -308,20 +343,19 @@ document.getElementById('fileInput').onchange = (e) => {
   reader.readAsDataURL(file);
 }
 
-// --- Submit Logic (Corrected) ---
+// --- Final Submit ---
 function submitFinal() {
   if(!receiptFile) { 
     document.getElementById('errReceipt').style.display='block'; 
-    if(tg) tg.HapticFeedback.notificationOccurred('error');
     return; 
   }
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; 
-  btn.innerHTML = `<span class="spinner"></span> Processing...`;
+  btn.innerHTML = `<span class="spinner"></span> በመላክ ላይ...`;
 
   const fd = new FormData();
-  fd.append('numbers', numbers); // ከ URL የተቀበልነው ቁጥር
+  fd.append('numbers', numbers);
   fd.append('user_id', userId);
   fd.append('username', username);
   fd.append('full_name', document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value);
@@ -330,20 +364,18 @@ function submitFinal() {
   fd.append('receipt', receiptFile);
 
   fetch(`${API_BASE}/submit-payment`, { method: 'POST', body: fd })
-    .then(async r => {
-      const res = await r.json();
-      if(r.ok && res.status === 'ok') {
+    .then(r => r.json())
+    .then(data => {
+      if(data.status === 'ok') {
+        clearInterval(timerInterval); // Stop timer on success
         document.getElementById('screenPayment').classList.remove('active');
         document.getElementById('screenSuccess').classList.add('active');
         if(tg) tg.HapticFeedback.notificationOccurred('success');
-      } else {
-        throw new Error(res.message || 'Error');
-      }
+      } else { throw new Error(); }
     }).catch(() => {
-      showToast("Submission failed. Try again.");
+      showToast("ስህተት ተፈጥሯል! እባክዎ ደግመው ይሞክሩ።");
       btn.disabled = false; 
-      btn.innerText = "Submit Proof of Payment";
-      if(tg) tg.HapticFeedback.notificationOccurred('error');
+      btn.innerText = "አረጋግጥ";
     });
 }
 </script>
