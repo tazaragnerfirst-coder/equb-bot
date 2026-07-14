@@ -1135,7 +1135,7 @@ async def announce_sold_numbers(bot, numbers):
 
     try:
         all_announcements = await db.get_sold_announcements()
-        if len(all_announcements) >= 10:
+        if len(all_announcements) >= 20:
             for _, mid, cid, _ in all_announcements:
                 try:
                     await bot.delete_message(chat_id=cid, message_id=mid)
