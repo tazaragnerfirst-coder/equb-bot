@@ -3,6 +3,7 @@ import json
 import asyncio
 import logging
 from datetime import date, datetime, timedelta
+from urllib.parse import quote
 
 import requests as req_lib
 from threading import Thread
@@ -157,7 +158,11 @@ def submit_payment():
         full_name   = request.form.get('full_name', '').strip()
         phone       = request.form.get('phone', '').strip()
         method      = request.form.get('method', '').strip()
+        lang        = request.form.get('lang', 'am').strip() or 'am'
         receipt     = request.files.get('receipt')
+
+        if lang not in T:
+            lang = 'am'
 
         if not (numbers_str and user_id and full_name and phone and method and receipt):
             return _cors_json({"status": "error", "message": "Missing fields"}, 400)
@@ -241,6 +246,23 @@ def submit_payment():
             except Exception as e:
                 logger.error(f"Admin notify (mini app) error: {e}")
 
+        # ── ተጠቃሚው ደረሰኙ በትክክል መላኩን የሚያረጋግጥ መልክት ──
+        try:
+            confirm_text = T[lang]["sent_ok"].format(
+                name=full_name,
+                phone=phone,
+                nums=", ".join(map(str, sorted(numbers))),
+                total=total_price,
+                method=method
+            )
+            req_lib.post(
+                f"https://api.telegram.org/bot{BOT_TOKEN}/sendMessage",
+                data={"chat_id": user_id, "text": confirm_text, "parse_mode": "Markdown"},
+                timeout=10
+            )
+        except Exception as e:
+            logger.error(f"User confirm notify error: {e}")
+
         return _cors_json({"status": "ok", "payment_id": payment_id})
 
     except Exception as e:
@@ -279,6 +301,17 @@ T = {
         "join_btn":       "📢 ቡድኑን ቀላቀሉ",
         "joined_btn":     "✅ ተቀላቅያለሁ",
         "not_joined":     "⚠️ ገና ቡድኑን አልተቀላቀሉም። ቀላቅለው እንደገና ይሞክሩ።",
+
+        "contact_required": (
+            "📱 *ቦቱን ለመጠቀም ስልክ ቁጥርዎን ማጋራት ያስፈልጋል*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "ይህ የሚያስፈልገው ክፍያ ሲፈጽሙ በራስ-ሰር\n"
+            "መረጃዎን ለመሙላት ነው።\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 ከስር ያለውን ቁልፍ ተጭነው ኮንታክትዎን ያጋሩ።"
+        ),
+        "contact_btn":    "📱 ኮንታክት አጋራ",
+        "contact_own_only": "⚠️ እባክዎ የራስዎን ኮንታክት ብቻ ያጋሩ።",
 
         "home_text": (
             "🎉 *{title}*\n"
@@ -458,6 +491,8 @@ T = {
         ),
 
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
+
+        "sold_announce": "🎟 ቁጥር *{num}* ተሽጧል!",
     },
 
     "en": {
@@ -479,6 +514,17 @@ T = {
         "join_btn":       "📢 Join Group",
         "joined_btn":     "✅ I Joined",
         "not_joined":     "⚠️ You haven't joined yet. Please join and try again.",
+
+        "contact_required": (
+            "📱 *You must share your contact to use this bot*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "This is needed to auto-fill your details\n"
+            "during payment.\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 Tap the button below to share your contact."
+        ),
+        "contact_btn":    "📱 Share Contact",
+        "contact_own_only": "⚠️ Please share your own contact only.",
 
         "home_text": (
             "🎉 *{title}*\n"
@@ -654,6 +700,8 @@ T = {
         ),
 
         "num_taken": "⚠️ Number {num} is already taken! Please pick again.",
+
+        "sold_announce": "🎟 Number *{num}* sold!",
     },
 
     "or": {
@@ -675,6 +723,17 @@ T = {
         "join_btn":       "📢 Garee Makamu",
         "joined_btn":     "✅ Makamuun koo",
         "not_joined":     "⚠️ Ammallee garee hin makaamin. Makamtee ammas yaali.",
+
+        "contact_required": (
+            "📱 *Bot kana fayyadamuuf lakkoofsa bilbilaa kee qooduu qabda*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "Kun kaffaltii yeroo raawwattu odeeffannoo\n"
+            "kee ofumaan guutuuf barbaachisa.\n"
+            "━━━━━━━━━━━━━━━\n"
+            "👇 Mallattoo gadii tuqi kontaakticha qoodi."
+        ),
+        "contact_btn":    "📱 Kontaakti Qoodi",
+        "contact_own_only": "⚠️ Maaloo kontaaktii kee qofa qoodi.",
 
         "home_text": (
             "🎉 *{title}*\n"
@@ -849,6 +908,8 @@ T = {
         ),
 
         "num_taken": "⚠️ Lakkoofsi {num} fudhataame! Ammas filadhu.",
+
+        "sold_announce": "🎟 Lakkoofsi *{num}* gurgurame!",
     }
 }
 
@@ -872,14 +933,33 @@ def mask_phone(phone):
         return phone
     return phone[:-1] + "#"
 
-def get_cancel_keyboard(ctx):
-    return ReplyKeyboardMarkup(
-        [[KeyboardButton(t(ctx, "home_btn")), KeyboardButton(t(ctx, "cancel_btn"))]],
-        resize_keyboard=True
-    )
-
 def remove_menu():
     return ReplyKeyboardRemove()
+
+# ══════════════════════════════════════════
+# SINGLE-SCREEN NAVIGATION
+# ‌አዲስ 'ገጽ' (home/admin/payment/…) ሲላክ ያለፈውን ገጽ አጥፍቶ ብቻ ነው የሚተካው።
+# reply_markup (ReplyKeyboardMarkup) በዚያው chat ውስጥ እንደተጣበቀ ስለሚቆይ
+# (Telegram property እንጂ የመልክቱ ንብረት ስላልሆነ) መልክቱን ብናጠፋም አይጠፋም።
+# ══════════════════════════════════════════
+async def show_screen(update: Update, ctx: ContextTypes.DEFAULT_TYPE, parts, parse_mode="Markdown"):
+    """parts: [(text, reply_markup), ...] በቅደም ተከተል ይላካሉ።"""
+    chat_id = update.effective_chat.id
+    old_ids = ctx.user_data.get("screen_msg_ids", [])
+    for mid in old_ids:
+        try:
+            await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
+        except Exception:
+            pass
+
+    new_ids = []
+    last_msg = None
+    for text, markup in parts:
+        last_msg = await ctx.bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=markup)
+        new_ids.append(last_msg.message_id)
+
+    ctx.user_data["screen_msg_ids"] = new_ids
+    return last_msg
 
 # ══════════════════════════════════════════
 # MEMBERSHIP CHECK
@@ -901,21 +981,57 @@ async def is_member_of_group(bot, user_id: int) -> bool:
 async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
     lang = ctx.user_data.get("lang", "am")
-
-    await update.effective_message.reply_text(
-        "⏳",
-        reply_markup=ReplyKeyboardRemove()
-    )
-
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)],
         [InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")],
     ])
-    await update.effective_message.reply_text(
-        T[lang]["join_required"],
-        parse_mode="Markdown",
-        reply_markup=keyboard
+    await show_screen(update, ctx, [(T[lang]["join_required"], keyboard)])
+
+async def send_contact_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """ኮንታክት አጋራ ማሳወቂያ ይላካል — ግሩፕ ከተቀላቀሉ በኋላ የሚጠየቅ"""
+    lang = ctx.user_data.get("lang", "am")
+    keyboard = ReplyKeyboardMarkup(
+        [[KeyboardButton(T[lang]["contact_btn"], request_contact=True)]],
+        resize_keyboard=True
     )
+    await show_screen(update, ctx, [(T[lang]["contact_required"], keyboard)])
+
+async def proceed_after_membership(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """ግሩፕ አባልነት ከተረጋገጠ በኋላ፦ አድሚን ከሆነ ወይም ቀድሞ ኮንታክት ካጋራ ወደ home፣
+    ካልሆነ ግን ኮንታክት እንዲያጋራ ይጠየቃል።"""
+    user = update.effective_user
+    if is_admin(user.id):
+        await show_home(update, ctx)
+        return
+    profile = await db.get_profile(user.id)
+    if not profile:
+        await send_contact_prompt(update, ctx)
+        return
+    ctx.user_data["_profile_checked"] = True
+    await show_home(update, ctx)
+
+# ══════════════════════════════════════════
+# CONTACT HANDLER
+# ══════════════════════════════════════════
+async def contact_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    contact = update.message.contact
+    user    = update.effective_user
+    lang    = ctx.user_data.get("lang", "am")
+
+    if not contact or contact.user_id != user.id:
+        await update.message.reply_text(T[lang]["contact_own_only"])
+        return
+
+    first = contact.first_name or user.first_name or ""
+    last  = contact.last_name or user.last_name or ""
+    phone = contact.phone_number or ""
+    if phone and not phone.startswith("+"):
+        phone = "+" + phone
+
+    await db.save_profile(user.id, first, last, phone)
+    ctx.user_data["_profile_checked"] = True
+
+    await show_home(update, ctx)
 
 # ══════════════════════════════════════════
 # GROUP LIST
@@ -997,6 +1113,38 @@ async def schedule_group_list_update(bot, total, min_interval=12):
 
     asyncio.create_task(_runner())
 
+
+# ══════════════════════════════════════════
+# GROUP "SOLD" ANNOUNCEMENTS
+# ለእያንዳንዱ አዲስ የተሸጠ ቁጥር 1 መልክት ብቻ ግሩፕ ላይ ይላካል፣ 10 ሲደርስ ተጠራርጎ ከ0 ይጀምራል።
+# ══════════════════════════════════════════
+async def announce_sold_numbers(bot, numbers):
+    for num in numbers:
+        try:
+            if await db.has_sold_announcement(num):
+                continue
+            msg = await bot.send_message(
+                chat_id=GROUP_ID,
+                text=T["am"]["sold_announce"].format(num=num),
+                parse_mode="Markdown"
+            )
+            await db.add_sold_announcement(num, msg.message_id, GROUP_ID)
+        except Exception as e:
+            logger.error(f"Sold announce error num={num}: {e}")
+        await asyncio.sleep(0.3)
+
+    try:
+        all_announcements = await db.get_sold_announcements()
+        if len(all_announcements) >= 10:
+            for _, mid, cid, _ in all_announcements:
+                try:
+                    await bot.delete_message(chat_id=cid, message_id=mid)
+                except Exception as e:
+                    logger.warning(f"Delete sold announce msg error: {e}")
+            await db.clear_sold_announcements()
+    except Exception as e:
+        logger.error(f"Sold announce batch-clear error: {e}")
+
 # ══════════════════════════════════════════
 # START / LANGUAGE
 # ══════════════════════════════════════════
@@ -1070,10 +1218,10 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
             [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
         ]
-        await update.message.reply_text(
+        await show_screen(update, ctx, [(
             "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+            InlineKeyboardMarkup(keyboard)
+        )])
         return
 
     if not is_admin(user.id):
@@ -1081,7 +1229,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await send_join_prompt(update, ctx)
             return
 
-    await show_home(update, ctx)
+    await proceed_after_membership(update, ctx)
 
 
 async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1090,10 +1238,10 @@ async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
         [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
     ]
-    await update.message.reply_text(
+    await show_screen(update, ctx, [(
         "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
-        reply_markup=InlineKeyboardMarkup(keyboard)
-    )
+        InlineKeyboardMarkup(keyboard)
+    )])
 
 
 async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1101,7 +1249,6 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     lang = query.data.split("_")[1]
     ctx.user_data["lang"] = lang
-    await query.delete_message()
 
     user = update.effective_user
     if not is_admin(user.id):
@@ -1109,7 +1256,7 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await send_join_prompt(update, ctx)
             return
 
-    await show_home(update, ctx)
+    await proceed_after_membership(update, ctx)
 
 
 # ══════════════════════════════════════════
@@ -1121,11 +1268,7 @@ async def check_membership_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if await is_member_of_group(ctx.bot, user.id):
         await query.answer()
-        try:
-            await query.delete_message()
-        except:
-            pass
-        await show_home(update, ctx)
+        await proceed_after_membership(update, ctx)
     else:
         lang = ctx.user_data.get("lang", "am")
         await query.answer(T[lang]["not_joined"], show_alert=True)
@@ -1157,13 +1300,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
     reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
-    if update.callback_query:
-        try:
-            await update.callback_query.delete_message()
-        except:
-            pass
-
-    await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+    await show_screen(update, ctx, [(text, reply_markup)])
 
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1178,6 +1315,15 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ══════════════════════════════════════════
 async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
+    user = update.effective_user
+
+    # ኮንታክት ገና ካላጋሩ (እና አድሚን ካልሆኑ) ማንኛውንም ግብዓት ወደ contact prompt መልስ
+    if ctx.user_data.get("lang") and not is_admin(user.id) and not ctx.user_data.get("_profile_checked"):
+        profile = await db.get_profile(user.id)
+        if not profile:
+            await send_contact_prompt(update, ctx)
+            return
+        ctx.user_data["_profile_checked"] = True
 
     home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
@@ -1200,7 +1346,6 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ctx.user_data["admin_action"] = None
         ctx.user_data["admin_menu"]   = False
         ctx.user_data["selected"]     = []
-        await update.message.reply_text("❌", reply_markup=remove_menu())
         await show_home(update, ctx)
         return
 
@@ -1210,7 +1355,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if any(w in text for w in info_words):
         lang = ctx.user_data.get("lang", "am")
-        await update.message.reply_text(T[lang]["info_text"], parse_mode="Markdown")
+        await show_screen(update, ctx, [(T[lang]["info_text"], None)])
         return
 
     if any(w in text for w in admin_words):
@@ -1305,7 +1450,7 @@ async def show_my_tickets(update, ctx):
         [InlineKeyboardButton(T[lang]["referral_btn"],  callback_data="show_referral")],
         [InlineKeyboardButton(T[lang]["back_home_btn"], callback_data="main_menu")],
     ])
-    await update.message.reply_text(reply_text, parse_mode="Markdown", reply_markup=keyboard)
+    await show_screen(update, ctx, [(reply_text, keyboard)])
 
 # ══════════════════════════════════════════
 # PAYMENT FLOW — numbers arrive from index.html, payment itself is
@@ -1344,10 +1489,18 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     lang     = ctx.user_data.get("lang", "am")
     nums_str = ",".join(map(str, sorted(numbers)))
+
+    # ቀድሞ የተጋራው ኮንታክት (ስም/ስልክ) ካለ payment mini app ላይ ቅድመ-ሙላ ይደረጋል
+    profile    = await db.get_profile(user.id)
+    first_name = profile.get("first_name", "") if profile else ""
+    last_name  = profile.get("last_name", "") if profile else ""
+    phone      = profile.get("phone", "") if profile else ""
+
     payment_url = (
         f"{PAYMENT_APP_URL}"
         f"?numbers={nums_str}&total={total_price}&user_id={user.id}"
-        f"&username={username}&lang={lang}"
+        f"&username={quote(username)}&lang={lang}"
+        f"&first_name={quote(first_name)}&last_name={quote(last_name)}&phone={quote(phone)}"
     )
 
     text = t(ctx, "payment_intro",
@@ -1362,7 +1515,7 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )],
         [InlineKeyboardButton(t(ctx, "pay_back_btn"), callback_data="main_menu")],
     ])
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
+    await show_screen(update, ctx, [(text, keyboard)])
 
 # ══════════════════════════════════════════
 # APPROVE / REJECT
@@ -1434,6 +1587,11 @@ async def approve_reject_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             asyncio.create_task(schedule_group_list_update(ctx.bot, total))
         except Exception as e:
             logger.error(f"Group update schedule error: {e}")
+
+        try:
+            asyncio.create_task(announce_sold_numbers(ctx.bot, numbers))
+        except Exception as e:
+            logger.error(f"Sold announce schedule error: {e}")
 
         taken = await db.count_taken_tickets()
         if taken >= total:
@@ -1513,24 +1671,10 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     ctx.user_data["admin_menu"] = True
 
-    if update.callback_query:
-        try:
-            await update.callback_query.edit_message_text(
-                text, parse_mode="Markdown", reply_markup=inline_kb)
-        except:
-            await update.effective_message.reply_text(
-                text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text(
-            "━━━━━━━━━━━",
-            reply_markup=menu_kb
-        )
-    else:
-        await update.effective_message.reply_text(
-            text, parse_mode="Markdown", reply_markup=inline_kb)
-        await update.effective_message.reply_text(
-            "━━━━━━━━━━━",
-            reply_markup=menu_kb
-        )
+    await show_screen(update, ctx, [
+        (text, inline_kb),
+        ("━━━━━━━━━━━", menu_kb),
+    ])
 
 
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1561,7 +1705,7 @@ async def show_settings_menu(update, ctx):
         [KeyboardButton("⚠️ RESET ⚠️")],
     ], resize_keyboard=True)
 
-    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=settings_kb)
+    await show_screen(update, ctx, [(text, settings_kb)])
 
 # ── Admin panel inline callbacks ──
 async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1962,6 +2106,7 @@ def main():
 
     # Message handlers
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
+    app.add_handler(MessageHandler(filters.CONTACT, contact_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
     logger.info("Bot started!")
