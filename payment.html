@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Premium Payment WebApp</title>
+<title>Premium Payment Portal</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
     --bg: #0b0f1a;
     --card: #161b2c;
-    --accent: #bef264;
+    --accent: #bef264; /* Lime Green from the book cover */
     --accent-dim: rgba(190, 242, 100, 0.1);
     --text: #ffffff;
     --text-dim: #94a3b8;
@@ -20,14 +20,16 @@
     --shimmer: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%);
   }
 
-  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; }
+  
   body {
     margin: 0; background: var(--bg); font-family: 'Inter', sans-serif; color: var(--text);
     display: flex; flex-direction: column; align-items: center; padding: 12px 16px;
   }
+  
   .app { width: 100%; max-width: 420px; }
 
-  /* --- New Segmented Progress Bar --- */
+  /* --- Instagram Style Progress Bar --- */
   .progress-bar { display: flex; gap: 8px; margin-bottom: 24px; padding: 0 4px; }
   .bar-seg { flex: 1; height: 4px; background: #2d364d; border-radius: 10px; transition: 0.4s; }
   .bar-seg.active { background: var(--accent); box-shadow: 0 0 10px var(--accent-dim); }
@@ -38,36 +40,52 @@
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
   .header { margin-bottom: 24px; }
-  .header h1 { font-size: 24px; font-weight: 800; margin: 0; }
+  .header h1 { font-size: 26px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
   .header h1 span { color: var(--accent); }
-  .header p { font-size: 14px; color: var(--text-dim); margin-top: 6px; }
+  .header p { font-size: 14px; color: var(--text-dim); margin-top: 8px; }
 
   /* --- Inputs & Validation --- */
   .field { margin-bottom: 18px; position: relative; }
-  .label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 0.5px; }
-  input {
+  .label { font-size: 11px; font-weight: 700; color: var(--accent); text-transform: uppercase; margin-bottom: 6px; display: block; letter-spacing: 1px; }
+  
+  input, select {
     width: 100%; background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px;
-    padding: 14px; color: white; font-size: 16px; outline: none; transition: 0.2s;
+    padding: 14px; color: white; font-size: 16px; font-family: inherit; transition: 0.2s;
   }
   input.invalid { border-color: var(--error); background: rgba(255, 107, 107, 0.05); }
-  input:focus { border-color: var(--accent); }
+  input:focus { border-color: var(--accent); background: #131c31; }
+  
   .err-hint { color: var(--error); font-size: 11px; font-weight: 600; margin-top: 5px; display: none; }
 
   /* --- Card UI --- */
   .card { background: var(--card); border-radius: var(--radius); padding: 20px; border: 1px solid rgba(255,255,255,0.04); margin-bottom: 16px; }
-  .timer-pill { background: var(--accent-dim); color: var(--accent); padding: 6px 12px; border-radius: 50px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px; }
-
-  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  
+  /* Payment Info Card (Bank Style) */
+  .bank-display { background: #0f172a; padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); margin-top: 10px; }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
   .info-row:last-child { border-bottom: none; }
-  .info-tag { font-size: 13px; color: var(--text-dim); }
-  .info-val { font-size: 15px; font-weight: 600; }
-  .copy { color: var(--accent); cursor: pointer; font-size: 11px; font-weight: 800; text-transform: uppercase; margin-left: 8px; background: var(--accent-dim); padding: 4px 8px; border-radius: 6px; }
+  .info-tag { font-size: 12px; color: var(--text-dim); font-weight: 500; }
+  .info-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  
+  .copy-btn { 
+    color: var(--accent); cursor: pointer; font-size: 10px; font-weight: 900; 
+    text-transform: uppercase; padding: 5px 10px; background: var(--accent-dim); 
+    border-radius: 6px; border: none;
+  }
 
-  /* --- Skeleton --- */
+  /* --- Skeleton Loader --- */
   .skeleton { background: var(--card); border-radius: var(--radius); padding: 24px; position: relative; overflow: hidden; }
   .skeleton::after { content: ""; position: absolute; top: 0; left: -100%; width: 200%; height: 100%; background: var(--shimmer); animation: loading 1.5s infinite; }
   @keyframes loading { to { transform: translateX(100%); } }
   .sk-line { height: 16px; background: #242c42; border-radius: 4px; margin-bottom: 12px; }
+
+  /* --- Upload Area --- */
+  .upload-box {
+    border: 2px dashed rgba(255,255,255,0.1); border-radius: 14px; padding: 30px;
+    text-align: center; cursor: pointer; transition: 0.3s; background: rgba(0,0,0,0.1);
+  }
+  .upload-box:hover { border-color: var(--accent); background: rgba(255,255,255,0.02); }
+  #receiptPreview { width: 100%; max-height: 180px; object-fit: contain; border-radius: 10px; display: none; margin-top: 10px; }
 
   /* --- Buttons --- */
   .btn {
@@ -76,23 +94,23 @@
     cursor: pointer; transition: 0.2s; display: flex; justify-content: center; align-items: center; gap: 10px;
   }
   .btn:active { transform: scale(0.97); }
-  .btn:disabled { opacity: 0.4; }
+  .btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
-  /* --- Success UI --- */
-  .success-page { text-align: center; padding: 40px 10px; }
-  .check-icon { width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim); }
-
+  /* --- Toast --- */
   .toast {
     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
     background: #fff; color: #000; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700; transition: 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); z-index: 1000;
   }
   .toast.show { transform: translateX(-50%) translateY(0); }
+
+  .spinner { width: 22px; height: 22px; border: 3px solid rgba(0,0,0,0.1); border-top-color: #000; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
 <div class="app">
-  <!-- Modern Progress Bar -->
+  <!-- Modern Segmented Progress Bar -->
   <div class="progress-bar">
     <div class="bar-seg active" id="p1"></div>
     <div class="bar-seg" id="p2"></div>
@@ -102,7 +120,7 @@
   <div class="screen active" id="screenInfo">
     <div class="header">
       <h1>Let's <span>Identify</span></h1>
-      <p>Please enter your real name and active phone.</p>
+      <p>Enter your real information to avoid verification delays.</p>
     </div>
 
     <div class="card">
@@ -113,16 +131,16 @@
       </div>
       <div class="field">
         <label class="label">Last Name</label>
-        <input type="text" id="lastName" placeholder="e.g. Girma">
+        <input type="text" id="lastName" placeholder="e.g. Bekele">
         <span class="err-hint" id="errLN">Please enter your last name</span>
       </div>
       <div class="field">
         <label class="label">Phone Number</label>
         <div style="display: flex; gap: 8px;">
-          <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; color: var(--text-dim); font-weight: 600;">+251</div>
+          <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; font-weight: 700; color: var(--text-dim);">+251</div>
           <input type="tel" id="phoneNumber" placeholder="911223344" maxlength="9" style="flex: 1;">
         </div>
-        <span class="err-hint" id="errPH">Enter a valid 9-digit phone number</span>
+        <span class="err-hint" id="errPH">Enter a valid 9-digit mobile number</span>
       </div>
     </div>
     <button class="btn" onclick="validateAndGo()">Continue to Payment</button>
@@ -131,67 +149,69 @@
   <!-- SCREEN 2: PAYMENT -->
   <div class="screen" id="screenPayment">
     <div class="header">
-      <h1>Transfer <span>Proof</span></h1>
-      <p>Transfer the amount and upload your receipt.</p>
+      <h1>Finalize <span>Transfer</span></h1>
+      <p>Pay exactly the amount shown below and upload the proof.</p>
     </div>
 
-    <div class="timer-pill">⏱ <span id="timer">15:00</span> remaining</div>
-
-    <!-- Skeleton Loader -->
-    <div id="paymentSkeleton" class="skeleton">
-      <div class="sk-line" style="width: 50%"></div>
+    <!-- Skeleton Loader (Hidden by default) -->
+    <div id="paymentSkeleton" class="skeleton" style="display: none;">
+      <div class="sk-line" style="width: 60%"></div>
       <div class="sk-line" style="width: 100%"></div>
       <div class="sk-line" style="width: 80%"></div>
-      <div class="sk-line" style="width: 40%"></div>
     </div>
 
-    <!-- Content -->
-    <div id="paymentContent" style="display: none;">
+    <div id="paymentContent">
       <div class="card">
-        <div class="field" style="margin-bottom: 12px;">
+        <div class="field">
           <label class="label">Choose Method</label>
-          <select id="methodSelect" style="width: 100%; background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px; color: white; outline: none;">
+          <select id="methodSelect">
             <option value="CBE">Commercial Bank (CBE)</option>
             <option value="TELEBIRR">Telebirr</option>
           </select>
         </div>
-        <div class="info-row">
-          <span class="info-tag">Account Number</span>
-          <div><span class="info-val" id="accNum">---</span><span class="copy" onclick="copyVal('accNum')">Copy</span></div>
-        </div>
-        <div class="info-row">
-          <span class="info-tag">Account Name</span>
-          <span class="info-val" id="accName">---</span>
-        </div>
-        <div class="info-row" style="border: none; padding-top: 15px;">
-          <span class="info-tag" style="color: var(--accent); font-weight: 800;">Amount to Pay</span>
-          <span class="info-val" id="totalAmt" style="color: var(--accent); font-size: 20px; font-weight: 800;">--- ETB</span>
+
+        <div class="bank-display">
+          <div class="info-row">
+            <span class="info-tag">Account Number</span>
+            <div>
+              <span class="info-val" id="accNum">---</span>
+              <button class="copy-btn" onclick="copyValue('accNum')">Copy</button>
+            </div>
+          </div>
+          <div class="info-row">
+            <span class="info-tag">Owner Name</span>
+            <span class="info-val" id="accName">---</span>
+          </div>
+          <div class="info-row" style="border: none; padding-top: 15px;">
+            <span class="info-tag" style="color: var(--accent); font-weight: 800;">Total Amount</span>
+            <span class="info-val" id="totalAmt" style="color: var(--accent); font-size: 20px; font-weight: 800;">--- ETB</span>
+          </div>
         </div>
       </div>
 
       <div class="card" style="padding: 12px;">
-        <div id="uploadBox" onclick="document.getElementById('fileInput').click()" style="border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 30px; text-align: center; cursor: pointer;">
-          <span id="upIcon" style="font-size: 32px;">📑</span>
-          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">Click to upload screenshot</p>
-          <img id="receiptPreview" style="width: 100%; max-height: 150px; object-fit: contain; border-radius: 8px; display: none;">
+        <div class="upload-box" onclick="document.getElementById('fileInput').click()">
+          <span id="upIcon" style="font-size: 32px;">📸</span>
+          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">Tap to upload receipt</p>
+          <img id="receiptPreview">
           <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
-        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Please upload your receipt proof</span>
+        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Please upload your payment proof</span>
       </div>
 
-      <button class="btn" id="submitBtn" onclick="submitFinal()">Confirm & Send Proof</button>
+      <button class="btn" id="submitBtn" onclick="submitFinal()">Submit Proof of Payment</button>
     </div>
   </div>
 
   <!-- SCREEN 3: SUCCESS -->
   <div class="screen" id="screenSuccess">
-    <div class="success-page">
-      <div class="check-icon">
+    <div style="text-align: center; padding: 60px 10px;">
+      <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim);">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
-      <h1 style="font-size: 32px;">All Set!</h1>
-      <p style="color: var(--text-dim); line-height: 1.6; margin: 15px 0 35px;">We have received your payment proof. You will get a notification once verified.</p>
-      <button class="btn" style="background: #1e293b; color: #fff;" onclick="tg.close()">Return to Bot</button>
+      <h1 style="font-size: 32px; font-weight: 900;">Complete!</h1>
+      <p style="color: var(--text-dim); line-height: 1.6; margin-bottom: 40px;">Your payment proof has been submitted. Check the bot for verification status.</p>
+      <button class="btn" style="background: #1e293b; color: #fff;" onclick="tg.close()">Back to Bot</button>
     </div>
   </div>
 </div>
@@ -204,8 +224,10 @@ if (tg) { tg.ready(); tg.expand(); }
 
 const API_BASE = "https://equb-bot-vt5m.onrender.com";
 const qs = new URLSearchParams(location.search);
+const numbers = qs.get('numbers') || '';
 const total = qs.get('total') || '0';
 const userId = tg?.initDataUnsafe?.user?.id || qs.get('user_id');
+const username = tg?.initDataUnsafe?.user?.username ? '@' + tg.initDataUnsafe.user.username : qs.get('username') || '@user';
 
 let receiptFile = null;
 
@@ -215,6 +237,7 @@ function showToast(m) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
+// --- First Step Validation ---
 function validateAndGo() {
   const fn = document.getElementById('firstName');
   const ln = document.getElementById('lastName');
@@ -235,18 +258,22 @@ function validateAndGo() {
     document.getElementById('screenPayment').classList.add('active');
     document.getElementById('p2').classList.add('active');
     if(tg) tg.HapticFeedback.impactOccurred('medium');
-    startTimer();
     loadConfig();
   } else {
     if(tg) tg.HapticFeedback.notificationOccurred('error');
   }
 }
 
+// --- Loading Bank Config ---
 function loadConfig() {
+  document.getElementById('paymentSkeleton').style.display = 'block';
+  document.getElementById('paymentContent').style.display = 'none';
+
   fetch(`${API_BASE}/payment-config`).then(r => r.json()).then(data => {
     setTimeout(() => {
       document.getElementById('paymentSkeleton').style.display = 'none';
       document.getElementById('paymentContent').style.display = 'block';
+      
       const update = () => {
         const m = document.getElementById('methodSelect').value;
         document.getElementById('accNum').innerText = m === 'CBE' ? data.cbe_account : data.telebirr_account;
@@ -255,26 +282,17 @@ function loadConfig() {
       };
       document.getElementById('methodSelect').onchange = update;
       update();
-    }, 1200);
-  });
+    }, 1000);
+  }).catch(() => showToast("Failed to load details"));
 }
 
-function startTimer() {
-  let time = 15 * 60;
-  const tEl = document.getElementById('timer');
-  const intv = setInterval(() => {
-    let m = Math.floor(time/60), s = time % 60;
-    tEl.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-    if(--time < 0) { clearInterval(intv); tg.close(); }
-  }, 1000);
-}
-
-function copyVal(id) {
+function copyValue(id) {
   navigator.clipboard.writeText(document.getElementById(id).innerText);
   showToast("Copied to clipboard!");
   if(tg) tg.HapticFeedback.impactOccurred('light');
 }
 
+// --- File Handling ---
 document.getElementById('fileInput').onchange = (e) => {
   const file = e.target.files[0];
   if(!file) return;
@@ -290,30 +308,42 @@ document.getElementById('fileInput').onchange = (e) => {
   reader.readAsDataURL(file);
 }
 
+// --- Submit Logic (Corrected) ---
 function submitFinal() {
-  if(!receiptFile) { document.getElementById('errReceipt').style.display='block'; return; }
+  if(!receiptFile) { 
+    document.getElementById('errReceipt').style.display='block'; 
+    if(tg) tg.HapticFeedback.notificationOccurred('error');
+    return; 
+  }
 
-  const b = document.getElementById('submitBtn');
-  b.disabled = true; b.innerText = "Sending Proof...";
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; 
+  btn.innerHTML = `<span class="spinner"></span> Processing...`;
 
   const fd = new FormData();
+  fd.append('numbers', numbers); // ከ URL የተቀበልነው ቁጥር
+  fd.append('user_id', userId);
+  fd.append('username', username);
   fd.append('full_name', document.getElementById('firstName').value + ' ' + document.getElementById('lastName').value);
   fd.append('phone', '+251' + document.getElementById('phoneNumber').value);
-  fd.append('user_id', userId);
-  fd.append('receipt', receiptFile);
   fd.append('method', document.getElementById('methodSelect').value);
+  fd.append('receipt', receiptFile);
 
   fetch(`${API_BASE}/submit-payment`, { method: 'POST', body: fd })
-    .then(r => r.json())
-    .then(data => {
-      if(data.status === 'ok') {
+    .then(async r => {
+      const res = await r.json();
+      if(r.ok && res.status === 'ok') {
         document.getElementById('screenPayment').classList.remove('active');
         document.getElementById('screenSuccess').classList.add('active');
         if(tg) tg.HapticFeedback.notificationOccurred('success');
-      } else { throw new Error(); }
+      } else {
+        throw new Error(res.message || 'Error');
+      }
     }).catch(() => {
-      showToast("Error! Please try again.");
-      b.disabled = false; b.innerText = "Confirm & Send Proof";
+      showToast("Submission failed. Try again.");
+      btn.disabled = false; 
+      btn.innerText = "Submit Proof of Payment";
+      if(tg) tg.HapticFeedback.notificationOccurred('error');
     });
 }
 </script>
