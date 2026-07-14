@@ -42,7 +42,7 @@
   .header { margin-bottom: 24px; }
   .header h1 { font-size: 26px; font-weight: 900; margin: 0; letter-spacing: -0.5px; }
   .header h1 span { color: var(--accent); }
-  .header p { font-size: 14px; color: var(--text-dim); margin-top: 8px; }
+  .header p { font-size: 14px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
 
   /* --- Inputs & Validation --- */
   .field { margin-bottom: 18px; position: relative; }
@@ -103,6 +103,13 @@
   .btn:active { transform: scale(0.97); }
   .btn:disabled { opacity: 0.5; filter: grayscale(1); }
 
+  /* --- Footer Badge --- */
+  .footer-badge {
+    margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    font-size: 11px; font-weight: 600; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;
+  }
+  .footer-badge svg { width: 14px; height: 14px; color: var(--accent); }
+
   /* --- Toast --- */
   .toast {
     position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(100px);
@@ -126,43 +133,48 @@
   <!-- SCREEN 1: INFO -->
   <div class="screen active" id="screenInfo">
     <div class="header">
-      <h1>የእርስዎ <span>መረጃ</span></h1>
-      <p>እባክዎ ትክክለኛ መረጃዎን ያስገቡ።</p>
+      <h1>Your <span>Information</span></h1>
+      <p>Please enter your legal name and mobile number to generate the invoice.</p>
     </div>
 
     <div class="card">
       <div class="field">
-        <label class="label">የመጀመሪያ ስም</label>
-        <input type="text" id="firstName" placeholder="ለምሳሌ፦ ሳሙኤል">
-        <span class="err-hint" id="errFN">እባክዎ ስምዎን ያስገቡ</span>
+        <label class="label">First Name</label>
+        <input type="text" id="firstName" placeholder="e.g. Samuel">
+        <span class="err-hint" id="errFN">Please enter your first name</span>
       </div>
       <div class="field">
-        <label class="label">የአባት ስም</label>
-        <input type="text" id="lastName" placeholder="ለምሳሌ፦ በቀለ">
-        <span class="err-hint" id="errLN">እባክዎ የአባት ስምዎን ያስገቡ</span>
+        <label class="label">Last Name</label>
+        <input type="text" id="lastName" placeholder="e.g. Bekele">
+        <span class="err-hint" id="errLN">Please enter your last name</span>
       </div>
       <div class="field">
-        <label class="label">ስልክ ቁጥር</label>
+        <label class="label">Phone Number</label>
         <div style="display: flex; gap: 8px;">
           <div style="background: #0f172a; border: 1.5px solid rgba(255,255,255,0.08); padding: 14px; border-radius: 12px; font-weight: 700; color: var(--text-dim);">+251</div>
           <input type="tel" id="phoneNumber" placeholder="911223344" maxlength="9" style="flex: 1;">
         </div>
-        <span class="err-hint" id="errPH">ትክክለኛ 9 ዲጂት ስልክ ያስገቡ</span>
+        <span class="err-hint" id="errPH">Enter a valid 9-digit number</span>
       </div>
     </div>
-    <button class="btn" onclick="validateAndGo()">ቀጥል</button>
+    <button class="btn" onclick="validateAndGo()">Continue to Payment <span>→</span></button>
+    
+    <div class="footer-badge">
+      <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm9.496 3.852a1 1 0 00-1.415-1.414L8 9.586 6.753 8.339a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l3.5-3.5z" clip-rule="evenodd"></path></svg>
+      Secure SSL Encrypted
+    </div>
   </div>
 
   <!-- SCREEN 2: PAYMENT -->
   <div class="screen" id="screenPayment">
     <div class="header">
-      <h1>ክፍያ <span>ይፈጽሙ</span></h1>
-      <p>ገንዘቡን ልከው የደረሰኝ ፎቶ እዚህ ይጫኑ።</p>
+      <h1>Complete <span>Transfer</span></h1>
+      <p>Transfer the total amount below and upload the transaction receipt screenshot.</p>
     </div>
 
     <!-- 5 Minute Timer -->
     <div class="timer-pill">
-      <span>⏱</span> <span id="timerText">05:00</span> ቀሪ ጊዜ
+      <span>⏱</span> <span id="timerText">05:00</span> Time Remaining
     </div>
 
     <div id="paymentSkeleton" class="skeleton" style="display: none;">
@@ -174,7 +186,7 @@
     <div id="paymentContent">
       <div class="card">
         <div class="field">
-          <label class="label">የክፍያ መንገድ</label>
+          <label class="label">Payment Method</label>
           <select id="methodSelect">
             <option value="CBE">CBE (Commercial Bank)</option>
             <option value="TELEBIRR">Telebirr</option>
@@ -183,18 +195,18 @@
 
         <div class="bank-display">
           <div class="info-row">
-            <span class="info-tag">የሂሳብ ቁጥር</span>
+            <span class="info-tag">Account Number</span>
             <div>
               <span class="info-val" id="accNum">---</span>
               <button class="copy-btn" onclick="copyValue('accNum')">Copy</button>
             </div>
           </div>
           <div class="info-row">
-            <span class="info-tag">ስም</span>
+            <span class="info-tag">Account Name</span>
             <span class="info-val" id="accName">---</span>
           </div>
           <div class="info-row" style="border: none; padding-top: 15px;">
-            <span class="info-tag" style="color: var(--accent); font-weight: 800;">መከፈል ያለበት</span>
+            <span class="info-tag" style="color: var(--accent); font-weight: 800;">Total Amount</span>
             <span class="info-val" id="totalAmt" style="color: var(--accent); font-size: 20px; font-weight: 800;">--- ETB</span>
           </div>
         </div>
@@ -203,14 +215,14 @@
       <div class="card" style="padding: 12px;">
         <div class="upload-box" onclick="document.getElementById('fileInput').click()">
           <span id="upIcon" style="font-size: 32px;">📸</span>
-          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">ደረሰኝ ለመጫን እዚህ ይንኩ</p>
+          <p id="upText" style="font-size: 13px; color: var(--text-dim); font-weight: 600; margin-top: 10px;">Tap to upload proof of payment</p>
           <img id="receiptPreview">
           <input type="file" id="fileInput" accept="image/*" style="display: none;">
         </div>
-        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">እባክዎ ደረሰኝ ይጫኑ</span>
+        <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Receipt screenshot is required</span>
       </div>
 
-      <button class="btn" id="submitBtn" onclick="submitFinal()">አረጋግጥ</button>
+      <button class="btn" id="submitBtn" onclick="submitFinal()">Verify & Submit</button>
     </div>
   </div>
 
@@ -220,9 +232,9 @@
       <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim);">
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
       </div>
-      <h1 style="font-size: 32px; font-weight: 900;">ተሳክቷል!</h1>
-      <p style="color: var(--text-dim); line-height: 1.6;">መረጃዎ ተልኳል። ሲረጋገጥ በቦቱ በኩል መልእክት ይደርስዎታል።</p>
-      <button class="btn" style="background: #1e293b; color: #fff; margin-top: 30px;" onclick="tg.close()">ተመለስ</button>
+      <h1 style="font-size: 32px; font-weight: 900;">Success!</h1>
+      <p style="color: var(--text-dim); line-height: 1.6;">Your proof has been submitted. We will verify your payment and notify you via the bot shortly.</p>
+      <button class="btn" style="background: #1e293b; color: #fff; margin-top: 30px;" onclick="tg.close()">Return to Bot</button>
     </div>
   </div>
 </div>
@@ -249,7 +261,7 @@ function showToast(m) {
   setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// --- Countdown Logic ---
+// --- Timer Function ---
 function startTimer(duration) {
   let timer = duration, minutes, seconds;
   const display = document.getElementById('timerText');
@@ -257,7 +269,6 @@ function startTimer(duration) {
   timerInterval = setInterval(() => {
     minutes = parseInt(timer / 60, 10);
     seconds = parseInt(timer % 60, 10);
-
     minutes = minutes < 10 ? "0" + minutes : minutes;
     seconds = seconds < 10 ? "0" + seconds : seconds;
 
@@ -265,13 +276,13 @@ function startTimer(duration) {
 
     if (--timer < 0) {
       clearInterval(timerInterval);
-      showToast("የጊዜ ገደብ አልፏል። እባክዎ ደግመው ይሞክሩ።");
+      showToast("Time expired. Please start again.");
       setTimeout(() => { if (tg) tg.close(); }, 2000);
     }
   }, 1000);
 }
 
-// --- Navigation & Validation ---
+// --- Navigation ---
 function validateAndGo() {
   const fn = document.getElementById('firstName');
   const ln = document.getElementById('lastName');
@@ -293,7 +304,7 @@ function validateAndGo() {
     document.getElementById('p2').classList.add('active');
     if(tg) tg.HapticFeedback.impactOccurred('medium');
     
-    startTimer(300); // Start 5 minute timer (300 seconds)
+    startTimer(300); // 5 minutes
     loadConfig();
   } else {
     if(tg) tg.HapticFeedback.notificationOccurred('error');
@@ -323,11 +334,11 @@ function loadConfig() {
 
 function copyValue(id) {
   navigator.clipboard.writeText(document.getElementById(id).innerText);
-  showToast("ኮፒ ተደርጓል!");
+  showToast("Copied to clipboard!");
   if(tg) tg.HapticFeedback.impactOccurred('light');
 }
 
-// --- Upload ---
+// --- Upload Logic ---
 document.getElementById('fileInput').onchange = (e) => {
   const file = e.target.files[0];
   if(!file) return;
@@ -343,7 +354,7 @@ document.getElementById('fileInput').onchange = (e) => {
   reader.readAsDataURL(file);
 }
 
-// --- Final Submit ---
+// --- Submit Logic ---
 function submitFinal() {
   if(!receiptFile) { 
     document.getElementById('errReceipt').style.display='block'; 
@@ -352,7 +363,7 @@ function submitFinal() {
 
   const btn = document.getElementById('submitBtn');
   btn.disabled = true; 
-  btn.innerHTML = `<span class="spinner"></span> በመላክ ላይ...`;
+  btn.innerHTML = `<span class="spinner"></span> Processing...`;
 
   const fd = new FormData();
   fd.append('numbers', numbers);
@@ -367,15 +378,15 @@ function submitFinal() {
     .then(r => r.json())
     .then(data => {
       if(data.status === 'ok') {
-        clearInterval(timerInterval); // Stop timer on success
+        clearInterval(timerInterval);
         document.getElementById('screenPayment').classList.remove('active');
         document.getElementById('screenSuccess').classList.add('active');
         if(tg) tg.HapticFeedback.notificationOccurred('success');
       } else { throw new Error(); }
     }).catch(() => {
-      showToast("ስህተት ተፈጥሯል! እባክዎ ደግመው ይሞክሩ።");
+      showToast("Error! Please try again.");
       btn.disabled = false; 
-      btn.innerText = "አረጋግጥ";
+      btn.innerText = "Verify & Submit";
     });
 }
 </script>
