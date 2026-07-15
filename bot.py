@@ -43,6 +43,20 @@ try:
 except ImportError:
     REQUIRED_GROUP_LINK = f"https://t.me/c/{str(GROUP_ID).replace('-100', '')}"
 
+# ── ቻናል (optional) — config.py ላይ CHANNEL_ID/REQUIRED_CHANNEL_LINK ከሌለ
+# ይህ ፍቸር በራሱ disabled ሆኖ ይቀራል (ምንም ስህተት አይፈጥርም) ──
+try:
+    from config import CHANNEL_ID, REQUIRED_CHANNEL_LINK
+except ImportError:
+    CHANNEL_ID = None
+    REQUIRED_CHANNEL_LINK = None
+
+# ── ሰፖርት ኮንታክት (optional) ──
+try:
+    from config import SUPPORT_CONTACT_USERNAME
+except ImportError:
+    SUPPORT_CONTACT_USERNAME = "TazaBiz"
+
 flask_app = Flask('', static_folder='.', static_url_path='')
 
 @flask_app.route('/')
@@ -493,6 +507,21 @@ T = {
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
 
         "sold_announce": "🎟 ቁጥር *{num}* ተሽጧል!",
+
+        "skip_btn":       "⏭ Skip",
+        "support_btn":    "🆘 ሰፖርት",
+        "support_menu_text": (
+            "🆘 *ሰፖርት*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "እርዳታ ከፈለጉ ከስር ያሉትን ይምረጡ 👇"
+        ),
+        "feedback_btn":   "💬 አስተያየት መስጫ",
+        "support_contact_btn": "📞 ሰፓርት መገናኛ",
+        "feedback_prompt": "💬 *አስተያየትዎን ይፃፉ:*\nመልክትዎ በቀጥታ ለአድሚን ይላካል።",
+        "feedback_sent":   "✅ አስተያየትዎ ተልኳል! እናመሰግናለን።",
+        "visit_group_btn":   "👥 Visit Group",
+        "visit_channel_btn": "📢 Visit Channel",
+        "mainmenu_btn":      "🏠 Main Menu",
     },
 
     "en": {
@@ -702,6 +731,21 @@ T = {
         "num_taken": "⚠️ Number {num} is already taken! Please pick again.",
 
         "sold_announce": "🎟 Number *{num}* sold!",
+
+        "skip_btn":       "⏭ Skip",
+        "support_btn":    "🆘 Support",
+        "support_menu_text": (
+            "🆘 *Support*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "Choose an option below 👇"
+        ),
+        "feedback_btn":   "💬 Send Feedback",
+        "support_contact_btn": "📞 Contact Support",
+        "feedback_prompt": "💬 *Type your feedback:*\nYour message will be sent directly to the admin.",
+        "feedback_sent":   "✅ Your feedback has been sent! Thank you.",
+        "visit_group_btn":   "👥 Visit Group",
+        "visit_channel_btn": "📢 Visit Channel",
+        "mainmenu_btn":      "🏠 Main Menu",
     },
 
     "or": {
@@ -910,6 +954,21 @@ T = {
         "num_taken": "⚠️ Lakkoofsi {num} fudhataame! Ammas filadhu.",
 
         "sold_announce": "🎟 Lakkoofsi *{num}* gurgurame!",
+
+        "skip_btn":       "⏭ Skip",
+        "support_btn":    "🆘 Support",
+        "support_menu_text": (
+            "🆘 *Support*\n"
+            "━━━━━━━━━━━━━━━\n"
+            "Filannoo gadii filadhu 👇"
+        ),
+        "feedback_btn":   "💬 Yaada Ergi",
+        "support_contact_btn": "📞 Kontaakti Sapoortii",
+        "feedback_prompt": "💬 *Yaada kee barreessi:*\nErgaan kee kallattiin admin bira gaha.",
+        "feedback_sent":   "✅ Yaadni kee ergameera! Galatoomi.",
+        "visit_group_btn":   "👥 Visit Group",
+        "visit_channel_btn": "📢 Visit Channel",
+        "mainmenu_btn":      "🏠 Main Menu",
     }
 }
 
@@ -959,8 +1018,30 @@ async def is_member_of_group(bot, user_id: int) -> bool:
         logger.warning(f"Membership check error for {user_id}: {e}")
         return True
 
+async def is_member_of_channel(bot, user_id: int) -> bool:
+    """ተጠቃሚ ቻናል ውስጥ አለ ወይ አረጋግጥ (ቻናል ካልተዋቀረ True ይመልሳል)"""
+    if not CHANNEL_ID:
+        return True
+    try:
+        from telegram.constants import ChatMemberStatus
+        member = await bot.get_chat_member(chat_id=CHANNEL_ID, user_id=user_id)
+        return member.status in (
+            ChatMemberStatus.MEMBER,
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER,
+        )
+    except Exception as e:
+        logger.warning(f"Channel membership check error for {user_id}: {e}")
+        return True
+
+async def is_fully_joined(bot, user_id: int) -> bool:
+    """ግሩፕ እና (ካለ) ቻናል ሁለቱንም አረጋግጥ"""
+    group_ok   = await is_member_of_group(bot, user_id)
+    channel_ok = await is_member_of_channel(bot, user_id)
+    return group_ok and channel_ok
+
 async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
+    """ግሩፕ (እና ካለ ቻናል) ቀላቅሉ ማሳወቂያ ይላካል"""
     lang = ctx.user_data.get("lang", "am")
 
     await update.effective_message.reply_text(
@@ -968,10 +1049,12 @@ async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         reply_markup=ReplyKeyboardRemove()
     )
 
-    keyboard = InlineKeyboardMarkup([
-        [InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)],
-        [InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")],
-    ])
+    keyboard_rows = [[InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)]]
+    if REQUIRED_CHANNEL_LINK:
+        keyboard_rows.append([InlineKeyboardButton(T[lang]["visit_channel_btn"], url=REQUIRED_CHANNEL_LINK)])
+    keyboard_rows.append([InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")])
+    keyboard = InlineKeyboardMarkup(keyboard_rows)
+
     await update.effective_message.reply_text(
         T[lang]["join_required"],
         parse_mode="Markdown",
@@ -982,7 +1065,8 @@ async def send_contact_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ ከተቀላቀሉ በኋላ ኮንታክት እንዲያጋሩ ይጠየቃል"""
     lang = ctx.user_data.get("lang", "am")
     keyboard = ReplyKeyboardMarkup(
-        [[KeyboardButton(T[lang]["contact_btn"], request_contact=True)]],
+        [[KeyboardButton(T[lang]["contact_btn"], request_contact=True)],
+         [KeyboardButton(T[lang]["skip_btn"])]],
         resize_keyboard=True
     )
     await update.effective_message.reply_text(
@@ -1218,7 +1302,7 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     if not is_admin(user.id):
-        if not await is_member_of_group(ctx.bot, user.id):
+        if not await is_fully_joined(ctx.bot, user.id):
             await send_join_prompt(update, ctx)
             return
 
@@ -1246,7 +1330,7 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     user = update.effective_user
     if not is_admin(user.id):
-        if not await is_member_of_group(ctx.bot, user.id):
+        if not await is_fully_joined(ctx.bot, user.id):
             await send_join_prompt(update, ctx)
             return
 
@@ -1260,7 +1344,7 @@ async def check_membership_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     user  = update.effective_user
 
-    if await is_member_of_group(ctx.bot, user.id):
+    if await is_fully_joined(ctx.bot, user.id):
         await query.answer()
         try:
             await query.delete_message()
@@ -1292,7 +1376,7 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     rows = [
         [KeyboardButton(t(ctx, "pick_btn"), web_app=WebAppInfo(url=lang_url))],
         [KeyboardButton(t(ctx, "my_tickets_btn"))],
-        [KeyboardButton(t(ctx, "info_btn"))],
+        [KeyboardButton(t(ctx, "info_btn")), KeyboardButton(t(ctx, "support_btn"))],
     ]
     if is_admin(user.id):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
@@ -1303,6 +1387,16 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             await update.callback_query.delete_message()
         except:
             pass
+
+    home_image = await db.get_setting("home_image")
+    if home_image:
+        try:
+            await update.effective_message.reply_photo(
+                photo=home_image, caption=text, parse_mode="Markdown", reply_markup=reply_markup
+            )
+            return
+        except Exception as e:
+            logger.warning(f"Home image send failed, falling back to text: {e}")
 
     await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
@@ -1315,11 +1409,73 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await show_home(update, ctx)
 
 # ══════════════════════════════════════════
+# SUPPORT
+# ══════════════════════════════════════════
+async def show_support_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    lang = ctx.user_data.get("lang", "am")
+    keyboard = [
+        [InlineKeyboardButton(T[lang]["feedback_btn"], callback_data="support_feedback")],
+    ]
+    if SUPPORT_CONTACT_USERNAME:
+        support_url = f"https://t.me/{SUPPORT_CONTACT_USERNAME.lstrip('@')}"
+        keyboard.append([InlineKeyboardButton(T[lang]["support_contact_btn"], url=support_url)])
+    keyboard.append([InlineKeyboardButton(T[lang]["back_home_btn"], callback_data="main_menu")])
+    await update.message.reply_text(
+        T[lang]["support_menu_text"],
+        parse_mode="Markdown",
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
+
+async def support_feedback_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    lang = ctx.user_data.get("lang", "am")
+    ctx.user_data["awaiting_feedback"] = True
+    try:
+        await query.edit_message_text(T[lang]["feedback_prompt"], parse_mode="Markdown")
+    except:
+        await update.effective_message.reply_text(T[lang]["feedback_prompt"], parse_mode="Markdown")
+
+async def handle_feedback_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    lang = ctx.user_data.get("lang", "am")
+    text = update.message.text.strip()
+    ctx.user_data["awaiting_feedback"] = False
+
+    uname = f"@{user.username}" if user.username else (user.full_name or "—")
+    fb_caption = (
+        f"💬 <b>Feedback</b>\n"
+        f"{'─'*20}\n"
+        f"👤 {uname}\n"
+        f"🆔 <code>{user.id}</code>\n"
+        f"{'─'*20}\n"
+        f"{text}"
+    )
+    for admin_id in ADMIN_IDS:
+        try:
+            await ctx.bot.send_message(chat_id=admin_id, text=fb_caption, parse_mode="HTML")
+        except Exception as e:
+            logger.error(f"Feedback forward error: {e}")
+
+    await update.message.reply_text(T[lang]["feedback_sent"])
+
+# ══════════════════════════════════════════
 # MESSAGE ROUTER
 # ══════════════════════════════════════════
 async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     text = update.message.text or ""
     user = update.effective_user
+
+    # ተጠቃሚ አስተያየት (feedback) እየፃፈ ከሆነ ወደ አድሚን ብቻ ላክ
+    if ctx.user_data.get("awaiting_feedback"):
+        await handle_feedback_text(update, ctx)
+        return
+
+    skip_words = ["⏭ Skip"]
+    if any(w in text for w in skip_words):
+        ctx.user_data["_profile_checked"] = True
+        await show_home(update, ctx)
+        return
 
     # ኮንታክት ገና ካላጋሩ (እና አድሚን ካልሆኑ) ማንኛውንም ግብዓት ወደ contact prompt መልስ
     if ctx.user_data.get("lang") and not is_admin(user.id) and not ctx.user_data.get("_profile_checked"):
@@ -1329,13 +1485,14 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             return
         ctx.user_data["_profile_checked"] = True
 
-    home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
+    home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "🏠 Main Menu"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
     tickets_words = ["✴️ የኔ ትኬቶች ✴️", "✴️ My Tickets ✴️", "✴️ Tikeetii Koo ✴️"]
     admin_words   = ["🔰 ADMIN 🔰"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
     pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
     back_words    = ["◀️ ተመለስ", "◀️ Back", "◀️ Deebi'i"]
+    support_words = ["🆘 ሰፖርት", "🆘 Support"]
 
     if any(w in text for w in home_words):
         ctx.user_data["admin_action"] = None
@@ -1358,9 +1515,26 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await show_my_tickets(update, ctx)
         return
 
+    if any(w in text for w in support_words):
+        await show_support_menu(update, ctx)
+        return
+
     if any(w in text for w in info_words):
         lang = ctx.user_data.get("lang", "am")
-        await update.message.reply_text(T[lang]["info_text"], parse_mode="Markdown")
+        kb_rows = []
+        row = []
+        row.append(InlineKeyboardButton(T[lang]["visit_group_btn"], url=REQUIRED_GROUP_LINK))
+        if REQUIRED_CHANNEL_LINK:
+            row.append(InlineKeyboardButton(T[lang]["visit_channel_btn"], url=REQUIRED_CHANNEL_LINK))
+        kb_rows.append(row)
+        kb_rows.append([
+            InlineKeyboardButton(T[lang]["back_btn"], callback_data="main_menu"),
+            InlineKeyboardButton(T[lang]["mainmenu_btn"], callback_data="main_menu"),
+        ])
+        await update.message.reply_text(
+            T[lang]["info_text"], parse_mode="Markdown",
+            reply_markup=InlineKeyboardMarkup(kb_rows)
+        )
         return
 
     if any(w in text for w in admin_words):
@@ -1405,6 +1579,14 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         if "PRIZE 3️⃣" in text:
             ctx.user_data["admin_action"] = "set_prize_3"
             await update.message.reply_text("🥉 3ኛ ሽልማት ፃፍ:")
+            return
+        if "CHANGE IMAGE 🖼" in text:
+            ctx.user_data["admin_action"] = "set_home_image"
+            await update.message.reply_text("🖼 አዲስ ምስል (ፎቶ) ላክ፦ Home ገጽ ላይ ይታያል።")
+            return
+        if "REMOVE IMAGE 🗑" in text:
+            await db.set_setting("home_image", "")
+            await update.message.reply_text("✅ ምስል ተሰርዟል።")
             return
         if "⚠️ RESET ⚠️" in text:
             await update.message.reply_text(
@@ -1677,6 +1859,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     menu_kb = ReplyKeyboardMarkup([
         [KeyboardButton("📤 SEND TO GROUP 📤")],
         [KeyboardButton("📢 BROADCAST 📢"), KeyboardButton("⚙️ SETTING ⚙️")],
+        [KeyboardButton("🏠 Main Menu")],
     ], resize_keyboard=True)
 
     ctx.user_data["admin_menu"] = True
@@ -1715,20 +1898,24 @@ async def show_settings_menu(update, ctx):
     prize1 = await db.get_setting("prize_1")
     prize2 = await db.get_setting("prize_2")
     prize3 = await db.get_setting("prize_3")
+    home_image = await db.get_setting("home_image")
+    image_status = "✅ ተቀናብሯል" if home_image else "❌ የለም"
 
     text = (
         f"⚙️ *SETTING* ⚙️\n"
         f"━━━━━━━━━━━━━━━\n"
         f"🔢 ቁጥሮች: {total}\n"
         f"💰 ዋጋ: {price} ETB\n"
-        f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}"
+        f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}\n"
+        f"🖼 Home ምስል: {image_status}"
     )
-    # ◀️ ተመለስ ወደ admin panel የሚመልስ ቁልፍ (አድሚን ከዚህ ስክሪን ለመውጣት /start መተየብ እንዳይኖርበት)
+    # ◀️ ተመለስ / 🏠 Main Menu ከስር ተቀምጠዋል (አድሚን ከዚህ ስክሪን ለመውጣት /start መተየብ እንዳይኖርበት)
     settings_kb = ReplyKeyboardMarkup([
-        [KeyboardButton("◀️ ተመለስ")],
         [KeyboardButton("CHANGE NUMBER 🔢"), KeyboardButton("CHANGE PRICE 💰")],
         [KeyboardButton("PRIZE 1️⃣"), KeyboardButton("PRIZE 2️⃣"), KeyboardButton("PRIZE 3️⃣")],
+        [KeyboardButton("CHANGE IMAGE 🖼"), KeyboardButton("REMOVE IMAGE 🗑")],
         [KeyboardButton("⚠️ RESET ⚠️")],
+        [KeyboardButton("◀️ ተመለስ"), KeyboardButton("🏠 Main Menu")],
     ], resize_keyboard=True)
 
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=settings_kb)
@@ -2056,6 +2243,20 @@ async def handle_text_input(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )
 
 # ══════════════════════════════════════════
+# ADMIN PHOTO HANDLER (home banner image upload)
+# ══════════════════════════════════════════
+async def admin_photo_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    if not is_admin(user.id):
+        return
+    if ctx.user_data.get("admin_action") != "set_home_image":
+        return
+    photo = update.message.photo[-1]
+    await db.set_setting("home_image", photo.file_id)
+    ctx.user_data["admin_action"] = None
+    await update.message.reply_text("✅ Home ምስል ተቀናብሯል!")
+
+# ══════════════════════════════════════════
 # MY TICKETS (inline callback)
 # ══════════════════════════════════════════
 async def my_tickets_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -2121,6 +2322,7 @@ def main():
     app.add_handler(CallbackQueryHandler(referral_cb,          pattern="^show_referral$"))
     app.add_handler(CallbackQueryHandler(approve_reject_cb,    pattern="^(approve|reject)_"))
     app.add_handler(CallbackQueryHandler(check_membership_cb,  pattern="^check_membership$"))
+    app.add_handler(CallbackQueryHandler(support_feedback_cb,  pattern="^support_feedback$"))
 
     app.add_handler(CallbackQueryHandler(admin_panel_cb,       pattern="^admin_panel$"))
     app.add_handler(CallbackQueryHandler(admin_pending_cb,     pattern="^admin_pending$"))
@@ -2133,6 +2335,7 @@ def main():
     # Message handlers
     app.add_handler(MessageHandler(filters.StatusUpdate.WEB_APP_DATA, web_app_data_handler))
     app.add_handler(MessageHandler(filters.CONTACT, contact_handler))
+    app.add_handler(MessageHandler(filters.PHOTO, admin_photo_handler))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, any_message_home))
 
     logger.info("Bot started!")
