@@ -279,7 +279,7 @@ from admin_auth import register_admin_verify_route
 register_admin_verify_route(flask_app)
 
 # ══════════════════════════════════════════
-# TRANSLATIONS
+# TRANSLATIONS  (ኢሞጂዎች በሦስቱም ቋንቋዎች ወጥ እንዲሆኑ ተስተካክለዋል)
 # ══════════════════════════════════════════
 T = {
     "am": {
@@ -426,7 +426,7 @@ T = {
             "ወይም ድጋሚ ይሞክሩ።"
         ),
 
-        "my_tickets_hdr": "🌟 *የኔ ትኬቶች* 🌟",
+        "my_tickets_hdr": "✴️ *የኔ ትኬቶች* ✴️",
         "my_tickets_body": (
             "ዉድ {username}\n"
             "━━━━━━━━━━━━━━━\n"
@@ -455,7 +455,7 @@ T = {
             "⏳ አድሚን እስኪያረጋግጥ ይጠብቁ።"
         ),
         "no_tickets": (
-            "🌟 *የኔ ትኬቶች* 🌟\n"
+            "✴️ *የኔ ትኬቶች* ✴️\n"
             "━━━━━━━━━━━━━━━\n"
             "ምንም ትኬት የለዎትም።"
         ),
@@ -496,10 +496,10 @@ T = {
     },
 
     "en": {
-        "pick_btn":       "➕ Pick Numbers ➕",
-        "my_tickets_btn": "🌟 My Tickets 🌟",
+        "pick_btn":       "❇️ Pick Numbers ❇️",
+        "my_tickets_btn": "✴️ My Tickets ✴️",
         "info_btn":       "ℹ️ How to Use ℹ️",
-        "admin_btn":      "🎴 ADMIN 🎴",
+        "admin_btn":      "🔰 ADMIN 🔰",
         "admin_cards_btn":"📋 CARDS",
         "home_btn":       "🏠 Home",
         "cancel_btn":     "❌ Cancel",
@@ -538,7 +538,7 @@ T = {
             "━━━━━━━━━━━━━━━\n"
             "To pick your ticket number\n"
             "press the button below 👇\n"
-            "\" ➕ Pick Numbers ➕ \""
+            "\" ❇️ Pick Numbers ❇️ \""
         ),
 
         "payment_intro": (
@@ -638,7 +638,7 @@ T = {
             "or try again."
         ),
 
-        "my_tickets_hdr": "🌟 *My Tickets* 🌟",
+        "my_tickets_hdr": "✴️ *My Tickets* ✴️",
         "my_tickets_body": (
             "Dear {username}\n"
             "━━━━━━━━━━━━━━━\n"
@@ -667,7 +667,7 @@ T = {
             "⏳ Waiting for admin approval."
         ),
         "no_tickets": (
-            "🌟 *My Tickets* 🌟\n"
+            "✴️ *My Tickets* ✴️\n"
             "━━━━━━━━━━━━━━━\n"
             "You have no tickets yet."
         ),
@@ -690,7 +690,7 @@ T = {
         "info_text": (
             "ℹ️ *How to Use*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ *➕ Pick Numbers* — Select from WebApp\n"
+            "1️⃣ *❇️ Pick Numbers* — Select from WebApp\n"
             "2️⃣ *Payment* — Choose CBE or Telebirr\n"
             "3️⃣ *Send Receipt* — Send screenshot\n"
             "4️⃣ *Name & Phone* — Fill your info\n"
@@ -705,10 +705,10 @@ T = {
     },
 
     "or": {
-        "pick_btn":       "➕ Lakkoofsa Filadhu ➕",
-        "my_tickets_btn": "🌟 Tikeetii Koo 🌟",
+        "pick_btn":       "❇️ Lakkoofsa Filadhu ❇️",
+        "my_tickets_btn": "✴️ Tikeetii Koo ✴️",
         "info_btn":       "ℹ️ Akkamitti fayyadamuu ℹ️",
-        "admin_btn":      "🎴 ADMIN 🎴",
+        "admin_btn":      "🔰 ADMIN 🔰",
         "admin_cards_btn":"📋 CARDS",
         "home_btn":       "🏠 Fuula Jalqabaa",
         "cancel_btn":     "❌ Haquu",
@@ -746,7 +746,7 @@ T = {
             "Gatii tikeetii tokkoo = {price}\n"
             "━━━━━━━━━━━━━━━\n"
             "Lakkoofsa tikeetii filachuuf\n"
-            "cuqaasi 👇 \" ➕ Lakkoofsa Filadhu ➕ \""
+            "cuqaasi 👇 \" ❇️ Lakkoofsa Filadhu ❇️ \""
         ),
 
         "payment_intro": (
@@ -763,7 +763,7 @@ T = {
         ),
         "pay_cbe_btn":      "🏦 CBE",
         "pay_telebirr_btn": "📱 TELE BIRR",
-        "pay_back_btn":     "🔙 Deebi'i",
+        "pay_back_btn":     "◀️ Deebi'i",
 
         "cbe_msg": (
             "🏦 *CBE*\n"
@@ -898,7 +898,7 @@ T = {
         "info_text": (
             "ℹ️ *Akkamitti itti fayyadamuu*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ *➕ Lakkoofsa Filadhu* — WebApp irraa filadhu\n"
+            "1️⃣ *❇️ Lakkoofsa Filadhu* — WebApp irraa filadhu\n"
             "2️⃣ *Kaffaltii* — CBE ykn Telebirr filadhu\n"
             "3️⃣ *Beeksisa Ergi* — Screenshot ergi\n"
             "4️⃣ *Maqaa fi Bilbila* — Odeeffannoo guuti\n"
@@ -933,33 +933,14 @@ def mask_phone(phone):
         return phone
     return phone[:-1] + "#"
 
+def get_cancel_keyboard(ctx):
+    return ReplyKeyboardMarkup(
+        [[KeyboardButton(t(ctx, "home_btn")), KeyboardButton(t(ctx, "cancel_btn"))]],
+        resize_keyboard=True
+    )
+
 def remove_menu():
     return ReplyKeyboardRemove()
-
-# ══════════════════════════════════════════
-# SINGLE-SCREEN NAVIGATION
-# ‌አዲስ 'ገጽ' (home/admin/payment/…) ሲላክ ያለፈውን ገጽ አጥፍቶ ብቻ ነው የሚተካው።
-# reply_markup (ReplyKeyboardMarkup) በዚያው chat ውስጥ እንደተጣበቀ ስለሚቆይ
-# (Telegram property እንጂ የመልክቱ ንብረት ስላልሆነ) መልክቱን ብናጠፋም አይጠፋም።
-# ══════════════════════════════════════════
-async def show_screen(update: Update, ctx: ContextTypes.DEFAULT_TYPE, parts, parse_mode="Markdown"):
-    """parts: [(text, reply_markup), ...] በቅደም ተከተል ይላካሉ።"""
-    chat_id = update.effective_chat.id
-    old_ids = ctx.user_data.get("screen_msg_ids", [])
-    for mid in old_ids:
-        try:
-            await ctx.bot.delete_message(chat_id=chat_id, message_id=mid)
-        except Exception:
-            pass
-
-    new_ids = []
-    last_msg = None
-    for text, markup in parts:
-        last_msg = await ctx.bot.send_message(chat_id=chat_id, text=text, parse_mode=parse_mode, reply_markup=markup)
-        new_ids.append(last_msg.message_id)
-
-    ctx.user_data["screen_msg_ids"] = new_ids
-    return last_msg
 
 # ══════════════════════════════════════════
 # MEMBERSHIP CHECK
@@ -981,20 +962,34 @@ async def is_member_of_group(bot, user_id: int) -> bool:
 async def send_join_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ ቀላቅሉ ማሳወቂያ ይላካል"""
     lang = ctx.user_data.get("lang", "am")
+
+    await update.effective_message.reply_text(
+        "⏳",
+        reply_markup=ReplyKeyboardRemove()
+    )
+
     keyboard = InlineKeyboardMarkup([
         [InlineKeyboardButton(T[lang]["join_btn"], url=REQUIRED_GROUP_LINK)],
         [InlineKeyboardButton(T[lang]["joined_btn"], callback_data="check_membership")],
     ])
-    await show_screen(update, ctx, [(T[lang]["join_required"], keyboard)])
+    await update.effective_message.reply_text(
+        T[lang]["join_required"],
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
 
 async def send_contact_prompt(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    """ኮንታክት አጋራ ማሳወቂያ ይላካል — ግሩፕ ከተቀላቀሉ በኋላ የሚጠየቅ"""
+    """ግሩፕ ከተቀላቀሉ በኋላ ኮንታክት እንዲያጋሩ ይጠየቃል"""
     lang = ctx.user_data.get("lang", "am")
     keyboard = ReplyKeyboardMarkup(
         [[KeyboardButton(T[lang]["contact_btn"], request_contact=True)]],
         resize_keyboard=True
     )
-    await show_screen(update, ctx, [(T[lang]["contact_required"], keyboard)])
+    await update.effective_message.reply_text(
+        T[lang]["contact_required"],
+        parse_mode="Markdown",
+        reply_markup=keyboard
+    )
 
 async def proceed_after_membership(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     """ግሩፕ አባልነት ከተረጋገጠ በኋላ፦ አድሚን ከሆነ ወይም ቀድሞ ኮንታክት ካጋራ ወደ home፣
@@ -1115,8 +1110,9 @@ async def schedule_group_list_update(bot, total, min_interval=12):
 
 
 # ══════════════════════════════════════════
-# GROUP "SOLD" ANNOUNCEMENTS
-# ለእያንዳንዱ አዲስ የተሸጠ ቁጥር 1 መልክት ብቻ ግሩፕ ላይ ይላካል፣ 10 ሲደርስ ተጠራርጎ ከ0 ይጀምራል።
+# GROUP "SOLD" ANNOUNCEMENTS — sliding window of max 10
+# ለእያንዳንዱ አዲስ የተሸጠ ቁጥር 1 መልክት ብቻ ግሩፕ ላይ ይላካል (duplicate guard)።
+# ከ10 ካለፈ፣ ሁሉንም ከማጥፋት ይልቅ በጣም አሮጌውን 1 ብቻ አጥፍቶ አዲሱን ይተካል (ቋሚ sliding window)።
 # ══════════════════════════════════════════
 async def announce_sold_numbers(bot, numbers):
     for num in numbers:
@@ -1129,21 +1125,18 @@ async def announce_sold_numbers(bot, numbers):
                 parse_mode="Markdown"
             )
             await db.add_sold_announcement(num, msg.message_id, GROUP_ID)
+
+            all_announcements = await db.get_sold_announcements()
+            if len(all_announcements) > 10:
+                oldest_num, oldest_mid, oldest_cid, _ = all_announcements[0]
+                try:
+                    await bot.delete_message(chat_id=oldest_cid, message_id=oldest_mid)
+                except Exception as e:
+                    logger.warning(f"Delete oldest sold announce error: {e}")
+                await db.remove_sold_announcement(oldest_num)
         except Exception as e:
             logger.error(f"Sold announce error num={num}: {e}")
         await asyncio.sleep(0.3)
-
-    try:
-        all_announcements = await db.get_sold_announcements()
-        if len(all_announcements) >= 20:
-            for _, mid, cid, _ in all_announcements:
-                try:
-                    await bot.delete_message(chat_id=cid, message_id=mid)
-                except Exception as e:
-                    logger.warning(f"Delete sold announce msg error: {e}")
-            await db.clear_sold_announcements()
-    except Exception as e:
-        logger.error(f"Sold announce batch-clear error: {e}")
 
 # ══════════════════════════════════════════
 # START / LANGUAGE
@@ -1218,10 +1211,10 @@ async def start(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
             [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
         ]
-        await show_screen(update, ctx, [(
+        await update.message.reply_text(
             "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
-            InlineKeyboardMarkup(keyboard)
-        )])
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
         return
 
     if not is_admin(user.id):
@@ -1238,10 +1231,10 @@ async def language_cmd(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🇬🇧 English",      callback_data="lang_en")],
         [InlineKeyboardButton("🇪🇹 Afaan Oromoo", callback_data="lang_or")],
     ]
-    await show_screen(update, ctx, [(
+    await update.message.reply_text(
         "🌐 ቋንቋ ይምረጡ / Choose Language / Afaan filachuu:",
-        InlineKeyboardMarkup(keyboard)
-    )])
+        reply_markup=InlineKeyboardMarkup(keyboard)
+    )
 
 
 async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1249,6 +1242,7 @@ async def lang_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     lang = query.data.split("_")[1]
     ctx.user_data["lang"] = lang
+    await query.delete_message()
 
     user = update.effective_user
     if not is_admin(user.id):
@@ -1268,6 +1262,10 @@ async def check_membership_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if await is_member_of_group(ctx.bot, user.id):
         await query.answer()
+        try:
+            await query.delete_message()
+        except:
+            pass
         await proceed_after_membership(update, ctx)
     else:
         lang = ctx.user_data.get("lang", "am")
@@ -1300,7 +1298,13 @@ async def show_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         rows.append([KeyboardButton(t(ctx, "admin_btn"))])
     reply_markup = ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
-    await show_screen(update, ctx, [(text, reply_markup)])
+    if update.callback_query:
+        try:
+            await update.callback_query.delete_message()
+        except:
+            pass
+
+    await update.effective_message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
 
 
 async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1327,11 +1331,11 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
-    tickets_words = ["🌟 የኔ ትኬቶች 🌟", "🌟 My Tickets 🌟", "🌟 Tikeetii Koo 🌟",
-                     "✴️ የኔ ትኬቶች ✴️"]
-    admin_words   = ["🔰 ADMIN 🔰", "🎴 ADMIN 🎴"]
+    tickets_words = ["✴️ የኔ ትኬቶች ✴️", "✴️ My Tickets ✴️", "✴️ Tikeetii Koo ✴️"]
+    admin_words   = ["🔰 ADMIN 🔰"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
-    pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "➕ Pick Numbers ➕", "➕ Lakkoofsa Filadhu ➕"]
+    pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
+    back_words    = ["◀️ ተመለስ", "◀️ Back", "◀️ Deebi'i"]
 
     if any(w in text for w in home_words):
         ctx.user_data["admin_action"] = None
@@ -1346,6 +1350,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         ctx.user_data["admin_action"] = None
         ctx.user_data["admin_menu"]   = False
         ctx.user_data["selected"]     = []
+        await update.message.reply_text("❌", reply_markup=remove_menu())
         await show_home(update, ctx)
         return
 
@@ -1355,7 +1360,7 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     if any(w in text for w in info_words):
         lang = ctx.user_data.get("lang", "am")
-        await show_screen(update, ctx, [(T[lang]["info_text"], None)])
+        await update.message.reply_text(T[lang]["info_text"], parse_mode="Markdown")
         return
 
     if any(w in text for w in admin_words):
@@ -1364,6 +1369,11 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         return
 
     if any(w in text for w in pick_words):
+        return
+
+    # ── አድሚን ◀️ ተመለስ (ወደ admin panel፣ Home አይደለም) ──
+    if any(w in text for w in back_words) and is_admin(update.effective_user.id):
+        await show_admin_panel(update, ctx)
         return
 
     if is_admin(update.effective_user.id):
@@ -1450,7 +1460,7 @@ async def show_my_tickets(update, ctx):
         [InlineKeyboardButton(T[lang]["referral_btn"],  callback_data="show_referral")],
         [InlineKeyboardButton(T[lang]["back_home_btn"], callback_data="main_menu")],
     ])
-    await show_screen(update, ctx, [(reply_text, keyboard)])
+    await update.message.reply_text(reply_text, parse_mode="Markdown", reply_markup=keyboard)
 
 # ══════════════════════════════════════════
 # PAYMENT FLOW — numbers arrive from index.html, payment itself is
@@ -1515,7 +1525,7 @@ async def web_app_data_handler(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         )],
         [InlineKeyboardButton(t(ctx, "pay_back_btn"), callback_data="main_menu")],
     ])
-    await show_screen(update, ctx, [(text, keyboard)])
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
 
 # ══════════════════════════════════════════
 # APPROVE / REJECT
@@ -1671,10 +1681,24 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
     ctx.user_data["admin_menu"] = True
 
-    await show_screen(update, ctx, [
-        (text, inline_kb),
-        ("━━━━━━━━━━━", menu_kb),
-    ])
+    if update.callback_query:
+        try:
+            await update.callback_query.edit_message_text(
+                text, parse_mode="Markdown", reply_markup=inline_kb)
+        except:
+            await update.effective_message.reply_text(
+                text, parse_mode="Markdown", reply_markup=inline_kb)
+        await update.effective_message.reply_text(
+            "━━━━━━━━━━━",
+            reply_markup=menu_kb
+        )
+    else:
+        await update.effective_message.reply_text(
+            text, parse_mode="Markdown", reply_markup=inline_kb)
+        await update.effective_message.reply_text(
+            "━━━━━━━━━━━",
+            reply_markup=menu_kb
+        )
 
 
 async def admin_panel_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -1699,13 +1723,15 @@ async def show_settings_menu(update, ctx):
         f"💰 ዋጋ: {price} ETB\n"
         f"🥇 {prize1}\n🥈 {prize2}\n🥉 {prize3}"
     )
+    # ◀️ ተመለስ ወደ admin panel የሚመልስ ቁልፍ (አድሚን ከዚህ ስክሪን ለመውጣት /start መተየብ እንዳይኖርበት)
     settings_kb = ReplyKeyboardMarkup([
+        [KeyboardButton("◀️ ተመለስ")],
         [KeyboardButton("CHANGE NUMBER 🔢"), KeyboardButton("CHANGE PRICE 💰")],
         [KeyboardButton("PRIZE 1️⃣"), KeyboardButton("PRIZE 2️⃣"), KeyboardButton("PRIZE 3️⃣")],
         [KeyboardButton("⚠️ RESET ⚠️")],
     ], resize_keyboard=True)
 
-    await show_screen(update, ctx, [(text, settings_kb)])
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=settings_kb)
 
 # ── Admin panel inline callbacks ──
 async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
