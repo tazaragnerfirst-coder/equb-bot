@@ -114,6 +114,22 @@ async def count_taken_tickets():
     docs = await _run(lambda: db.collection("tickets").where("status", "==", "taken").stream())
     return sum(1 for _ in docs)
 
+async def count_tickets_today():
+    today_str = date.today().isoformat()
+    def _sync():
+        docs = db.collection("tickets").where("status", "==", "taken").stream()
+        count = 0
+        for doc in docs:
+            created = doc.to_dict().get("created_at", "")
+            if created.startswith(today_str):
+                count += 1
+        return count
+    return await _run(_sync)
+
+async def count_pending_tickets():
+    docs = await _run(lambda: db.collection("tickets").where("status", "==", "reserved").stream())
+    return sum(1 for _ in docs)
+
 async def get_user_tickets(user_id, status):
     docs = await _run(lambda: db.collection("tickets").where("user_id", "==", str(user_id)).where("status", "==", status).stream())
     return [(int(doc.id),) for doc in docs]
@@ -221,6 +237,9 @@ async def get_sold_announcements():
             res.append((doc.id, d.get("message_id"), d.get("chat_id"), d.get("created_at") or ""))
         return sorted(res, key=lambda x: x[3])
     return await _run(_sync)
+
+async def remove_sold_announcement(number):
+    await _run(lambda: db.collection("sold_announcements").document(str(number)).delete())
 
 async def clear_sold_announcements():
     def _sync():
