@@ -474,7 +474,7 @@ T = {
             "ምንም ትኬት የለዎትም።"
         ),
         "referral_btn": "👥 Referral",
-        "back_home_btn": "🔙 ተመለስ",
+        "back_home_btn": "🔙 Back",
 
         "referral_info": (
             "👥 *Referral ስርዓት*\n"
@@ -490,18 +490,19 @@ T = {
         ),
 
         "info_text": (
-            "ℹ️ *አጠቃቀም መመሪያ*\n"
+            "ℹ️ *ሙሉ አጠቃቀም መመሪያ*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ *➕ ቁጥር ምረጥ* — ቁጥሮቾን ከ WebApp ይምረጡ\n"
-            "2️⃣ *ክፍያ* — CBE ወይም Telebirr ይምረጡ\n"
-            "3️⃣ *ደረሰኝ ላክ* — Screenshot ይላኩ\n"
-            "4️⃣ *ስም እና ስልክ* — መረጃዎን ይሙሉ\n"
-            "5️⃣ *አረጋግጥ* — አድሚን ያረጋግጥልዎታል\n"
+            "1️⃣ ቋንቋ ይምረጡ\n"
+            "2️⃣ ቡድናችንን (እና ካለ ቻናላችንን) ይቀላቀሉ፣ ከዛ ✅ ተቀላቅያለሁ ይጫኑ\n"
+            "3️⃣ ስልክ ቁጥርዎን ያጋሩ — ይህ በክፍያ ወቅት መረጃዎን በራስ-ሰር ለመሙላት ያገለግላል\n"
+            "4️⃣ \"❇️ ቁጥር ምረጥ ❇️\" ተጭነው የሚፈልጉትን የትኬት ቁጥር(ሮች) ይምረጡ\n"
+            "5️⃣ \"💳 ክፍያ ቀጥል\" ተጭነው CBE ወይም Telebirr ይምረጡ፣ ስምና ስልክ ያረጋግጡ፣ ከዛ የከፈሉበትን ደረሰኝ (screenshot) ይላኩ\n"
+            "6️⃣ አድሚን ደረሰኙን ካረጋገጠ በኋላ ቁጥሮቹ የእርስዎ ይሆናሉ — የማረጋገጫ መልክት ይደርስዎታል\n"
+            "7️⃣ በ\"✴️ የኔ ትኬቶች ✴️\" ማንኛውም ጊዜ የገዙትን/በሂደት ላይ ያሉትን ቁጥሮች ማየት ይችላሉ\n"
+            "8️⃣ ጓደኞችዎን በ Referral ሊንክ ጋብዘው ለእያንዳንዱ የተጋበዘ ሰው 2 ብር ያግኙ\n"
             "━━━━━━━━━━━━━━━\n"
-            "📌 *ማሳሰቢያ:*\n"
-            "— ትክክለኛ ደረሰኝ ብቻ ተቀባይነት ይኖረዋል\n"
-            "— ደረሰኝ ከቀየሩ ወይም ትርጉም የሌለው\n"
-            "  ፎቶ ከላኩ ያለ notification ውድቅ ይሆናል"
+            "📌 *ማሳሰቢያ:* ትክክለኛ ደረሰኝ ብቻ ተቀባይነት ይኖረዋል፤ የተቀየረ ወይም ትርጉም የሌለው ደረሰኝ ውድቅ ይሆናል።\n"
+            "📌 እርዳታ ካስፈለገዎት \"💬 Support\" ይጫኑ"
         ),
 
         "num_taken": "⚠️ ቁጥር {num} ቀድሞ ተይዟል! እንደገና ይምረጡ።",
@@ -509,7 +510,7 @@ T = {
         "sold_announce": "🎟 ቁጥር *{num}* ተሽጧል!",
 
         "skip_btn":       "⏭ Skip",
-        "support_btn":    "🆘 ሰፖርት",
+        "support_btn":    "💬 Support",
         "support_menu_text": (
             "🆘 *ሰፖርት*\n"
             "━━━━━━━━━━━━━━━\n"
@@ -717,15 +718,19 @@ T = {
         ),
 
         "info_text": (
-            "ℹ️ *How to Use*\n"
+            "ℹ️ *Complete Guide*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ *❇️ Pick Numbers* — Select from WebApp\n"
-            "2️⃣ *Payment* — Choose CBE or Telebirr\n"
-            "3️⃣ *Send Receipt* — Send screenshot\n"
-            "4️⃣ *Name & Phone* — Fill your info\n"
-            "5️⃣ *Confirm* — Admin will verify\n"
+            "1️⃣ Choose your language\n"
+            "2️⃣ Join our group (and channel, if shown), then tap ✅ I Joined\n"
+            "3️⃣ Share your phone number — this auto-fills your info during payment\n"
+            "4️⃣ Tap \"❇️ Pick Numbers ❇️\" and select the ticket number(s) you want\n"
+            "5️⃣ Tap \"💳 Continue to Payment\", choose CBE or Telebirr, confirm your name & phone, then upload your payment receipt (screenshot)\n"
+            "6️⃣ Once admin verifies your receipt, the numbers become yours — you'll get a confirmation message\n"
+            "7️⃣ Check \"✴️ My Tickets ✴️\" anytime to see your purchased/pending numbers\n"
+            "8️⃣ Invite friends with your Referral link and earn 2 ETB for each person you invite\n"
             "━━━━━━━━━━━━━━━\n"
-            "📌 *Note:* Only valid receipts are accepted."
+            "📌 *Note:* Only valid receipts are accepted; edited or unclear receipts will be rejected.\n"
+            "📌 Need help? Tap \"💬 Support\""
         ),
 
         "num_taken": "⚠️ Number {num} is already taken! Please pick again.",
@@ -733,7 +738,7 @@ T = {
         "sold_announce": "🎟 Number *{num}* sold!",
 
         "skip_btn":       "⏭ Skip",
-        "support_btn":    "🆘 Support",
+        "support_btn":    "💬 Support",
         "support_menu_text": (
             "🆘 *Support*\n"
             "━━━━━━━━━━━━━━━\n"
@@ -924,7 +929,7 @@ T = {
             "Tikeetii hin qabdu."
         ),
         "referral_btn":  "👥 Referral",
-        "back_home_btn": "🔙 Deebi'i",
+        "back_home_btn": "🔙 Back",
 
         "referral_info": (
             "👥 *Referral*\n"
@@ -940,15 +945,19 @@ T = {
         ),
 
         "info_text": (
-            "ℹ️ *Akkamitti itti fayyadamuu*\n"
+            "ℹ️ *Qajeelfama Guutuu*\n"
             "━━━━━━━━━━━━━━━\n"
-            "1️⃣ *❇️ Lakkoofsa Filadhu* — WebApp irraa filadhu\n"
-            "2️⃣ *Kaffaltii* — CBE ykn Telebirr filadhu\n"
-            "3️⃣ *Beeksisa Ergi* — Screenshot ergi\n"
-            "4️⃣ *Maqaa fi Bilbila* — Odeeffannoo guuti\n"
-            "5️⃣ *Mirkaneessi* — Admin si beeksisa\n"
+            "1️⃣ Afaan filadhu\n"
+            "2️⃣ Garee keenya (fi channel, yoo jiraate) makami, ergasii ✅ Makamuun koo tuqi\n"
+            "3️⃣ Lakkoofsa bilbilaa kee qoodi — kun odeeffannoo kee kaffaltii keessatti ofumaan guutuuf gargaara\n"
+            "4️⃣ \"❇️ Lakkoofsa Filadhu ❇️\" tuqiitii lakkoofsa tikeetii barbaaddu filadhu\n"
+            "5️⃣ \"💳 Kaffaltiitti Itti Fufi\" tuqi, CBE ykn Telebirr filadhu, maqaa fi bilbila mirkaneessi, ergasii ragaa kaffaltii (screenshot) ergi\n"
+            "6️⃣ Admin ragaa kee erga mirkaneessee booda lakkoofsi kee siif ta'a — ergaa mirkaneessaa siif erga\n"
+            "7️⃣ Yeroo barbaaddetti \"✴️ Tikeetii Koo ✴️\" ilaaluun lakkoofsa bitatte/eegaa jiru argachuu dandeessa\n"
+            "8️⃣ Hiriyoota kee link Referral kaatiin afeeruun nama afeerte hunda irraa 2 ETB argadha\n"
             "━━━━━━━━━━━━━━━\n"
-            "📌 *Yaadadhu:* Beeksisa sirrii qofa fudhatama."
+            "📌 *Yaadadhu:* Ragaan sirrii qofa fudhatama; ragaan jijjiirame ykn ifa hin taane ni kufa.\n"
+            "📌 Gargaarsa yoo barbaadde \"💬 Support\" tuqi"
         ),
 
         "num_taken": "⚠️ Lakkoofsi {num} fudhataame! Ammas filadhu.",
@@ -956,7 +965,7 @@ T = {
         "sold_announce": "🎟 Lakkoofsi *{num}* gurgurame!",
 
         "skip_btn":       "⏭ Skip",
-        "support_btn":    "🆘 Support",
+        "support_btn":    "💬 Support",
         "support_menu_text": (
             "🆘 *Support*\n"
             "━━━━━━━━━━━━━━━\n"
@@ -1413,28 +1422,17 @@ async def home_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 # ══════════════════════════════════════════
 async def show_support_menu(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     lang = ctx.user_data.get("lang", "am")
-    keyboard = [
-        [InlineKeyboardButton(T[lang]["feedback_btn"], callback_data="support_feedback")],
-    ]
+    text = T[lang]["support_menu_text"]
     if SUPPORT_CONTACT_USERNAME:
-        support_url = f"https://t.me/{SUPPORT_CONTACT_USERNAME.lstrip('@')}"
-        keyboard.append([InlineKeyboardButton(T[lang]["support_contact_btn"], url=support_url)])
-    keyboard.append([InlineKeyboardButton(T[lang]["back_home_btn"], callback_data="main_menu")])
-    await update.message.reply_text(
-        T[lang]["support_menu_text"],
-        parse_mode="Markdown",
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        text += f"\n\n📞 {T[lang]['support_contact_btn']}: @{SUPPORT_CONTACT_USERNAME.lstrip('@')}"
+    keyboard = ReplyKeyboardMarkup(
+        [
+            [KeyboardButton(T[lang]["feedback_btn"])],
+            [KeyboardButton(T[lang]["back_home_btn"]), KeyboardButton(T[lang]["mainmenu_btn"])],
+        ],
+        resize_keyboard=True
     )
-
-async def support_feedback_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    lang = ctx.user_data.get("lang", "am")
-    ctx.user_data["awaiting_feedback"] = True
-    try:
-        await query.edit_message_text(T[lang]["feedback_prompt"], parse_mode="Markdown")
-    except:
-        await update.effective_message.reply_text(T[lang]["feedback_prompt"], parse_mode="Markdown")
+    await update.message.reply_text(text, parse_mode="Markdown", reply_markup=keyboard)
 
 async def handle_feedback_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     user = update.effective_user
@@ -1485,14 +1483,15 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
             return
         ctx.user_data["_profile_checked"] = True
 
-    home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "🏠 Main Menu"]
+    home_words    = ["ዋና ገጽ", "Home", "Fuula Jalqabaa", "🏠 Main Menu", "🔙 Back"]
     cancel_words  = ["❌ ሰርዝ", "❌ Cancel", "❌ Haquu"]
     tickets_words = ["✴️ የኔ ትኬቶች ✴️", "✴️ My Tickets ✴️", "✴️ Tikeetii Koo ✴️"]
     admin_words   = ["🔰 ADMIN 🔰"]
     info_words    = ["ℹ️ አጠቃቀም ℹ️", "ℹ️ How to Use ℹ️", "ℹ️ Akkamitti fayyadamuu ℹ️"]
     pick_words    = ["❇️ ቁጥር ምረጥ ❇️", "❇️ Pick Numbers ❇️", "❇️ Lakkoofsa Filadhu ❇️"]
     back_words    = ["◀️ ተመለስ", "◀️ Back", "◀️ Deebi'i"]
-    support_words = ["🆘 ሰፖርት", "🆘 Support"]
+    support_words = ["💬 Support"]
+    feedback_words = ["💬 አስተያየት መስጫ", "💬 Send Feedback", "💬 Yaada Ergi"]
 
     if any(w in text for w in home_words):
         ctx.user_data["admin_action"] = None
@@ -1515,25 +1514,25 @@ async def any_message_home(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await show_my_tickets(update, ctx)
         return
 
+    if any(w in text for w in feedback_words):
+        lang = ctx.user_data.get("lang", "am")
+        ctx.user_data["awaiting_feedback"] = True
+        await update.message.reply_text(T[lang]["feedback_prompt"], parse_mode="Markdown")
+        return
+
     if any(w in text for w in support_words):
         await show_support_menu(update, ctx)
         return
 
     if any(w in text for w in info_words):
         lang = ctx.user_data.get("lang", "am")
-        kb_rows = []
-        row = []
-        row.append(InlineKeyboardButton(T[lang]["visit_group_btn"], url=REQUIRED_GROUP_LINK))
-        if REQUIRED_CHANNEL_LINK:
-            row.append(InlineKeyboardButton(T[lang]["visit_channel_btn"], url=REQUIRED_CHANNEL_LINK))
-        kb_rows.append(row)
-        kb_rows.append([
-            InlineKeyboardButton(T[lang]["back_btn"], callback_data="main_menu"),
-            InlineKeyboardButton(T[lang]["mainmenu_btn"], callback_data="main_menu"),
-        ])
+        keyboard = ReplyKeyboardMarkup(
+            [[KeyboardButton(T[lang]["back_home_btn"]), KeyboardButton(T[lang]["mainmenu_btn"])]],
+            resize_keyboard=True
+        )
         await update.message.reply_text(
             T[lang]["info_text"], parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup(kb_rows)
+            reply_markup=keyboard
         )
         return
 
@@ -2322,7 +2321,6 @@ def main():
     app.add_handler(CallbackQueryHandler(referral_cb,          pattern="^show_referral$"))
     app.add_handler(CallbackQueryHandler(approve_reject_cb,    pattern="^(approve|reject)_"))
     app.add_handler(CallbackQueryHandler(check_membership_cb,  pattern="^check_membership$"))
-    app.add_handler(CallbackQueryHandler(support_feedback_cb,  pattern="^support_feedback$"))
 
     app.add_handler(CallbackQueryHandler(admin_panel_cb,       pattern="^admin_panel$"))
     app.add_handler(CallbackQueryHandler(admin_pending_cb,     pattern="^admin_pending$"))
