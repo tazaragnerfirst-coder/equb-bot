@@ -125,6 +125,40 @@
     font-size: 11px; color: var(--accent); font-weight: 600; margin-top: -12px; margin-bottom: 16px;
     display: none;
   }
+
+  /* --- Loading state text (tiers 3 & 4) --- */
+  .btn .load-text { font-size: 15px; font-weight: 800; }
+
+  /* --- Inline structured error box --- */
+  .error-box {
+    display: none; background: rgba(255, 107, 107, 0.08); border: 1px solid rgba(255, 107, 107, 0.3);
+    border-radius: 14px; padding: 16px; margin-bottom: 16px; animation: slideUp 0.3s ease;
+  }
+  .error-box.show { display: block; }
+  .error-box-title { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800; color: var(--error); margin-bottom: 6px; }
+  .error-box-title svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .error-box-why { font-size: 13px; color: var(--text-dim); line-height: 1.5; margin-bottom: 12px; }
+  .error-box-action {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.05); color: var(--text); font-size: 13px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .error-box-action:active { transform: scale(0.97); }
+
+  /* --- Animated success check --- */
+  .success-circle {
+    width: 80px; height: 80px; background: var(--accent); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+    box-shadow: 0 0 25px var(--accent-dim); animation: popIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes popIn { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+  .success-check { stroke-dasharray: 30; stroke-dashoffset: 30; animation: drawCheck 0.4s 0.35s ease forwards; }
+  @keyframes drawCheck { to { stroke-dashoffset: 0; } }
+  .success-detail {
+    background: var(--card); border-radius: 14px; padding: 16px; margin-top: 20px; text-align: left;
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+  .success-detail .info-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -229,6 +263,15 @@
         <span class="err-hint" id="errReceipt" style="text-align: center; margin-top: 10px;">Receipt screenshot is required</span>
       </div>
 
+      <div class="error-box" id="submitErrorBox">
+        <div class="error-box-title">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+          <span id="errBoxTitle">Submission failed</span>
+        </div>
+        <p class="error-box-why" id="errBoxWhy">Something went wrong.</p>
+        <button class="error-box-action" id="errBoxAction" onclick="submitFinal()">↻ Try again</button>
+      </div>
+
       <button class="btn" id="submitBtn" onclick="submitFinal()">Verify & Submit</button>
     </div>
   </div>
@@ -236,11 +279,27 @@
   <!-- SCREEN 3: SUCCESS -->
   <div class="screen" id="screenSuccess">
     <div style="text-align: center; padding: 60px 10px;">
-      <div style="width: 80px; height: 80px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 24px; box-shadow: 0 0 25px var(--accent-dim);">
-        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <div class="success-circle">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"><polyline class="success-check" points="20 6 9 17 4 12"></polyline></svg>
       </div>
       <h1 style="font-size: 32px; font-weight: 900;">Success!</h1>
       <p style="color: var(--text-dim); line-height: 1.6;">Your proof has been submitted. We will verify your payment and notify you via the bot shortly.</p>
+
+      <div class="success-detail">
+        <div class="info-row">
+          <span class="info-tag">Reference ID</span>
+          <span class="info-val" id="doneRef">---</span>
+        </div>
+        <div class="info-row">
+          <span class="info-tag">Ticket Numbers</span>
+          <span class="info-val" id="doneNumbers">---</span>
+        </div>
+        <div class="info-row" style="border: none;">
+          <span class="info-tag" style="color: var(--accent); font-weight: 800;">Amount Paid</span>
+          <span class="info-val" id="doneAmount" style="color: var(--accent);">--- ETB</span>
+        </div>
+      </div>
+
       <button class="btn" style="background: #1e293b; color: #fff; margin-top: 30px;" onclick="tg.close()">Return to Bot</button>
     </div>
   </div>
@@ -380,16 +439,65 @@ document.getElementById('fileInput').onchange = (e) => {
   reader.readAsDataURL(file);
 }
 
+// --- Tiered loading state helper ---
+// <1s: nothing. 1-5s: plain spinner. 5-6s: spinner + static text. 6-10s: spinner + rotating text.
+const ROTATING_MESSAGES = ["Verifying your receipt...", "Almost there...", "Finalizing submission..."];
+
+function startLoadingTiers(btn) {
+  const timers = [];
+  let rotateInterval = null;
+
+  timers.push(setTimeout(() => {
+    btn.innerHTML = `<span class="spinner"></span>`;
+  }, 1000));
+
+  timers.push(setTimeout(() => {
+    btn.innerHTML = `<span class="spinner"></span><span class="load-text">Verifying...</span>`;
+  }, 5000));
+
+  timers.push(setTimeout(() => {
+    let i = 0;
+    btn.innerHTML = `<span class="spinner"></span><span class="load-text">${ROTATING_MESSAGES[i]}</span>`;
+    rotateInterval = setInterval(() => {
+      i = (i + 1) % ROTATING_MESSAGES.length;
+      const label = btn.querySelector('.load-text');
+      if (label) label.textContent = ROTATING_MESSAGES[i];
+    }, 1800);
+  }, 6000));
+
+  return () => {
+    timers.forEach(clearTimeout);
+    if (rotateInterval) clearInterval(rotateInterval);
+  };
+}
+
+function showSubmitError(title, why) {
+  document.getElementById('errBoxTitle').textContent = title;
+  document.getElementById('errBoxWhy').textContent = why;
+  document.getElementById('submitErrorBox').classList.add('show');
+  if (tg) tg.HapticFeedback.notificationOccurred('error');
+}
+
+function hideSubmitError() {
+  document.getElementById('submitErrorBox').classList.remove('show');
+}
+
 // --- Submit Logic ---
 function submitFinal() {
+  hideSubmitError();
+
   if(!receiptFile) { 
     document.getElementById('errReceipt').style.display='block'; 
     return; 
   }
 
   const btn = document.getElementById('submitBtn');
-  btn.disabled = true; 
-  btn.innerHTML = `<span class="spinner"></span> Processing...`;
+  btn.disabled = true;
+  btn.innerHTML = '';
+  const stopTiers = startLoadingTiers(btn);
+
+  const amountVal = total;
+  const numbersVal = numbers;
 
   const fd = new FormData();
   fd.append('numbers', numbers);
@@ -402,18 +510,46 @@ function submitFinal() {
   fd.append('receipt', receiptFile);
 
   fetch(`${API_BASE}/submit-payment`, { method: 'POST', body: fd })
-    .then(r => r.json())
+    .then(async (r) => {
+      let data;
+      try { data = await r.json(); } catch (e) { data = null; }
+
+      if (!r.ok || !data || data.status !== 'ok') {
+        const err = new Error(data && data.message ? data.message : 'server_error');
+        err.httpStatus = r.status;
+        err.serverMessage = data && data.message;
+        throw err;
+      }
+      return data;
+    })
     .then(data => {
-      if(data.status === 'ok') {
-        clearInterval(timerInterval);
-        document.getElementById('screenPayment').classList.remove('active');
-        document.getElementById('screenSuccess').classList.add('active');
-        if(tg) tg.HapticFeedback.notificationOccurred('success');
-      } else { throw new Error(); }
-    }).catch(() => {
-      showToast("Error! Please try again.");
-      btn.disabled = false; 
+      stopTiers();
+      clearInterval(timerInterval);
+
+      document.getElementById('doneRef').textContent = data.reference || data.payment_id || ('#' + Date.now().toString().slice(-8));
+      document.getElementById('doneNumbers').textContent = numbersVal || '---';
+      document.getElementById('doneAmount').textContent = amountVal + ' ETB';
+
+      document.getElementById('screenPayment').classList.remove('active');
+      document.getElementById('screenSuccess').classList.add('active');
+      if(tg) tg.HapticFeedback.notificationOccurred('success');
+    })
+    .catch((err) => {
+      stopTiers();
+      btn.disabled = false;
       btn.innerText = "Verify & Submit";
+
+      if (!navigator.onLine) {
+        showSubmitError("No internet connection", "Your device lost its connection while submitting. Check your connection and try again.");
+      } else if (err.httpStatus >= 500) {
+        showSubmitError("Server error", "Our server couldn't process the receipt right now. Wait a moment and try again.");
+      } else if (err.httpStatus === 413) {
+        showSubmitError("File too large", "The receipt image is too large to upload. Choose a smaller screenshot and try again.");
+      } else if (err.httpStatus >= 400 && err.httpStatus < 500) {
+        showSubmitError("Submission rejected", err.serverMessage || "Some details couldn't be verified. Check your information and try again.");
+      } else {
+        showSubmitError("Couldn't submit", "The request didn't go through. Check your connection and try again.");
+      }
     });
 }
 </script>
