@@ -293,7 +293,7 @@ from admin_auth import register_admin_verify_route
 register_admin_verify_route(flask_app)
 
 # ══════════════════════════════════════════
-# TRANSLATIONS  (ኢሞጂዎች በሦስቱም ቋንቋዎች ወጥ እንዲሆኑ ተስተካክለዋል)
+# TRANSLATIONS  
 # ══════════════════════════════════════════
 T = {
     "am": {
@@ -997,9 +997,9 @@ def is_admin(user_id):
 
 def mask_phone(phone):
     phone = str(phone).strip()
-    if len(phone) < 2:
+    if len(phone) < 6:
         return phone
-    return phone[:-1] + "#"
+    return phone[:4] + ("*" * stars_count) + phone[-2:]
 
 def get_cancel_keyboard(ctx):
     return ReplyKeyboardMarkup(
