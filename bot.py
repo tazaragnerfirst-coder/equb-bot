@@ -1150,17 +1150,25 @@ async def send_full_list_to_group(bot, total):
 
     if old_msgs and len(old_msgs) == len(new_chunks):
         edited_ids = []
+        is_any_message_missing = False
+
         for (msg_id, chat_id), text in zip(old_msgs, new_chunks):
             try:
                 await bot.edit_message_text(chat_id=chat_id, message_id=msg_id, text=text)
+                edited_ids.append(msg_id)
             except BadRequest as e:
-                if "not modified" not in str(e).lower():
+                if "message to edit not found" in str(e).lower() or "chat not found" in str(e).lower():
+                    is_any_message_missing = True
+                    break
+                elif "not modified" not in str(e).lower():
                     logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
             except Exception as e:
                 logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
-            edited_ids.append(msg_id)
             await asyncio.sleep(0.4)
-        return len(edited_ids)
+        
+        if not is_any_message_missing and len(edited_ids) == len(new_chunks):
+            return len(edited_ids)
+
 
     for msg_id, chat_id in old_msgs:
         try:
