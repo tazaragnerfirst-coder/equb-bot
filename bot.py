@@ -999,6 +999,7 @@ def mask_phone(phone):
     phone = str(phone).strip()
     if len(phone) < 6:
         return phone
+    stars_count = len(phone) - 6
     return phone[:4] + ("*" * stars_count) + phone[-2:]
 
 def get_cancel_keyboard(ctx):
