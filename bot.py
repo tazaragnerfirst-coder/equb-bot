@@ -997,10 +997,10 @@ def is_admin(user_id):
 
 def mask_phone(phone):
     phone = str(phone).strip()
-    if len(phone) < 6:
+    if len(phone) < 9:
         return phone
-    stars_count = len(phone) - 6
-    return phone[:4] + ("*" * stars_count) + phone[-2:]
+    stars_count = len(phone) - 9
+    return phone[:7] + ("*" * stars_count) + phone[-2:]
 
 def get_cancel_keyboard(ctx):
     return ReplyKeyboardMarkup(
