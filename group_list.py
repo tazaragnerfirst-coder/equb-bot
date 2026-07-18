@@ -1,6 +1,7 @@
 # ══════════════════════════════════════════
 # group_list.py
 # ግሩፕ ውስጥ የትኬት ዝርዝርን edit-in-place ማሳየት + "ተሽጧል" ማስታወቂያ (sliding window)።
+# Per-chunk granular repair: የጠፋ/የተበላሸ chunk ብቻ በአዲስ ይተካል፣ ደህና ያሉት አይነኩም።
 # ══════════════════════════════════════════
 import asyncio
 import logging
@@ -34,49 +35,76 @@ def _build_chunks(ticket_map, total, chunk_size=150):
 
 
 async def send_full_list_to_group(bot, total):
+    """
+    Per-chunk granular repair:
+    - ነባር chunk-ች (msg_id አላቸው) ቅድሚያ edit ይደረግላቸዋል።
+    - Edit ሲሳካ ወይም "not modified" ሲሆን endeded ናቸው ይባላል።
+    - Edit "message to edit not found" / "chat not found" ካልሆነ ብቻ ያ specific
+      chunk በአዲስ መልክት ይተካል (ሌሎቹ አይነኩም)።
+    - Total ቢጨምር ተጨማሪ chunks አዲስ ይላካሉ።
+    - Total ቢቀንስ የተረፉ (ከአዲሱ chunk ብዛት በላይ ያሉ) ነባር መልክቶች ይሰረዛሉ።
+    - old_msgs ባዶ ከሆነ (የመጀመሪያ ጊዜ) ሁሉም chunks በአዲስ ይላካሉ።
+    """
     old_msgs = await db.get_group_message_ids()
     ticket_map = await db.get_all_tickets_full(total)
     new_chunks = _build_chunks(ticket_map, total)
 
-    if old_msgs and len(old_msgs) == len(new_chunks):
-        edited_ids = []
-        is_any_message_missing = False
+    final_msg_ids = []  # (msg_id, chat_id) per chunk position, in order
+    repaired_count = 0
+    edited_count = 0
 
-        for (msg_id, chat_id), text in zip(old_msgs, new_chunks):
+    for idx, text in enumerate(new_chunks):
+        if idx < len(old_msgs):
+            msg_id, chat_id = old_msgs[idx]
             try:
                 await bot.edit_message_text(chat_id=chat_id, message_id=msg_id, text=text)
-                edited_ids.append(msg_id)
+                final_msg_ids.append((msg_id, chat_id))
+                edited_count += 1
             except BadRequest as e:
-                if "message to edit not found" in str(e).lower() or "chat not found" in str(e).lower():
-                    is_any_message_missing = True
-                    break
-                elif "not modified" not in str(e).lower():
+                err = str(e).lower()
+                if "not modified" in err:
+                    # ይዘቱ ካልተቀየረ - እንደ ስኬታማ ይቆጠራል
+                    final_msg_ids.append((msg_id, chat_id))
+                    edited_count += 1
+                elif "message to edit not found" in err or "chat not found" in err:
+                    # ይሄ specific chunk ብቻ ጠፍቷል/ተደልጧል -> በአዲስ ይተካል
+                    try:
+                        new_msg = await bot.send_message(chat_id=GROUP_ID, text=text)
+                        final_msg_ids.append((new_msg.message_id, GROUP_ID))
+                        repaired_count += 1
+                    except Exception as e2:
+                        logger.error(f"Repair-send chunk {idx} error: {e2}")
+                        final_msg_ids.append((msg_id, chat_id))  # fallback: keep old ref
+                else:
                     logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
+                    final_msg_ids.append((msg_id, chat_id))
             except Exception as e:
                 logger.warning(f"Edit chunk error (msg_id={msg_id}): {e}")
+                final_msg_ids.append((msg_id, chat_id))
             await asyncio.sleep(0.4)
+        else:
+            # Total አድጎ አዲስ chunk ያስፈልጋል
+            try:
+                new_msg = await bot.send_message(chat_id=GROUP_ID, text=text)
+                final_msg_ids.append((new_msg.message_id, GROUP_ID))
+                await asyncio.sleep(0.8)
+            except Exception as e:
+                logger.error(f"New chunk send error (idx={idx}): {e}")
 
-        if not is_any_message_missing and len(edited_ids) == len(new_chunks):
-            return len(edited_ids)
+    # Total ቢቀንስ የተረፉ ነባር መልክቶች ይሰረዛሉ
+    if len(old_msgs) > len(new_chunks):
+        for msg_id, chat_id in old_msgs[len(new_chunks):]:
+            try:
+                await bot.delete_message(chat_id=chat_id, message_id=msg_id)
+            except Exception as e:
+                logger.warning(f"Delete extra old group msg error: {e}")
 
-    for msg_id, chat_id in old_msgs:
-        try:
-            await bot.delete_message(chat_id=chat_id, message_id=msg_id)
-        except Exception as e:
-            logger.warning(f"Delete old group msg error: {e}")
-    await db.clear_group_messages()
+    await db.save_group_message_ids(GROUP_ID, [mid for mid, _ in final_msg_ids])
 
-    new_msg_ids = []
-    for text in new_chunks:
-        try:
-            msg = await bot.send_message(chat_id=GROUP_ID, text=text)
-            new_msg_ids.append(msg.message_id)
-            await asyncio.sleep(0.8)
-        except Exception as e:
-            logger.error(f"Chunk send error: {e}")
+    if repaired_count:
+        logger.info(f"Group list: {edited_count} edited, {repaired_count} chunk(s) repaired (resent).")
 
-    await db.save_group_message_ids(GROUP_ID, new_msg_ids)
-    return len(new_msg_ids)
+    return len(final_msg_ids)
 
 
 async def schedule_group_list_update(bot, total, min_interval=12):
