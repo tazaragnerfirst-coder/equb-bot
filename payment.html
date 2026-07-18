@@ -83,10 +83,16 @@
 
   /* Bank Info Card */
   .bank-display { background: #0f172a; padding: 18px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.06); margin-top: 10px; }
-  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+  .info-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.03); gap: 12px; }
   .info-row:last-child { border-bottom: none; }
-  .info-tag { font-size: 12px; color: var(--text-dim); font-weight: 500; }
-  .info-val { font-size: 15px; font-weight: 700; color: var(--text); }
+  .info-tag { font-size: 12px; color: var(--text-dim); font-weight: 500; flex-shrink: 0; }
+  .info-val { font-size: 15px; font-weight: 700; color: var(--text); text-align: right; }
+
+  /* Row that needs to wrap long content (e.g. many ticket numbers) instead of overflowing */
+  .info-row.wrap-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+  .info-row.wrap-row .info-val {
+    text-align: left; white-space: normal; word-break: break-word; line-height: 1.6; font-size: 14px; width: 100%;
+  }
 
   .copy-btn { 
     color: var(--accent); cursor: pointer; font-size: 10px; font-weight: 900; 
@@ -175,11 +181,13 @@
   .overlay.show { display: flex; }
   .overlay-card {
     background: var(--card); border-radius: 20px; padding: 30px 24px; text-align: center;
-    max-width: 360px; border: 1px solid rgba(255,255,255,0.06);
+    max-width: 360px; border: 1px solid rgba(255,255,255,0.06); width: 100%;
   }
   .overlay-card .icon { font-size: 40px; margin-bottom: 14px; }
   .overlay-card h2 { font-size: 20px; font-weight: 900; margin: 0 0 10px; }
   .overlay-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; margin-bottom: 22px; }
+  .overlay-actions { display: flex; flex-direction: column; gap: 10px; }
+  .btn-secondary { background: #1e293b; color: #fff; }
 </style>
 </head>
 <body>
@@ -317,7 +325,7 @@
           <span class="info-tag">Reference ID</span>
           <span class="info-val" id="doneRef">---</span>
         </div>
-        <div class="info-row">
+        <div class="info-row wrap-row">
           <span class="info-tag">Ticket Numbers</span>
           <span class="info-val" id="doneNumbers">---</span>
         </div>
@@ -337,8 +345,11 @@
   <div class="overlay-card">
     <div class="icon">⏰</div>
     <h2>Time Expired</h2>
-    <p>Your 5-minute window to complete this payment has ended. Your entered info was not lost — you can start again right away.</p>
-    <button class="btn" onclick="restartFlow()">↻ Start Again</button>
+    <p>Your window to complete this payment has ended. Your entered info was not lost — you can start again right away, or close and return to the bot.</p>
+    <div class="overlay-actions">
+      <button class="btn" onclick="restartFlow()">↻ Start Again</button>
+      <button class="btn btn-secondary" onclick="closeApp()">Close</button>
+    </div>
   </div>
 </div>
 
@@ -356,11 +367,19 @@ const userId = tg?.initDataUnsafe?.user?.id || qs.get('user_id');
 const username = tg?.initDataUnsafe?.user?.username ? '@' + tg.initDataUnsafe.user.username : qs.get('username') || '@user';
 const langParam = qs.get('lang') || 'am';
 
+// Real hold-expiry passed by the bot (unix seconds). Falls back to a client-only
+// 5 min window ONLY if the bot didn't provide one — but the bot SHOULD always
+// pass this so the countdown here matches the real lock expiry in database.py.
+const expiresAtParam = qs.get('expires_at');
+
 const MAX_FILE_MB = 5;
 const FETCH_TIMEOUT_MS = 20000;
+const SERVER_SYNC_INTERVAL_MS = 20000;
 
 let receiptFile = null;
 let timerInterval = null;
+let syncInterval = null;
+let timerSeconds = 0;
 
 // --- Prefill from saved Telegram contact (bot passes these via URL) ---
 (function prefillFromContact() {
@@ -392,33 +411,92 @@ function fetchWithTimeout(url, options = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
 }
 
-// --- Timer Function ---
-function startTimer(duration) {
-  let timer = duration, minutes, seconds;
+// --- Timer: source of truth is the real expiry from the bot, not a local guess ---
+function getInitialRemainingSeconds() {
+  if (expiresAtParam) {
+    const expiresAt = parseInt(expiresAtParam, 10);
+    if (!isNaN(expiresAt)) {
+      const remaining = expiresAt - Math.floor(Date.now() / 1000);
+      return Math.max(remaining, 0);
+    }
+  }
+  return 300; // fallback only if bot didn't pass expires_at
+}
+
+function updateTimerDisplay() {
   const display = document.getElementById('timerText');
+  const s = Math.max(timerSeconds, 0);
+  const minutes = String(Math.floor(s / 60)).padStart(2, '0');
+  const seconds = String(s % 60).padStart(2, '0');
+  display.textContent = minutes + ":" + seconds;
+}
+
+function expireNow() {
+  clearInterval(timerInterval);
+  clearInterval(syncInterval);
+  timerInterval = null;
+  syncInterval = null;
+  const submitBtn = document.getElementById('submitBtn');
+  if (submitBtn) submitBtn.disabled = true;
+  document.getElementById('expiredOverlay').classList.add('show');
+  if (tg) tg.HapticFeedback.notificationOccurred('warning');
+}
+
+function startTimer(duration) {
+  timerSeconds = duration;
   const pill = document.getElementById('timerPill');
+  updateTimerDisplay();
+
+  if (timerSeconds <= 0) {
+    expireNow();
+    return;
+  }
 
   timerInterval = setInterval(() => {
-    minutes = parseInt(timer / 60, 10);
-    seconds = parseInt(timer % 60, 10);
-    minutes = minutes < 10 ? "0" + minutes : minutes;
-    seconds = seconds < 10 ? "0" + seconds : seconds;
+    timerSeconds--;
+    updateTimerDisplay();
 
-    display.textContent = minutes + ":" + seconds;
+    if (timerSeconds <= 60 && timerSeconds >= 0) pill.classList.add('warn');
 
-    if (timer <= 60) pill.classList.add('warn');
-
-    if (--timer < 0) {
-      clearInterval(timerInterval);
-      document.getElementById('expiredOverlay').classList.add('show');
-      if (tg) tg.HapticFeedback.notificationOccurred('warning');
+    if (timerSeconds <= 0) {
+      expireNow();
     }
   }, 1000);
+
+  startServerSync();
+}
+
+// Periodically re-check the real hold status on the backend so the on-screen
+// countdown can't drift out of sync with the actual lock expiry in the DB.
+// Silently ignored if the backend doesn't implement this endpoint yet.
+function startServerSync() {
+  syncInterval = setInterval(() => {
+    fetchWithTimeout(
+      `${API_BASE}/ticket-hold-status?numbers=${encodeURIComponent(numbers)}&user_id=${encodeURIComponent(userId)}`,
+      {}, 8000
+    )
+      .then(r => (r.ok ? r.json() : null))
+      .then(data => {
+        if (!data) return;
+        if (data.expired === true) {
+          expireNow();
+        } else if (typeof data.remaining_seconds === 'number') {
+          timerSeconds = data.remaining_seconds;
+          updateTimerDisplay();
+        }
+      })
+      .catch(() => {}); // endpoint optional — never break the flow on failure
+  }, SERVER_SYNC_INTERVAL_MS);
 }
 
 function restartFlow() {
   document.getElementById('expiredOverlay').classList.remove('show');
   location.reload();
+}
+
+function closeApp() {
+  if (tg) tg.close();
+  else window.close();
 }
 
 // --- Live validation: clear error state as user types ---
@@ -464,7 +542,7 @@ function validateAndGo() {
     document.getElementById('backBtn').style.display = 'flex';
     if(tg) tg.HapticFeedback.impactOccurred('medium');
 
-    if (!timerInterval) startTimer(300); // only start once
+    if (!timerInterval) startTimer(getInitialRemainingSeconds()); // only start once, synced to real expiry
     loadConfig();
   } else {
     if(tg) tg.HapticFeedback.notificationOccurred('error');
@@ -624,6 +702,7 @@ function submitFinal() {
     .then(data => {
       stopTiers();
       clearInterval(timerInterval);
+      clearInterval(syncInterval);
 
       document.getElementById('doneRef').textContent = data.reference || data.payment_id || ('#' + Date.now().toString().slice(-8));
       document.getElementById('doneNumbers').textContent = numbersVal || '---';
