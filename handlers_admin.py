@@ -58,7 +58,7 @@ async def show_admin_panel(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     menu_kb = ReplyKeyboardMarkup([
         [KeyboardButton("📤 SEND TO GROUP 📤")],
         [KeyboardButton("📢 BROADCAST 📢"), KeyboardButton("⚙️ SETTING ⚙️")],
-        [KeyboardButton("🏠 Main Menu")],
+        [KeyboardButton("🔝 Main Menu")],
     ], resize_keyboard=True)
 
     ctx.user_data["admin_menu"] = True
@@ -115,7 +115,7 @@ async def show_settings_menu(update, ctx):
         [KeyboardButton("PRIZE 1️⃣"), KeyboardButton("PRIZE 2️⃣"), KeyboardButton("PRIZE 3️⃣")],
         [KeyboardButton("CHANGE IMAGE 🖼"), KeyboardButton("REMOVE IMAGE 🗑")],
         [KeyboardButton("⚠️ RESET ⚠️")],
-        [KeyboardButton("◀️ ተመለስ"), KeyboardButton("🏠 Main Menu")],
+        [KeyboardButton("🔙 ተመለስ"), KeyboardButton("🔝 Main Menu")],
     ], resize_keyboard=True)
 
     await update.message.reply_text(text, parse_mode="Markdown", reply_markup=settings_kb)
@@ -132,7 +132,7 @@ async def admin_pending_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await query.edit_message_text(
             "✅ No pending payments.",
             reply_markup=InlineKeyboardMarkup([[
-                InlineKeyboardButton("◀️ Back", callback_data="admin_panel")
+                InlineKeyboardButton("🔙 Back", callback_data="admin_panel")
             ]])
         )
         return
@@ -197,7 +197,7 @@ async def admin_stats_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
     await query.edit_message_text(
         text, parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("◀️ Back", callback_data="admin_panel")
+            InlineKeyboardButton("🔙 Back", callback_data="admin_panel")
         ]])
     )
 
@@ -210,7 +210,7 @@ async def admin_find_cb(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         "🔍 *SEARCH*\n━━━━━━━━━━━━━━━\nየቲኬት ቁጥር ፃፍ:\nምሳሌ: 5",
         parse_mode="Markdown",
         reply_markup=InlineKeyboardMarkup([[
-            InlineKeyboardButton("◀️ Cancel", callback_data="admin_panel")
+            InlineKeyboardButton("🔙 Cancel", callback_data="admin_panel")
         ]])
     )
 
