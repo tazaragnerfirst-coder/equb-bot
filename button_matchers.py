@@ -15,7 +15,7 @@ def _collect(key):
 
 
 # ── Reply-keyboard button matchers (any_message_home router uses these) ──
-home_words     = _collect("home_btn") + ["🏠 Main Menu", "🔙 Back"]
+home_words     = _collect("home_btn") + ["🔝 Main Menu", "🔙 Back"]
 cancel_words   = _collect("cancel_btn")
 tickets_words  = _collect("my_tickets_btn")
 admin_words    = _collect("admin_btn")
