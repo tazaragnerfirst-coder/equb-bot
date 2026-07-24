@@ -10,12 +10,12 @@ T = {
     "am": {
         "pick_btn":       "❇️ ቁጥር ምረጥ ❇️",
         "my_tickets_btn": "✴️ የኔ ትኬቶች ✴️",
-        "info_btn":       "ℹ️ አጠቃቀም ",
+        "info_btn":       "ℹ️ አጠቃቀም ℹ️",
         "admin_btn":      "🔰 ADMIN 🔰",
         "admin_cards_btn":"📋 CARDS",
-        "home_btn":       "🔝 ዋና ገጽ",
+        "home_btn":       "🏠 ዋና ገጽ",
         "cancel_btn":     "❌ ሰርዝ",
-        "back_btn":       "🔙 ተመለስ",
+        "back_btn":       "◀️ ተመለስ",
 
         "join_required": (
             "⚠️ *ቦቱን ለመጠቀም መጀመሪያ*\n"
@@ -68,7 +68,7 @@ T = {
         ),
         "pay_cbe_btn":     "🏦 CBE",
         "pay_telebirr_btn":"📱 TELE BIRR",
-        "pay_back_btn":    "🔙 ተመለስ",
+        "pay_back_btn":    "◀️ ተመለስ",
 
         "cbe_msg": (
             "🏦 *CBE*\n"
@@ -233,18 +233,18 @@ T = {
         "feedback_sent":   "✅ አስተያየትዎ ተልኳል! እናመሰግናለን።",
         "visit_group_btn":   "👥 Visit Group",
         "visit_channel_btn": "📢 Visit Channel",
-        "mainmenu_btn":      "🔝 Main Menu",
+        "mainmenu_btn":      "🏠 Main Menu",
     },
 
     "en": {
         "pick_btn":       "❇️ Pick Numbers ❇️",
         "my_tickets_btn": "✴️ My Tickets ✴️",
-        "info_btn":       "ℹ️ How to Use ",
+        "info_btn":       "ℹ️ How to Use ℹ️",
         "admin_btn":      "🔰 ADMIN 🔰",
         "admin_cards_btn":"📋 CARDS",
-        "home_btn":       "🔝 Home",
+        "home_btn":       "🏠 Home",
         "cancel_btn":     "❌ Cancel",
-        "back_btn":       "🔙 Back",
+        "back_btn":       "◀️ Back",
 
         "join_required": (
             "⚠️ *You must join our group*\n"
@@ -296,7 +296,7 @@ T = {
         ),
         "pay_cbe_btn":      "🏦 CBE",
         "pay_telebirr_btn": "📱 TELE BIRR",
-        "pay_back_btn":     "🔙 Back",
+        "pay_back_btn":     "◀️ Back",
 
         "cbe_msg": (
             "🏦 *CBE*\n"
@@ -461,18 +461,18 @@ T = {
         "feedback_sent":   "✅ Your feedback has been sent! Thank you.",
         "visit_group_btn":   "👥 Visit Group",
         "visit_channel_btn": "📢 Visit Channel",
-        "mainmenu_btn":      "🔝 Main Menu",
+        "mainmenu_btn":      "🏠 Main Menu",
     },
 
     "or": {
         "pick_btn":       "❇️ Lakkoofsa Filadhu ❇️",
         "my_tickets_btn": "✴️ Tikeetii Koo ✴️",
-        "info_btn":       "ℹ️ Akkamitti fayyadamuu ",
+        "info_btn":       "ℹ️ Akkamitti fayyadamuu ℹ️",
         "admin_btn":      "🔰 ADMIN 🔰",
         "admin_cards_btn":"📋 CARDS",
-        "home_btn":       "🔝 Fuula Jalqabaa",
+        "home_btn":       "🏠 Fuula Jalqabaa",
         "cancel_btn":     "❌ Haquu",
-        "back_btn":       "🔙 Deebi'i",
+        "back_btn":       "◀️ Deebi'i",
 
         "join_required": (
             "⚠️ *Garee keenya makamuun*\n"
@@ -523,7 +523,7 @@ T = {
         ),
         "pay_cbe_btn":      "🏦 CBE",
         "pay_telebirr_btn": "📱 TELE BIRR",
-        "pay_back_btn":     "🔝 Deebi'i",
+        "pay_back_btn":     "◀️ Deebi'i",
 
         "cbe_msg": (
             "🏦 *CBE*\n"
@@ -688,6 +688,6 @@ T = {
         "feedback_sent":   "✅ Yaadni kee ergameera! Galatoomi.",
         "visit_group_btn":   "👥 Visit Group",
         "visit_channel_btn": "📢 Visit Channel",
-        "mainmenu_btn":      "🔝 Main Menu",
+        "mainmenu_btn":      "🏠 Main Menu",
     }
 }
